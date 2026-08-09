@@ -73,22 +73,26 @@ export default function App() {
   }, [toast])
 
   // ---- Derived list ----
-  const items = useMemo(() => {
-    let out = LISTINGS.filter((l) => {
-      if (favOnly && !favs.has(l.id)) return false
-      if (seaOnly && !l.seaView) return false
-      if (filters.zone && l.zone !== filters.zone) return false
-      if (filters.contract && l.contract !== filters.contract) return false
-      if (filters.type && l.type !== filters.type) return false
-      if (!inPriceBands(l.price, filters.priceRanges)) return false
-      if (filters.smin != null && l.size < filters.smin) return false
-      if (filters.smax != null && l.size > filters.smax) return false
-      if (filters.rooms && l.rooms < +filters.rooms) return false
-      if (filters.baths && l.baths < +filters.baths) return false
-      for (const f of filters.feats) if (!l.feats.includes(f)) return false
-      return true
-    })
+  // Listings matching the filter criteria (zone/price/type/…) but NOT the map
+  // viewport. The map fits itself to THIS set, so panning the map never fights
+  // the auto-fit (that would loop). `items` then also applies the viewport.
+  const criteriaItems = useMemo(() => LISTINGS.filter((l) => {
+    if (favOnly && !favs.has(l.id)) return false
+    if (seaOnly && !l.seaView) return false
+    if (filters.zone && l.zone !== filters.zone) return false
+    if (filters.contract && l.contract !== filters.contract) return false
+    if (filters.type && l.type !== filters.type) return false
+    if (!inPriceBands(l.price, filters.priceRanges)) return false
+    if (filters.smin != null && l.size < filters.smin) return false
+    if (filters.smax != null && l.size > filters.smax) return false
+    if (filters.rooms && l.rooms < +filters.rooms) return false
+    if (filters.baths && l.baths < +filters.baths) return false
+    for (const f of filters.feats) if (!l.feats.includes(f)) return false
+    return true
+  }), [filters, favOnly, seaOnly, favs])
 
+  const items = useMemo(() => {
+    let out = criteriaItems
     if (areaSync && bounds && mapZoom > 6) {
       out = out.filter((l) => bounds.contains([l.lat, l.lng]))
     }
@@ -102,7 +106,18 @@ export default function App() {
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
     return arr
-  }, [filters, areaSync, bounds, mapZoom, sort, favOnly, seaOnly, favs, userPos])
+  }, [criteriaItems, areaSync, bounds, mapZoom, sort, userPos])
+
+  // Fit the map to the filtered houses whenever the filter criteria change, so
+  // the view always covers exactly the current results (and no more). Keyed on
+  // the criteria only — not on favouriting or on map movement.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !criteriaItems.length) return
+    const b = L.latLngBounds(criteriaItems.map((l) => [l.lat, l.lng])).pad(0.12)
+    map.flyToBounds(b, { duration: 0.7, maxZoom: 13 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, seaOnly, favOnly])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
