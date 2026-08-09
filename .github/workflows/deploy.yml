@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/summerhome-repo-deploy-3hja3k
   workflow_dispatch:
 
 permissions:
