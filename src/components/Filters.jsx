@@ -5,7 +5,7 @@ import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly }) {
+export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -95,6 +95,7 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
         <button className="chip" onClick={() => setOpen((o) => !o)}>
           ⚙️ {t('adv_filters')}{advCount ? <span className="badge">{advCount}</span> : null}
         </button>
+        <button className={'chip' + (seaOnly ? ' active' : '')} onClick={onToggleSea}>{t('sea_view')}</button>
         <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}</button>
       </div>
 

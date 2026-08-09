@@ -37,6 +37,7 @@ export default function App() {
   const [filters, setFilters] = useState(initialFilters)
   const [sort, setSort] = useState('rel')
   const [favOnly, setFavOnly] = useState(false)
+  const [seaOnly, setSeaOnly] = useState(false)
   const [favs, setFavs] = useState(loadFavs)
   const [userPos, setUserPos] = useState(null)
   const [areaSync, setAreaSync] = useState(true)
@@ -75,6 +76,7 @@ export default function App() {
   const items = useMemo(() => {
     let out = LISTINGS.filter((l) => {
       if (favOnly && !favs.has(l.id)) return false
+      if (seaOnly && !l.seaView) return false
       if (filters.zone && l.zone !== filters.zone) return false
       if (filters.contract && l.contract !== filters.contract) return false
       if (filters.type && l.type !== filters.type) return false
@@ -100,7 +102,7 @@ export default function App() {
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
     return arr
-  }, [filters, areaSync, bounds, mapZoom, sort, favOnly, favs, userPos])
+  }, [filters, areaSync, bounds, mapZoom, sort, favOnly, seaOnly, favs, userPos])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
@@ -188,6 +190,7 @@ export default function App() {
           items={items}
           filters={filters}
           favOnly={favOnly}
+          seaOnly={seaOnly}
           favs={favs}
           userPos={userPos}
           sort={sort}
@@ -195,6 +198,7 @@ export default function App() {
           onImmediate={(k, v) => setFilters((f) => ({ ...f, [k]: v }))}
           onApplyAdvanced={(adv) => setFilters((f) => ({ ...f, ...adv }))}
           onToggleFavOnly={() => setFavOnly((v) => !v)}
+          onToggleSea={() => setSeaOnly((v) => !v)}
           onSortChange={onSortChange}
           onOpen={setSelectedId}
           onToggleFav={toggleFav}

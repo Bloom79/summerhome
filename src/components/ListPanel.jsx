@@ -3,8 +3,8 @@ import Card from './Card.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, filters, favOnly, favs, userPos, sort, highlightId,
-  onImmediate, onApplyAdvanced, onToggleFavOnly, onSortChange,
+  items, filters, favOnly, seaOnly, favs, userPos, sort, highlightId,
+  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onSortChange,
   onOpen, onToggleFav, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -16,6 +16,8 @@ export default function ListPanel({
         onApplyAdvanced={onApplyAdvanced}
         favOnly={favOnly}
         onToggleFavOnly={onToggleFavOnly}
+        seaOnly={seaOnly}
+        onToggleSea={onToggleSea}
       />
 
       <div id="resmeta">
