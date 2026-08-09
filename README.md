@@ -1,30 +1,60 @@
 # summerhome — CasaTrova
 
-**CasaTrova** is a single-page real-estate search portal: an interactive map,
-precise geolocation, advanced filters, and photo previews for property
-listings. It's a fully static app (plain HTML/CSS/JS) using
-[Leaflet](https://leafletjs.com/) for the map and OpenStreetMap / Nominatim
-for tiles and geocoding — no build step and no backend required.
+**CasaTrova** is a real-estate search portal built as a **React + Vite**
+single-page app: an interactive Leaflet map, precise geolocation, advanced
+filters, favourites, and a photo gallery for each property. It uses
+OpenStreetMap tiles and the Nominatim geocoder — no API key and no backend
+required.
 
-## Live site
+## Tech stack
 
-The app is deployed to **GitHub Pages** via the workflow in
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). Every push to
-the deploy branch publishes the latest `index.html`.
+- [React 18](https://react.dev/) + [Vite 5](https://vite.dev/) (build tooling)
+- [Leaflet](https://leafletjs.com/) via
+  [react-leaflet](https://react-leaflet.js.org/) for the interactive map
+- OpenStreetMap tiles + Nominatim geocoding
 
-## Run locally
+## Project structure
 
-Because everything is static, just open `index.html` in a browser, or serve
-the folder:
+```
+index.html            # Vite entry
+src/
+  main.jsx            # React bootstrap
+  App.jsx             # State + filtering logic
+  data.js             # Demo listings (real coordinates)
+  utils.js            # Formatting, distance, geocoding helpers
+  index.css           # Styles
+  components/
+    Header.jsx        # Search (autocomplete) + "near me"
+    Filters.jsx       # Filter bar + advanced drawer
+    ListPanel.jsx     # Results panel
+    Card.jsx          # Listing card
+    MapPanel.jsx      # Leaflet map + price-pin markers
+    DetailModal.jsx   # Property detail + gallery
+```
+
+## Develop
 
 ```bash
-python3 -m http.server 8000
-# then open http://localhost:8000
+npm install
+npm run dev       # start the dev server
+npm run build     # production build → dist/
+npm run preview   # preview the production build
 ```
+
+## Deployment
+
+Deployed to **GitHub Pages** via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): every push to
+the deploy branch builds the app and publishes `dist/`. The Vite `base` is set
+to `/summerhome/` to match the Pages URL:
+
+**https://bloom79.github.io/summerhome/**
+
+> First-time setup: in the repository **Settings → Pages**, set
+> **Source** to **GitHub Actions** (one time). After that the workflow deploys
+> automatically.
 
 ## Notes
 
-- The listings in `index.html` are demonstration data with real coordinates,
-  ready to be wired up to a real data source.
-- All map/geocoding requests go to public OpenStreetMap services; no API key
-  is needed.
+- Listings in `src/data.js` are demonstration data with real coordinates,
+  ready to be wired up to a real data source / API.
