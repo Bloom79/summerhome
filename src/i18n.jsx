@@ -21,7 +21,7 @@ const STR = {
   it: {
     search_ph: 'Cerca zona o indirizzo… (es. Burtonport, North Berwick, Crail)',
     near_me: '📍 Vicino a me',
-    banner: '🌊 Annunci reali con foto dai portali (MyHome.ie · Rightmove) — coste di Donegal e Scozia: Burtonport · North Berwick · Rosemarkie · East Neuk · aggiornato {date}',
+    banner: '🌊 Annunci reali con foto da MyHome.ie e Rightmove — coste e laghi di Scozia + Donegal (Irlanda) · usa il filtro Zona · aggiornato {date}',
     all_zones: 'Tutte le zone', sale_rent: 'Vendita e affitto', for_sale: 'In vendita', for_rent: 'In affitto',
     all_types: 'Tutti i tipi', adv_filters: 'Filtri avanzati', favourites: 'Preferiti',
     price_any: '💶 Prezzo', price_label: 'Prezzo', price_upto: 'Fino a {v}', price_over: 'Oltre {v}', price_clear: 'Azzera',
@@ -47,7 +47,7 @@ const STR = {
   en: {
     search_ph: 'Search area or address… (e.g. Burtonport, North Berwick, Crail)',
     near_me: '📍 Near me',
-    banner: '🌊 Real listings with photos from the portals (MyHome.ie · Rightmove) — Donegal & Scotland coasts: Burtonport · North Berwick · Rosemarkie · East Neuk · updated {date}',
+    banner: '🌊 Real listings with photos from MyHome.ie and Rightmove — Scotland coasts & lochs + Donegal (Ireland) · use the Zone filter · updated {date}',
     all_zones: 'All areas', sale_rent: 'Sale & rent', for_sale: 'For sale', for_rent: 'To rent',
     all_types: 'All types', adv_filters: 'Advanced filters', favourites: 'Favourites',
     price_any: '💶 Price', price_label: 'Price', price_upto: 'Up to {v}', price_over: 'Over {v}', price_clear: 'Clear',
