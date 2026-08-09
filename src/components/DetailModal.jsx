@@ -3,7 +3,8 @@ import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
 
 export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap, toast }) {
   const [idx, setIdx] = useState(0)
-  const move = (d) => setIdx((i) => (i + d + l.imgs.length) % l.imgs.length)
+  const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
+  const move = (d) => { if (hasImgs) setIdx((i) => (i + d + l.imgs.length) % l.imgs.length) }
 
   // Reset gallery when a different listing opens.
   useEffect(() => { setIdx(0) }, [l.id])
@@ -30,16 +31,28 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
         <button className="mclose" onClick={onClose}>✕</button>
 
         <div className="gal">
-          <img className="gmain" src={imgUrl(l.imgs[idx])} onError={(e) => handleImgError(e, l.imgs[idx])} alt="" />
-          {l.imgs.length > 1 && (
+          {hasImgs ? (
             <>
-              <button className="gnav prev" onClick={() => move(-1)}>‹</button>
-              <button className="gnav next" onClick={() => move(1)}>›</button>
+              <img className="gmain" src={imgUrl(l.imgs[idx])} onError={(e) => handleImgError(e, l.imgs[idx])} alt="" />
+              {l.imgs.length > 1 && (
+                <>
+                  <button className="gnav prev" onClick={() => move(-1)}>‹</button>
+                  <button className="gnav next" onClick={() => move(1)}>›</button>
+                </>
+              )}
             </>
+          ) : (
+            <div className="gmain gph">
+              <div className="gph-ico">🏠</div>
+              <div className="gph-txt">Le foto sono nell'annuncio originale</div>
+              {l.url && (
+                <a className="gph-link" href={l.url} target="_blank" rel="noopener noreferrer">📷 Apri l'annuncio con le foto →</a>
+              )}
+            </div>
           )}
         </div>
 
-        {l.imgs.length > 1 && (
+        {hasImgs && l.imgs.length > 1 && (
           <div className="thumbs">
             {l.imgs.map((k, i) => (
               <img key={i} src={imgUrl(k)} onError={(e) => handleImgError(e, k)} className={i === idx ? 'on' : ''} onClick={() => setIdx(i)} alt="" />
@@ -84,10 +97,8 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
 
           <div className="mcta">
             {l.url && (
-              <a className="btn accent" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>🔗 Vedi annuncio originale</a>
+              <a className="btn primary" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>🔗 Vedi annuncio originale (foto e dettagli)</a>
             )}
-            <button className="btn primary" onClick={() => toast("Richiesta inviata! Un agente ti contatterà (demo)")}>✉️ Contatta l'agenzia</button>
-            <button className="btn accent" onClick={() => toast('Visita richiesta! Ti proporremo 3 orari (demo)')}>📅 Prenota visita</button>
             <button className="btn ghost" onClick={() => onToggleFav(l.id)}>{fav ? '❤️ Salvato' : '🤍 Salva'}</button>
           </div>
         </div>

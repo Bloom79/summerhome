@@ -171,8 +171,8 @@ export default function App() {
       <Header onFlyTo={flyTo} onNearMe={onNearMe} toast={toast} />
 
       <div id="demobanner">
-        🌊 Annunci reali dai portali (Daft.ie · Rightmove) sulle coste di Donegal e Scozia — Burtonport · North Berwick · Rosemarkie · East Neuk.
-        Apri una scheda per l'annuncio originale · aggiornato {LAST_UPDATED}
+        🌊 Annunci reali con foto dai portali (MyHome.ie · Rightmove) — coste di Donegal e Scozia:
+        Burtonport · North Berwick · Rosemarkie · East Neuk · aggiornato {LAST_UPDATED}
       </div>
 
       <div id="main">

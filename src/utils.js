@@ -1,5 +1,3 @@
-import { IMGS } from './data.js'
-
 // ---- Prezzo ----
 const SYMBOL = { EUR: '€', GBP: '£' }
 export const priceSym = (l) => SYMBOL[l.currency] || '€'
@@ -22,27 +20,22 @@ export const shortP = (l) => {
     : Math.round(l.price / 1000) + 'k')
 }
 
-// ---- Immagini con fallback ----
-export const imgUrl = (k) => (IMGS[k] ? IMGS[k][0] : '')
-export const imgFall = (k) => (IMGS[k] ? `https://picsum.photos/seed/${IMGS[k][1]}/900/560` : '')
+// ---- Immagini ----
+// Le foto sono URL reali dal CDN del portale di origine (Rightmove / MyHome).
+export const imgUrl = (u) => (typeof u === 'string' && u.startsWith('http') ? u : '')
 export const PLACEHOLDER =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="900" height="560" fill="#dce6e7"/><text x="450" y="300" font-size="90" text-anchor="middle">🏠</text></svg>'
   )
 
-// onError handler: primary → picsum fallback → svg placeholder (main img only)
-export const handleImgError = (e, k) => {
+// onError handler: if a source photo fails to load, hide it (cards) or show the
+// neutral placeholder (main gallery image).
+export const handleImgError = (e) => {
   const el = e.currentTarget
-  if (!el.dataset.f) {
-    el.dataset.f = '1'
-    el.src = imgFall(k)
-  } else if (el.classList.contains('gmain')) {
-    el.onerror = null
-    el.src = PLACEHOLDER
-  } else {
-    el.style.display = 'none'
-  }
+  el.onerror = null
+  if (el.classList.contains('gmain')) el.src = PLACEHOLDER
+  else el.style.display = 'none'
 }
 
 // ---- Distanza (Haversine, km) ----
