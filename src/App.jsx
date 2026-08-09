@@ -184,6 +184,7 @@ export default function App() {
           sort={sort}
           highlightId={highlightId}
           onImmediate={(k, v) => setFilters((f) => ({ ...f, [k]: v }))}
+          onPrice={(pmin, pmax) => setFilters((f) => ({ ...f, pmin, pmax }))}
           onApplyAdvanced={(adv) => setFilters((f) => ({ ...f, ...adv }))}
           onToggleFavOnly={() => setFavOnly((v) => !v)}
           onSortChange={onSortChange}

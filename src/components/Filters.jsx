@@ -2,26 +2,38 @@ import { useEffect, useState } from 'react'
 import { FEATURES, ZONES } from '../data.js'
 import { useI18n } from '../i18n.jsx'
 
-const emptyAdv = { pmin: '', pmax: '', smin: '', smax: '', rooms: '', baths: '', feats: [] }
+const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 
-export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly }) {
+export default function Filters({ filters, onImmediate, onPrice, onApplyAdvanced, favOnly, onToggleFavOnly }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
-  // Local draft for the advanced drawer; committed on "Applica filtri".
   const [draft, setDraft] = useState(emptyAdv)
 
   // Keep the draft in sync if committed filters change elsewhere (e.g. reset).
   useEffect(() => {
     setDraft({
-      pmin: filters.pmin ?? '', pmax: filters.pmax ?? '',
       smin: filters.smin ?? '', smax: filters.smax ?? '',
       rooms: filters.rooms || '', baths: filters.baths || '',
       feats: [...filters.feats],
     })
   }, [filters])
 
+  // Preset price ranges (numeric — applies to £ and € alike).
+  const RANGES = [
+    { v: '', min: null, max: null, label: t('price_any') },
+    { v: 'a', min: null, max: 250000, label: t('price_upto', { v: '250k' }) },
+    { v: 'b', min: 250000, max: 500000, label: '250k – 500k' },
+    { v: 'c', min: 500000, max: 750000, label: '500k – 750k' },
+    { v: 'd', min: 750000, max: 1000000, label: '750k – 1M' },
+    { v: 'e', min: 1000000, max: null, label: t('price_over', { v: '1M' }) },
+  ]
+  const priceValue = (RANGES.find((r) => (r.min ?? null) === (filters.pmin ?? null) && (r.max ?? null) === (filters.pmax ?? null)) || {}).v || ''
+  const onPriceChange = (v) => {
+    const r = RANGES.find((x) => x.v === v) || RANGES[0]
+    onPrice(r.min, r.max)
+  }
+
   const advCount =
-    (filters.pmin != null ? 1 : 0) + (filters.pmax != null ? 1 : 0) +
     (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) +
     (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
 
@@ -31,16 +43,12 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
 
   const num = (v) => (v === '' ? null : +v)
   const apply = () => {
-    onApplyAdvanced({
-      pmin: num(draft.pmin), pmax: num(draft.pmax),
-      smin: num(draft.smin), smax: num(draft.smax),
-      rooms: draft.rooms, baths: draft.baths, feats: draft.feats,
-    })
+    onApplyAdvanced({ smin: num(draft.smin), smax: num(draft.smax), rooms: draft.rooms, baths: draft.baths, feats: draft.feats })
     setOpen(false)
   }
   const reset = () => {
     setDraft(emptyAdv)
-    onApplyAdvanced({ pmin: null, pmax: null, smin: null, smax: null, rooms: '', baths: '', feats: [] })
+    onApplyAdvanced({ smin: null, smax: null, rooms: '', baths: '', feats: [] })
   }
 
   return (
@@ -49,6 +57,9 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
         <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
           <option value="">{t('all_zones')}</option>
           {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+        </select>
+        <select className={'chip' + (priceValue ? ' active' : '')} value={priceValue} onChange={(e) => onPriceChange(e.target.value)}>
+          {RANGES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
         </select>
         <select className="chip" value={filters.contract} onChange={(e) => onImmediate('contract', e.target.value)}>
           <option value="">{t('sale_rent')}</option>
@@ -69,13 +80,6 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
 
       {open && (
         <div id="advfilters">
-          <div className="fgroup">
-            <label>{t('f_price')}</label>
-            <div className="pair">
-              <input type="number" min="0" placeholder={t('min')} value={draft.pmin} onChange={(e) => setD('pmin', e.target.value)} />
-              <input type="number" min="0" placeholder={t('max')} value={draft.pmax} onChange={(e) => setD('pmax', e.target.value)} />
-            </div>
-          </div>
           <div className="fgroup">
             <label>{t('f_area')}</label>
             <div className="pair">
