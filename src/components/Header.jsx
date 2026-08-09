@@ -67,7 +67,7 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
             value={value}
             onChange={onInput}
             onKeyDown={(e) => { if (e.key === 'Enter') doSearch() }}
-            placeholder="Cerca città, zona o indirizzo… (es. Sperlonga, Roma Trastevere)"
+            placeholder="Cerca zona o indirizzo… (es. Burtonport, North Berwick, Crail)"
             autoComplete="off"
           />
           <button title="Cerca" onClick={doSearch}>🔍</button>

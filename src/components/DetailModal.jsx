@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fmtP, imgUrl, handleImgError } from '../utils.js'
+import { fmtP, priceSym, imgUrl, handleImgError } from '../utils.js'
 
 export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap, toast }) {
   const [idx, setIdx] = useState(0)
@@ -20,7 +20,9 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [l])
 
-  const ppm = l.contract === 'sale' ? '€ ' + Math.round(l.price / l.size).toLocaleString('it-IT') + '/m²' : ''
+  const ppm = l.contract === 'sale' && l.size
+    ? priceSym(l) + ' ' + Math.round(l.price / l.size).toLocaleString('en-GB') + '/m²'
+    : ''
 
   return (
     <div id="modal" onClick={(e) => { if (e.target.id === 'modal') onClose() }}>

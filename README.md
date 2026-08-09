@@ -1,10 +1,29 @@
 # summerhome — CasaTrova
 
-**CasaTrova** is a real-estate search portal built as a **React + Vite**
+**CasaTrova** is a coastal-property search portal built as a **React + Vite**
 single-page app: an interactive Leaflet map, precise geolocation, advanced
 filters, favourites, and a photo gallery for each property. It uses
 OpenStreetMap tiles and the Nominatim geocoder — no API key and no backend
 required.
+
+## Focus areas
+
+The portal covers **only** these coastal areas (nothing else):
+
+| Zone | Region | Currency |
+|------|--------|----------|
+| **Burtonport / The Rosses** | Co. Donegal, Ireland | € EUR |
+| **North Berwick** (& Gullane, Dirleton) | East Lothian, Scotland | £ GBP |
+| **Rosemarkie / Fortrose** | Black Isle, Highland, Scotland | £ GBP |
+| **East Neuk of Fife** (Anstruther, Crail, Pittenweem, St Monans, Elie) | Fife, Scotland | £ GBP |
+
+## Daily update agent
+
+Listings are refreshed **every day by a scheduled agent** that searches these
+four areas and commits the new data to `src/data.js` (updating `LAST_UPDATED`).
+The push triggers the Pages workflow, so the live site always reflects the
+latest run. See [`docs/daily-agent.md`](docs/daily-agent.md) for the agent's
+brief and how to change/pause it.
 
 ## Tech stack
 

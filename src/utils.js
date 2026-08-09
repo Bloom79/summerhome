@@ -1,17 +1,23 @@
 import { IMGS } from './data.js'
 
 // ---- Prezzo ----
-export const fmtP = (l) =>
-  l.contract === 'rent'
-    ? '€ ' + l.price.toLocaleString('it-IT') + '/mese'
-    : '€ ' + l.price.toLocaleString('it-IT')
+const SYMBOL = { EUR: '€', GBP: '£' }
+export const priceSym = (l) => SYMBOL[l.currency] || '€'
+const priceLocale = (l) => (l.currency === 'GBP' ? 'en-GB' : 'it-IT')
 
-// Compact price used on map pins (es. €1.2M, €445k, €1.4k/m)
+export const fmtP = (l) => {
+  const s = priceSym(l)
+  const n = l.price.toLocaleString(priceLocale(l))
+  return l.contract === 'rent' ? `${s} ${n}/mese` : `${s} ${n}`
+}
+
+// Compact price used on map pins (es. £695k, €1.2M, £1.4k/m)
 export const shortP = (l) => {
+  const s = priceSym(l)
   if (l.contract === 'rent') {
-    return '€' + (l.price >= 1000 ? (l.price / 1000).toFixed(1).replace('.0', '') + 'k' : l.price) + '/m'
+    return s + (l.price >= 1000 ? (l.price / 1000).toFixed(1).replace('.0', '') + 'k' : l.price) + '/m'
   }
-  return '€' + (l.price >= 1000000
+  return s + (l.price >= 1000000
     ? (l.price / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M'
     : Math.round(l.price / 1000) + 'k')
 }
@@ -53,10 +59,11 @@ export const dist = (a, b, c, d) => {
 export const fmtDist = (d) => (d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1) + ' km')
 
 // ---- Geocoding (OpenStreetMap / Nominatim) ----
+// Limited to the UK & Ireland — the only countries this portal covers.
 export async function geocode(text, limit = 5) {
   const r = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=it&addressdetails=1&limit=${limit}&q=${encodeURIComponent(text)}`,
-    { headers: { 'Accept-Language': 'it' } }
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=gb,ie&addressdetails=1&limit=${limit}&q=${encodeURIComponent(text)}`,
+    { headers: { 'Accept-Language': 'en' } }
   )
   return r.ok ? r.json() : []
 }

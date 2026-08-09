@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FEATURES } from '../data.js'
+import { FEATURES, ZONES } from '../data.js'
 
 const emptyAdv = { pmin: '', pmax: '', smin: '', smax: '', rooms: '', baths: '', feats: [] }
 
@@ -44,6 +44,10 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
   return (
     <>
       <div id="filterbar">
+        <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
+          <option value="">Tutte le zone</option>
+          {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+        </select>
         <select className="chip" value={filters.contract} onChange={(e) => onImmediate('contract', e.target.value)}>
           <option value="">Vendita e affitto</option>
           <option value="sale">In vendita</option>
@@ -51,8 +55,8 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
         </select>
         <select className="chip" value={filters.type} onChange={(e) => onImmediate('type', e.target.value)}>
           <option value="">Tutti i tipi</option>
-          <option>Appartamento</option><option>Villa</option><option>Attico</option>
-          <option>Casa indipendente</option><option>Trilocale</option><option>Loft</option>
+          <option>Cottage</option><option>Casa indipendente</option><option>Villa</option>
+          <option>Appartamento</option><option>Bungalow</option>
         </select>
         <button className="chip" onClick={() => setOpen((o) => !o)}>
           ⚙️ Filtri avanzati{advCount ? <span className="badge">{advCount}</span> : null}

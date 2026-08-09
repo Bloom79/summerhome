@@ -31,7 +31,7 @@ export default function MapPanel({
   return (
     <section id="mapwrap">
       <div id="map">
-        <MapContainer center={[42.3, 12.5]} zoom={6} zoomControl={false} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={[56.4, -4.5]} zoom={5} zoomControl={false} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}

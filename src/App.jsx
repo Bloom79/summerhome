@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { LISTINGS } from './data.js'
+import { LISTINGS, LAST_UPDATED } from './data.js'
 import { dist } from './utils.js'
 import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
@@ -8,7 +8,7 @@ import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 
 const initialFilters = {
-  contract: '', type: '', pmin: null, pmax: null, smin: null, smax: null,
+  zone: '', contract: '', type: '', pmin: null, pmax: null, smin: null, smax: null,
   rooms: '', baths: '', feats: [],
 }
 
@@ -63,6 +63,7 @@ export default function App() {
   const items = useMemo(() => {
     let out = LISTINGS.filter((l) => {
       if (favOnly && !favs.has(l.id)) return false
+      if (filters.zone && l.zone !== filters.zone) return false
       if (filters.contract && l.contract !== filters.contract) return false
       if (filters.type && l.type !== filters.type) return false
       if (filters.pmin != null && l.price < filters.pmin) return false
@@ -170,7 +171,8 @@ export default function App() {
       <Header onFlyTo={flyTo} onNearMe={onNearMe} toast={toast} />
 
       <div id="demobanner">
-        ⚠️ Annunci dimostrativi con coordinate reali delle località — pronto per essere collegato a dati reali.
+        🌊 Case sulle coste di Donegal (IE) e Scozia — Burtonport · North Berwick · Rosemarkie · East Neuk.
+        Aggiornato automaticamente ogni giorno · ultimo aggiornamento {LAST_UPDATED}
       </div>
 
       <div id="main">
