@@ -1,11 +1,13 @@
 import Filters from './Filters.jsx'
 import Card from './Card.jsx'
+import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
   items, filters, favOnly, favs, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onSortChange,
   onOpen, onToggleFav, onHover, cardRefs,
 }) {
+  const { t } = useI18n()
   return (
     <section id="panel">
       <Filters
@@ -17,16 +19,16 @@ export default function ListPanel({
       />
 
       <div id="resmeta">
-        <div id="count">
-          <b>{items.length}</b> immobil{items.length === 1 ? 'e' : 'i'} trovat{items.length === 1 ? 'o' : 'i'}
-        </div>
+        <div id="count" dangerouslySetInnerHTML={{
+          __html: t(items.length === 1 ? 'found_one' : 'found_many', { n: `<b>${items.length}</b>` }),
+        }} />
         <select id="sort" value={sort} onChange={(e) => onSortChange(e.target.value)}>
-          <option value="rel">Rilevanza</option>
-          <option value="pasc">Prezzo ↑</option>
-          <option value="pdesc">Prezzo ↓</option>
-          <option value="sdesc">Superficie ↓</option>
-          <option value="new">Più recenti</option>
-          <option value="dist">Distanza</option>
+          <option value="rel">{t('sort_rel')}</option>
+          <option value="pasc">{t('sort_pasc')}</option>
+          <option value="pdesc">{t('sort_pdesc')}</option>
+          <option value="sdesc">{t('sort_sdesc')}</option>
+          <option value="new">{t('sort_new')}</option>
+          <option value="dist">{t('sort_dist')}</option>
         </select>
       </div>
 
@@ -49,8 +51,8 @@ export default function ListPanel({
       ) : (
         <div id="empty">
           <div className="big">🔎</div>
-          Nessun immobile trovato con questi criteri.<br />
-          Prova ad allargare l'area sulla mappa o ad azzerare i filtri.
+          {t('empty1')}<br />
+          {t('empty2')}
         </div>
       )}
     </section>

@@ -6,6 +6,7 @@ import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
+import { useI18n } from './i18n.jsx'
 
 const initialFilters = {
   zone: '', contract: '', type: '', pmin: null, pmax: null, smin: null, smax: null,
@@ -22,6 +23,7 @@ function loadFavs() {
 }
 
 export default function App() {
+  const { t } = useI18n()
   const [filters, setFilters] = useState(initialFilters)
   const [sort, setSort] = useState('rel')
   const [favOnly, setFavOnly] = useState(false)
@@ -53,7 +55,7 @@ export default function App() {
     setFavs((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
-      else { next.add(id); toast('Aggiunto ai preferiti ❤️') }
+      else { next.add(id); toast(t('t_fav_added')) }
       try { localStorage.setItem('ct_favs', JSON.stringify([...next])) } catch { /* ignore */ }
       return next
     })
@@ -118,8 +120,8 @@ export default function App() {
   }, [])
 
   const onNearMe = useCallback(() => {
-    if (!navigator.geolocation) { toast('Geolocalizzazione non supportata'); return }
-    toast('Rilevo la tua posizione…')
+    if (!navigator.geolocation) { toast(t('t_geo_no')); return }
+    toast(t('t_geo_locating'))
     navigator.geolocation.getCurrentPosition(
       (p) => {
         const pos = [p.coords.latitude, p.coords.longitude]
@@ -127,12 +129,12 @@ export default function App() {
         if (window.innerWidth <= 840) setMobileView('map')
         mapRef.current?.flyTo(pos, 12, { duration: 1.2 })
         setSort('dist')
-        toast('Ordinati per distanza da te')
+        toast(t('t_geo_sorted'))
       },
-      () => toast('Impossibile rilevare la posizione'),
+      () => toast(t('t_geo_fail')),
       { enableHighAccuracy: true, timeout: 9000 }
     )
-  }, [toast])
+  }, [toast, t])
 
   const onMarkerClick = useCallback((id) => {
     setHighlightId(id)
@@ -159,9 +161,9 @@ export default function App() {
   }, [items])
 
   const onSortChange = useCallback((v) => {
-    if (v === 'dist' && !userPos) toast('Prima attiva "Vicino a me" 📍')
+    if (v === 'dist' && !userPos) toast(t('t_dist_hint'))
     setSort(v)
-  }, [userPos, toast])
+  }, [userPos, toast, t])
 
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
@@ -170,10 +172,7 @@ export default function App() {
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '')}>
       <Header onFlyTo={flyTo} onNearMe={onNearMe} toast={toast} />
 
-      <div id="demobanner">
-        🌊 Annunci reali con foto dai portali (MyHome.ie · Rightmove) — coste di Donegal e Scozia:
-        Burtonport · North Berwick · Rosemarkie · East Neuk · aggiornato {LAST_UPDATED}
-      </div>
+      <div id="demobanner">{t('banner', { date: LAST_UPDATED })}</div>
 
       <div id="main">
         <ListPanel
@@ -209,8 +208,8 @@ export default function App() {
       </div>
 
       <div id="viewtoggle">
-        <button className={mobileView === 'list' ? 'on' : ''} onClick={() => setView('list')}>☰ Lista</button>
-        <button className={mobileView === 'map' ? 'on' : ''} onClick={() => setView('map')}>🗺️ Mappa</button>
+        <button className={mobileView === 'list' ? 'on' : ''} onClick={() => setView('list')}>{t('vt_list')}</button>
+        <button className={mobileView === 'map' ? 'on' : ''} onClick={() => setView('map')}>{t('vt_map')}</button>
       </div>
 
       {selected && (

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { FEATURES, ZONES } from '../data.js'
+import { useI18n } from '../i18n.jsx'
 
 const emptyAdv = { pmin: '', pmax: '', smin: '', smax: '', rooms: '', baths: '', feats: [] }
 
 export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly }) {
+  const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   // Local draft for the advanced drawer; committed on "Applica filtri".
   const [draft, setDraft] = useState(emptyAdv)
@@ -45,64 +47,65 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
     <>
       <div id="filterbar">
         <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
-          <option value="">Tutte le zone</option>
+          <option value="">{t('all_zones')}</option>
           {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
         </select>
         <select className="chip" value={filters.contract} onChange={(e) => onImmediate('contract', e.target.value)}>
-          <option value="">Vendita e affitto</option>
-          <option value="sale">In vendita</option>
-          <option value="rent">In affitto</option>
+          <option value="">{t('sale_rent')}</option>
+          <option value="sale">{t('for_sale')}</option>
+          <option value="rent">{t('for_rent')}</option>
         </select>
         <select className="chip" value={filters.type} onChange={(e) => onImmediate('type', e.target.value)}>
-          <option value="">Tutti i tipi</option>
-          <option>Cottage</option><option>Casa indipendente</option><option>Villa</option>
-          <option>Appartamento</option><option>Bungalow</option>
+          <option value="">{t('all_types')}</option>
+          {['Cottage', 'Casa indipendente', 'Villa', 'Appartamento', 'Bungalow'].map((ty) => (
+            <option key={ty} value={ty}>{typeLabel(ty)}</option>
+          ))}
         </select>
         <button className="chip" onClick={() => setOpen((o) => !o)}>
-          ⚙️ Filtri avanzati{advCount ? <span className="badge">{advCount}</span> : null}
+          ⚙️ {t('adv_filters')}{advCount ? <span className="badge">{advCount}</span> : null}
         </button>
-        <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ Preferiti</button>
+        <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}</button>
       </div>
 
       {open && (
         <div id="advfilters">
           <div className="fgroup">
-            <label>Prezzo (€)</label>
+            <label>{t('f_price')}</label>
             <div className="pair">
-              <input type="number" min="0" placeholder="Min" value={draft.pmin} onChange={(e) => setD('pmin', e.target.value)} />
-              <input type="number" min="0" placeholder="Max" value={draft.pmax} onChange={(e) => setD('pmax', e.target.value)} />
+              <input type="number" min="0" placeholder={t('min')} value={draft.pmin} onChange={(e) => setD('pmin', e.target.value)} />
+              <input type="number" min="0" placeholder={t('max')} value={draft.pmax} onChange={(e) => setD('pmax', e.target.value)} />
             </div>
           </div>
           <div className="fgroup">
-            <label>Superficie (m²)</label>
+            <label>{t('f_area')}</label>
             <div className="pair">
-              <input type="number" min="0" placeholder="Min" value={draft.smin} onChange={(e) => setD('smin', e.target.value)} />
-              <input type="number" min="0" placeholder="Max" value={draft.smax} onChange={(e) => setD('smax', e.target.value)} />
+              <input type="number" min="0" placeholder={t('min')} value={draft.smin} onChange={(e) => setD('smin', e.target.value)} />
+              <input type="number" min="0" placeholder={t('max')} value={draft.smax} onChange={(e) => setD('smax', e.target.value)} />
             </div>
           </div>
           <div className="fgroup">
-            <label>Locali (min)</label>
+            <label>{t('f_rooms')}</label>
             <select value={draft.rooms} onChange={(e) => setD('rooms', e.target.value)}>
-              <option value="">Qualsiasi</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option value="">{t('any')}</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
             </select>
           </div>
           <div className="fgroup">
-            <label>Bagni (min)</label>
+            <label>{t('f_baths')}</label>
             <select value={draft.baths} onChange={(e) => setD('baths', e.target.value)}>
-              <option value="">Qualsiasi</option><option>1</option><option>2</option><option>3</option>
+              <option value="">{t('any')}</option><option>1</option><option>2</option><option>3</option>
             </select>
           </div>
           <div className="fgroup" style={{ gridColumn: '1/-1' }}>
-            <label>Caratteristiche</label>
+            <label>{t('f_features')}</label>
             <div className="feat">
               {FEATURES.map((f) => (
-                <span key={f} className={draft.feats.includes(f) ? 'on' : ''} onClick={() => toggleFeat(f)}>{f}</span>
+                <span key={f} className={draft.feats.includes(f) ? 'on' : ''} onClick={() => toggleFeat(f)}>{featLabel(f)}</span>
               ))}
             </div>
           </div>
           <div className="factions">
-            <button className="btn ghost" onClick={reset}>Azzera</button>
-            <button className="btn primary" onClick={apply}>Applica filtri</button>
+            <button className="btn ghost" onClick={reset}>{t('reset')}</button>
+            <button className="btn primary" onClick={apply}>{t('apply')}</button>
           </div>
         </div>
       )}

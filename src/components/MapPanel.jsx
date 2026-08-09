@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, ZoomControl, useMapEvents } from 'react-leaflet'
-import { fmtP, shortP, imgUrl, handleImgError } from '../utils.js'
+import { fmtP, shortP, imgUrl, handleImgError, hostOf } from '../utils.js'
+import { useI18n } from '../i18n.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
 const pinIcon = (l, hl) =>
@@ -28,6 +29,7 @@ export default function MapPanel({
   items, highlightId, userPos, areaSync,
   onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onMapReady, onBoundsChange,
 }) {
+  const { t } = useI18n()
   return (
     <section id="mapwrap">
       <div id="map">
@@ -49,12 +51,19 @@ export default function MapPanel({
             >
               <Popup>
                 <div className="pop">
-                  <img src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e, l.imgs[0])} alt="" />
+                  {l.imgs && l.imgs.length
+                    ? <img src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+                    : null}
                   <div className="pb">
                     <div className="pt">{l.title}</div>
                     <div className="pa">📍 {l.addr}</div>
                     <div className="pp">{fmtP(l)}</div>
-                    <span className="plink" onClick={() => onOpen(l.id)}>Vedi scheda completa →</span>
+                    {l.url && (
+                      <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer">
+                        🔗 {t('view_on', { host: hostOf(l.url) })} →
+                      </a>
+                    )}
+                    <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>
                   </div>
                 </div>
               </Popup>
@@ -63,15 +72,15 @@ export default function MapPanel({
 
           {userPos && (
             <CircleMarker center={userPos} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b7dd8', fillOpacity: 1 }}>
-              <Popup>📍 Sei qui</Popup>
+              <Popup>{t('here')}</Popup>
             </CircleMarker>
           )}
         </MapContainer>
       </div>
 
       <div className="mapbtns">
-        <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>🗺️ Cerca in quest'area</button>
-        <button className="mbtn" onClick={onFitAll}>⛶ Vedi tutto</button>
+        <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>
+        <button className="mbtn" onClick={onFitAll}>{t('map_see_all')}</button>
       </div>
     </section>
   )

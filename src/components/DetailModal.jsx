@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
+import { useI18n } from '../i18n.jsx'
 
 export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap, toast }) {
+  const { t, featLabel, listingDesc } = useI18n()
   const [idx, setIdx] = useState(0)
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const move = (d) => { if (hasImgs) setIdx((i) => (i + d + l.imgs.length) % l.imgs.length) }
@@ -44,9 +46,9 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
           ) : (
             <div className="gmain gph">
               <div className="gph-ico">🏠</div>
-              <div className="gph-txt">Le foto sono nell'annuncio originale</div>
+              <div className="gph-txt">{t('gal_ph')}</div>
               {l.url && (
-                <a className="gph-link" href={l.url} target="_blank" rel="noopener noreferrer">📷 Apri l'annuncio con le foto →</a>
+                <a className="gph-link" href={l.url} target="_blank" rel="noopener noreferrer">{t('gal_open')}</a>
               )}
             </div>
           )}
@@ -65,41 +67,41 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
             <div><div className="mtitle">{l.title}</div></div>
             <div className="mprice">{fmtP(l)}<br /><small>{ppm}</small></div>
           </div>
-          <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : l.city ? ` — ${l.city}` : ''}</div>
+          <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
           {l.url && (
             <div className="msource">
-              🔗 Fonte:{' '}
+              🔗 {t('src_label')}:{' '}
               <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
             </div>
           )}
 
           <div className="mstats">
-            {l.size ? <div className="stat"><b>{l.size} m²</b><span>Superficie</span></div> : null}
-            {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>Camere</span></div> : null}
-            {l.baths ? <div className="stat"><b>{l.baths}</b><span>Bagni</span></div> : null}
-            {l.floor ? <div className="stat"><b>{l.floor}</b><span>Piano</span></div> : null}
-            {l.year ? <div className="stat"><b>{l.year}</b><span>Anno</span></div> : null}
-            {l.energy ? <div className="stat"><b>{l.energy}</b><span>Classe energ.</span></div> : null}
+            {l.size ? <div className="stat"><b>{l.size} m²</b><span>{t('st_area')}</span></div> : null}
+            {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>{t('st_rooms')}</span></div> : null}
+            {l.baths ? <div className="stat"><b>{l.baths}</b><span>{t('st_baths')}</span></div> : null}
+            {l.floor ? <div className="stat"><b>{l.floor}</b><span>{t('st_floor')}</span></div> : null}
+            {l.year ? <div className="stat"><b>{l.year}</b><span>{t('st_year')}</span></div> : null}
+            {l.energy ? <div className="stat"><b>{l.energy}</b><span>{t('st_epc')}</span></div> : null}
           </div>
 
-          <p className="mdesc">{l.desc}</p>
-          <div className="mfeats">{l.feats.map((f) => <span key={f}>✓ {f}</span>)}</div>
+          <p className="mdesc">{listingDesc(l)}</p>
+          <div className="mfeats">{l.feats.map((f) => <span key={f}>✓ {featLabel(f)}</span>)}</div>
 
           <div className="locbox">
-            <h4>📌 Localizzazione precisa</h4>
+            <h4>{t('loc_title')}</h4>
             <div className="coords">{l.lat.toFixed(6)}, {l.lng.toFixed(6)}</div>
             <div className="loclinks">
-              <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">Apri in Google Maps</a>
-              <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">Street View</a>
-              <a onClick={() => { onClose(); onShowOnMap(l.id) }}>Mostra sulla mappa</a>
+              <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_gmaps')}</a>
+              <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>
+              <a onClick={() => { onClose(); onShowOnMap(l.id) }}>{t('loc_show_map')}</a>
             </div>
           </div>
 
           <div className="mcta">
             {l.url && (
-              <a className="btn primary" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>🔗 Vedi annuncio originale (foto e dettagli)</a>
+              <a className="btn primary" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>{t('view_original')}</a>
             )}
-            <button className="btn ghost" onClick={() => onToggleFav(l.id)}>{fav ? '❤️ Salvato' : '🤍 Salva'}</button>
+            <button className="btn ghost" onClick={() => onToggleFav(l.id)}>{fav ? t('saved') : t('save')}</button>
           </div>
         </div>
       </div>

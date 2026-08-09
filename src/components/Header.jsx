@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { geocode, zoomForType } from '../utils.js'
+import { useI18n } from '../i18n.jsx'
 
 export default function Header({ onFlyTo, onNearMe, toast }) {
+  const { t, lang, setLang } = useI18n()
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [open, setOpen] = useState(false)
@@ -67,10 +69,10 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
             value={value}
             onChange={onInput}
             onKeyDown={(e) => { if (e.key === 'Enter') doSearch() }}
-            placeholder="Cerca zona o indirizzo… (es. Burtonport, North Berwick, Crail)"
+            placeholder={t('search_ph')}
             autoComplete="off"
           />
-          <button title="Cerca" onClick={doSearch}>🔍</button>
+          <button title="Search" onClick={doSearch}>🔍</button>
         </div>
         {open && (
           <div className="suggestions">
@@ -80,7 +82,11 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
           </div>
         )}
       </div>
-      <button className="hbtn" onClick={onNearMe}>📍 Vicino a me</button>
+      <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
+      <div className="langtog">
+        <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
+        <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
+      </div>
     </header>
   )
 }

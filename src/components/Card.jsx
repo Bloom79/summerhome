@@ -1,7 +1,10 @@
-import { fmtP, imgUrl, handleImgError, dist, fmtDist } from '../utils.js'
+import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
+import { useI18n } from '../i18n.jsx'
 
 export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav, onHover }) {
+  const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
+  const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   return (
     <div
       className={'card' + (highlighted ? ' hl' : '')}
@@ -10,22 +13,35 @@ export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav
       onMouseLeave={() => onHover(l.id, false)}
     >
       <div className="cimg">
-        <img loading="lazy" src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e, l.imgs[0])} alt="" />
-        <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? 'Affitto' : 'Vendita'}</span>
+        {hasImgs
+          ? <img loading="lazy" src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+          : <div className="cimg-ph">📷</div>}
+        <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>
         <span className="price">{fmtP(l)}</span>
-        <span className="nimg">📷 {l.imgs.length}</span>
+        {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
       </div>
       <div className="cbody">
         <div className="ctitle">{l.title}</div>
         <div className="caddr">📍 {l.addr}</div>
         <div className="cstats">
           {l.size ? <span><b>{l.size}</b> m²</span> : null}
-          {l.rooms ? <span><b>{l.rooms}</b> camer{l.rooms === 1 ? 'a' : 'e'}</span> : null}
-          {l.baths ? <span><b>{l.baths}</b> bagn{l.baths === 1 ? 'o' : 'i'}</span> : null}
-          <span>{l.type}</span>
+          {l.rooms ? <span dangerouslySetInnerHTML={{ __html: t(l.rooms === 1 ? 'bed_one' : 'bed_many', { n: `<b>${l.rooms}</b>` }) }} /> : null}
+          {l.baths ? <span dangerouslySetInnerHTML={{ __html: t(l.baths === 1 ? 'bath_one' : 'bath_many', { n: `<b>${l.baths}</b>` }) }} /> : null}
+          <span>{typeLabel(l.type)}</span>
         </div>
-        {d != null && <div className="cdist">📏 a {fmtDist(d)} da te</div>}
+        {d != null && <div className="cdist">📏 {t('dist_from_you', { d: fmtDist(d) })}</div>}
+        {l.url && (
+          <a
+            className="csrc"
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            🔗 {t('view_on', { host: hostOf(l.url) })} →
+          </a>
+        )}
       </div>
     </div>
   )
