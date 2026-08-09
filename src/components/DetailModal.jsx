@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fmtP, priceSym, imgUrl, handleImgError } from '../utils.js'
+import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
 
 export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap, toast }) {
   const [idx, setIdx] = useState(0)
@@ -52,7 +52,13 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
             <div><div className="mtitle">{l.title}</div></div>
             <div className="mprice">{fmtP(l)}<br /><small>{ppm}</small></div>
           </div>
-          <div className="maddr">📍 {l.addr} — {l.city}</div>
+          <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : l.city ? ` — ${l.city}` : ''}</div>
+          {l.url && (
+            <div className="msource">
+              🔗 Fonte:{' '}
+              <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
+            </div>
+          )}
 
           <div className="mstats">
             <div className="stat"><b>{l.size} m²</b><span>Superficie</span></div>
@@ -77,6 +83,9 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
           </div>
 
           <div className="mcta">
+            {l.url && (
+              <a className="btn accent" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>🔗 Vedi annuncio originale</a>
+            )}
             <button className="btn primary" onClick={() => toast("Richiesta inviata! Un agente ti contatterà (demo)")}>✉️ Contatta l'agenzia</button>
             <button className="btn accent" onClick={() => toast('Visita richiesta! Ti proporremo 3 orari (demo)')}>📅 Prenota visita</button>
             <button className="btn ghost" onClick={() => onToggleFav(l.id)}>{fav ? '❤️ Salvato' : '🤍 Salva'}</button>

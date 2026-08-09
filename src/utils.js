@@ -58,6 +58,15 @@ export const dist = (a, b, c, d) => {
 
 export const fmtDist = (d) => (d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1) + ' km')
 
+// Short, human-readable host for a source-listing URL (es. "daft.ie").
+export const hostOf = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return 'annuncio originale'
+  }
+}
+
 // ---- Geocoding (OpenStreetMap / Nominatim) ----
 // Limited to the UK & Ireland — the only countries this portal covers.
 export async function geocode(text, limit = 5) {

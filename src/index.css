@@ -113,7 +113,10 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mtitle{font-size:1.35rem;font-weight:800}
 .mprice{font-size:1.45rem;font-weight:800;color:var(--brand-dark);white-space:nowrap;text-align:right}
 .mprice small{font-size:.85rem;color:var(--muted);font-weight:600}
-.maddr{color:var(--muted);font-size:.92rem;margin-bottom:14px}
+.maddr{color:var(--muted);font-size:.92rem;margin-bottom:6px}
+.msource{font-size:.82rem;margin-bottom:14px}
+.msource a{color:var(--brand);font-weight:700;text-decoration:none}
+.msource a:hover{text-decoration:underline}
 .mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
 .stat{background:var(--brand-light);border-radius:11px;padding:10px 12px;text-align:center}
 .stat b{display:block;font-size:1.05rem}
