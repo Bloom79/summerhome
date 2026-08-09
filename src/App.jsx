@@ -171,8 +171,8 @@ export default function App() {
       <Header onFlyTo={flyTo} onNearMe={onNearMe} toast={toast} />
 
       <div id="demobanner">
-        🌊 Case sulle coste di Donegal (IE) e Scozia — Burtonport · North Berwick · Rosemarkie · East Neuk.
-        Aggiornato automaticamente ogni giorno · ultimo aggiornamento {LAST_UPDATED}
+        🌊 Annunci reali dai portali (Daft.ie · Rightmove) sulle coste di Donegal e Scozia — Burtonport · North Berwick · Rosemarkie · East Neuk.
+        Apri una scheda per l'annuncio originale · aggiornato {LAST_UPDATED}
       </div>
 
       <div id="main">

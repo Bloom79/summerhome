@@ -61,12 +61,12 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
           )}
 
           <div className="mstats">
-            <div className="stat"><b>{l.size} m²</b><span>Superficie</span></div>
-            <div className="stat"><b>{l.rooms}</b><span>Locali</span></div>
-            <div className="stat"><b>{l.baths}</b><span>Bagni</span></div>
-            <div className="stat"><b>{l.floor}</b><span>Piano</span></div>
-            <div className="stat"><b>{l.year}</b><span>Anno</span></div>
-            <div className="stat"><b>{l.energy}</b><span>Classe energ.</span></div>
+            {l.size ? <div className="stat"><b>{l.size} m²</b><span>Superficie</span></div> : null}
+            {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>Camere</span></div> : null}
+            {l.baths ? <div className="stat"><b>{l.baths}</b><span>Bagni</span></div> : null}
+            {l.floor ? <div className="stat"><b>{l.floor}</b><span>Piano</span></div> : null}
+            {l.year ? <div className="stat"><b>{l.year}</b><span>Anno</span></div> : null}
+            {l.energy ? <div className="stat"><b>{l.energy}</b><span>Classe energ.</span></div> : null}
           </div>
 
           <p className="mdesc">{l.desc}</p>

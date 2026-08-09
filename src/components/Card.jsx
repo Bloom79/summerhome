@@ -20,9 +20,9 @@ export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav
         <div className="ctitle">{l.title}</div>
         <div className="caddr">📍 {l.addr}</div>
         <div className="cstats">
-          <span><b>{l.size}</b> m²</span>
-          <span><b>{l.rooms}</b> locali</span>
-          <span><b>{l.baths}</b> bagn{l.baths === 1 ? 'o' : 'i'}</span>
+          {l.size ? <span><b>{l.size}</b> m²</span> : null}
+          {l.rooms ? <span><b>{l.rooms}</b> camer{l.rooms === 1 ? 'a' : 'e'}</span> : null}
+          {l.baths ? <span><b>{l.baths}</b> bagn{l.baths === 1 ? 'o' : 'i'}</span> : null}
           <span>{l.type}</span>
         </div>
         {d != null && <div className="cdist">📏 a {fmtDist(d)} da te</div>}
