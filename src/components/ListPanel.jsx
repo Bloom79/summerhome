@@ -4,7 +4,7 @@ import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
   items, filters, favOnly, favs, userPos, sort, highlightId,
-  onImmediate, onPrice, onApplyAdvanced, onToggleFavOnly, onSortChange,
+  onImmediate, onApplyAdvanced, onToggleFavOnly, onSortChange,
   onOpen, onToggleFav, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -13,7 +13,6 @@ export default function ListPanel({
       <Filters
         filters={filters}
         onImmediate={onImmediate}
-        onPrice={onPrice}
         onApplyAdvanced={onApplyAdvanced}
         favOnly={favOnly}
         onToggleFavOnly={onToggleFavOnly}

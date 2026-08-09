@@ -41,6 +41,13 @@ header{background:var(--brand);color:#fff;padding:10px 16px;display:flex;align-i
 .chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
 .chip .badge{background:var(--accent);color:#fff;border-radius:999px;padding:1px 7px;font-size:.72rem;margin-left:5px}
 select.chip{appearance:none;padding-right:26px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235f7477'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.msel{position:relative}
+.mselpanel{position:absolute;top:calc(100% + 6px);left:0;z-index:1400;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:8px;min-width:180px;display:flex;flex-direction:column;gap:2px}
+.mselpanel label{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:.86rem;color:var(--ink);cursor:pointer}
+.mselpanel label:hover{background:var(--brand-light)}
+.mselpanel input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+.mselclear{margin-top:4px;border:0;background:transparent;color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer;text-align:right;padding:6px 10px}
+.mselclear:hover{color:var(--brand)}
 
 /* ---------- Advanced filters drawer ---------- */
 #advfilters{background:#fff;border-bottom:1px solid var(--line);padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;max-height:46vh;overflow-y:auto}

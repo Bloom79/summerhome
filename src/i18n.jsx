@@ -24,7 +24,7 @@ const STR = {
     banner: '🌊 Annunci reali con foto dai portali (MyHome.ie · Rightmove) — coste di Donegal e Scozia: Burtonport · North Berwick · Rosemarkie · East Neuk · aggiornato {date}',
     all_zones: 'Tutte le zone', sale_rent: 'Vendita e affitto', for_sale: 'In vendita', for_rent: 'In affitto',
     all_types: 'Tutti i tipi', adv_filters: 'Filtri avanzati', favourites: 'Preferiti',
-    price_any: '💶 Prezzo: qualsiasi', price_upto: 'Fino a {v}', price_over: 'Oltre {v}',
+    price_any: '💶 Prezzo', price_label: 'Prezzo', price_upto: 'Fino a {v}', price_over: 'Oltre {v}', price_clear: 'Azzera',
     f_price: 'Prezzo', f_area: 'Superficie (m²)', f_rooms: 'Camere (min)', f_baths: 'Bagni (min)',
     f_features: 'Caratteristiche', any: 'Qualsiasi', reset: 'Azzera', apply: 'Applica filtri', min: 'Min', max: 'Max',
     found_one: '{n} immobile trovato', found_many: '{n} immobili trovati',
@@ -50,7 +50,7 @@ const STR = {
     banner: '🌊 Real listings with photos from the portals (MyHome.ie · Rightmove) — Donegal & Scotland coasts: Burtonport · North Berwick · Rosemarkie · East Neuk · updated {date}',
     all_zones: 'All areas', sale_rent: 'Sale & rent', for_sale: 'For sale', for_rent: 'To rent',
     all_types: 'All types', adv_filters: 'Advanced filters', favourites: 'Favourites',
-    price_any: '💶 Price: any', price_upto: 'Up to {v}', price_over: 'Over {v}',
+    price_any: '💶 Price', price_label: 'Price', price_upto: 'Up to {v}', price_over: 'Over {v}', price_clear: 'Clear',
     f_price: 'Price', f_area: 'Area (m²)', f_rooms: 'Bedrooms (min)', f_baths: 'Bathrooms (min)',
     f_features: 'Features', any: 'Any', reset: 'Reset', apply: 'Apply filters', min: 'Min', max: 'Max',
     found_one: '{n} property found', found_many: '{n} properties found',
@@ -71,6 +71,16 @@ const STR = {
     desc: (l, tl) => `${tl(l.type)}${l.rooms ? ` with ${l.rooms} bedroom${l.rooms > 1 ? 's' : ''}` : ''} in ${l.town}. Real listing on ${hostOf(l.url)} — open the source for photos and details.`,
   },
 }
+
+// Shared price bands (numeric; min inclusive, max exclusive). Used by the
+// multi-select price filter and the filtering logic.
+export const PRICE_RANGES = [
+  { id: 'a', min: null, max: 250000 },
+  { id: 'b', min: 250000, max: 500000 },
+  { id: 'c', min: 500000, max: 750000 },
+  { id: 'd', min: 750000, max: 1000000 },
+  { id: 'e', min: 1000000, max: null },
+]
 
 const LangContext = createContext(null)
 

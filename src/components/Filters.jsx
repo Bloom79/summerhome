@@ -1,13 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FEATURES, ZONES } from '../data.js'
-import { useI18n } from '../i18n.jsx'
+import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
+const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ filters, onImmediate, onPrice, onApplyAdvanced, favOnly, onToggleFavOnly }) {
+export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
+  const [priceOpen, setPriceOpen] = useState(false)
+  const priceRef = useRef(null)
   const [draft, setDraft] = useState(emptyAdv)
+
+  // Close the price panel on outside click.
+  useEffect(() => {
+    const onDoc = (e) => { if (priceRef.current && !priceRef.current.contains(e.target)) setPriceOpen(false) }
+    document.addEventListener('click', onDoc)
+    return () => document.removeEventListener('click', onDoc)
+  }, [])
+
+  const bands = filters.priceRanges || []
+  const bandLabel = (r) =>
+    r.min == null ? t('price_upto', { v: fmtK(r.max) })
+    : r.max == null ? t('price_over', { v: fmtK(r.min) })
+    : `${fmtK(r.min)} – ${fmtK(r.max)}`
+  const toggleBand = (id) => {
+    const next = bands.includes(id) ? bands.filter((x) => x !== id) : [...bands, id]
+    onImmediate('priceRanges', next)
+  }
 
   // Keep the draft in sync if committed filters change elsewhere (e.g. reset).
   useEffect(() => {
@@ -17,21 +37,6 @@ export default function Filters({ filters, onImmediate, onPrice, onApplyAdvanced
       feats: [...filters.feats],
     })
   }, [filters])
-
-  // Preset price ranges (numeric — applies to £ and € alike).
-  const RANGES = [
-    { v: '', min: null, max: null, label: t('price_any') },
-    { v: 'a', min: null, max: 250000, label: t('price_upto', { v: '250k' }) },
-    { v: 'b', min: 250000, max: 500000, label: '250k – 500k' },
-    { v: 'c', min: 500000, max: 750000, label: '500k – 750k' },
-    { v: 'd', min: 750000, max: 1000000, label: '750k – 1M' },
-    { v: 'e', min: 1000000, max: null, label: t('price_over', { v: '1M' }) },
-  ]
-  const priceValue = (RANGES.find((r) => (r.min ?? null) === (filters.pmin ?? null) && (r.max ?? null) === (filters.pmax ?? null)) || {}).v || ''
-  const onPriceChange = (v) => {
-    const r = RANGES.find((x) => x.v === v) || RANGES[0]
-    onPrice(r.min, r.max)
-  }
 
   const advCount =
     (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) +
@@ -58,9 +63,24 @@ export default function Filters({ filters, onImmediate, onPrice, onApplyAdvanced
           <option value="">{t('all_zones')}</option>
           {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
         </select>
-        <select className={'chip' + (priceValue ? ' active' : '')} value={priceValue} onChange={(e) => onPriceChange(e.target.value)}>
-          {RANGES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
-        </select>
+        <div className="msel" ref={priceRef}>
+          <button className={'chip' + (bands.length ? ' active' : '')} onClick={() => setPriceOpen((o) => !o)}>
+            💶 {bands.length ? `${t('price_label')} (${bands.length})` : t('price_any')} ▾
+          </button>
+          {priceOpen && (
+            <div className="mselpanel">
+              {PRICE_RANGES.map((r) => (
+                <label key={r.id}>
+                  <input type="checkbox" checked={bands.includes(r.id)} onChange={() => toggleBand(r.id)} />
+                  {bandLabel(r)}
+                </label>
+              ))}
+              {bands.length > 0 && (
+                <button className="mselclear" onClick={() => onImmediate('priceRanges', [])}>{t('price_clear')}</button>
+              )}
+            </div>
+          )}
+        </div>
         <select className="chip" value={filters.contract} onChange={(e) => onImmediate('contract', e.target.value)}>
           <option value="">{t('sale_rent')}</option>
           <option value="sale">{t('for_sale')}</option>

@@ -6,11 +6,21 @@ import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
-import { useI18n } from './i18n.jsx'
+import { useI18n, PRICE_RANGES } from './i18n.jsx'
 
 const initialFilters = {
-  zone: '', contract: '', type: '', pmin: null, pmax: null, smin: null, smax: null,
+  zone: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
   rooms: '', baths: '', feats: [],
+}
+
+// A listing matches the price filter if no band is selected, or its price
+// falls inside any selected band (min inclusive, max exclusive).
+const inPriceBands = (price, ids) => {
+  if (!ids || !ids.length) return true
+  return ids.some((id) => {
+    const r = PRICE_RANGES.find((x) => x.id === id)
+    return r && (r.min == null || price >= r.min) && (r.max == null || price < r.max)
+  })
 }
 
 // Load favourites from localStorage once.
@@ -68,8 +78,7 @@ export default function App() {
       if (filters.zone && l.zone !== filters.zone) return false
       if (filters.contract && l.contract !== filters.contract) return false
       if (filters.type && l.type !== filters.type) return false
-      if (filters.pmin != null && l.price < filters.pmin) return false
-      if (filters.pmax != null && l.price > filters.pmax) return false
+      if (!inPriceBands(l.price, filters.priceRanges)) return false
       if (filters.smin != null && l.size < filters.smin) return false
       if (filters.smax != null && l.size > filters.smax) return false
       if (filters.rooms && l.rooms < +filters.rooms) return false
@@ -184,7 +193,6 @@ export default function App() {
           sort={sort}
           highlightId={highlightId}
           onImmediate={(k, v) => setFilters((f) => ({ ...f, [k]: v }))}
-          onPrice={(pmin, pmax) => setFilters((f) => ({ ...f, pmin, pmax }))}
           onApplyAdvanced={(adv) => setFilters((f) => ({ ...f, ...adv }))}
           onToggleFavOnly={() => setFavOnly((v) => !v)}
           onSortChange={onSortChange}
