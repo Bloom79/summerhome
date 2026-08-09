@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CasaTrova — Portale Ricerca Case</title>
+<meta name="description" content="Portale avanzato per la ricerca di case: mappa interattiva, localizzazione precisa, filtri avanzati e anteprime fotografiche.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<style>
+:root{
+  --brand:#0f5f66; --brand-dark:#0a464b; --brand-light:#e6f2f3;
+  --accent:#e8804c; --ink:#1a2b2d; --muted:#5f7477; --line:#dfe8e9;
+  --bg:#f5f8f8; --card:#ffffff; --radius:14px;
+  --shadow:0 1px 3px rgba(16,42,45,.08),0 6px 20px rgba(16,42,45,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+
+/* ---------- Header ---------- */
+header{background:var(--brand);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;z-index:1200;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.logo{display:flex;align-items:center;gap:8px;font-size:1.25rem;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.logo span{color:#ffd9a8}
+.searchwrap{flex:1;min-width:230px;position:relative}
+.searchbox{display:flex;background:#fff;border-radius:999px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.searchbox input{flex:1;border:0;outline:0;padding:11px 18px;font-size:.95rem;color:var(--ink);background:transparent;min-width:0}
+.searchbox button{border:0;background:var(--accent);color:#fff;padding:0 20px;font-size:1rem;cursor:pointer;transition:filter .15s}
+.searchbox button:hover{filter:brightness(1.08)}
+.suggestions{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:none;z-index:1400;max-height:260px;overflow-y:auto}
+.suggestions div{padding:11px 16px;font-size:.88rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line)}
+.suggestions div:hover{background:var(--brand-light)}
+.hbtn{border:1.5px solid rgba(255,255,255,.55);background:transparent;color:#fff;border-radius:999px;padding:9px 16px;font-size:.85rem;cursor:pointer;white-space:nowrap;transition:background .15s}
+.hbtn:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- Layout ---------- */
+#main{flex:1;display:flex;min-height:0;position:relative}
+#panel{width:520px;max-width:52%;display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--line);min-height:0}
+#mapwrap{flex:1;position:relative;min-width:0}
+#map{position:absolute;inset:0}
+
+/* ---------- Filter bar ---------- */
+#filterbar{padding:10px 14px 8px;background:#fff;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;font-size:.83rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.chip:hover{border-color:var(--brand)}
+.chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.chip .badge{background:var(--accent);color:#fff;border-radius:999px;padding:1px 7px;font-size:.72rem;margin-left:5px}
+select.chip{appearance:none;padding-right:26px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235f7477'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+
+/* ---------- Advanced filters drawer ---------- */
+#advfilters{background:#fff;border-bottom:1px solid var(--line);padding:14px;display:none;grid-template-columns:1fr 1fr;gap:12px 16px;max-height:46vh;overflow-y:auto}
+#advfilters.open{display:grid}
+.fgroup label{display:block;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.fgroup .pair{display:flex;gap:8px}
+.fgroup input[type=number],.fgroup select{width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:.88rem;outline:none;background:#fff;color:var(--ink)}
+.fgroup input:focus,.fgroup select:focus{border-color:var(--brand)}
+.feat{display:flex;flex-wrap:wrap;gap:6px}
+.feat span{border:1.5px solid var(--line);border-radius:999px;padding:5px 11px;font-size:.79rem;cursor:pointer;user-select:none}
+.feat span.on{background:var(--brand-light);border-color:var(--brand);color:var(--brand-dark);font-weight:600}
+.factions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end}
+.btn{border:0;border-radius:9px;padding:10px 18px;font-size:.88rem;cursor:pointer;font-weight:600}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--line)}
+
+/* ---------- Results ---------- */
+#resmeta{padding:10px 16px 4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#count{font-size:.86rem;color:var(--muted)}
+#count b{color:var(--ink)}
+#sort{border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font-size:.83rem;background:#fff;color:var(--ink);outline:none}
+#list{flex:1;overflow-y:auto;padding:10px 14px 24px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.card{flex:0 0 auto;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column;border:2px solid transparent}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(16,42,45,.12),0 12px 28px rgba(16,42,45,.12)}
+.card.hl{border-color:var(--accent)}
+.cimg{position:relative;aspect-ratio:16/9.5;background:#dce6e7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ctext x='5' y='28' font-size='24'%3E🏠%3C/text%3E%3C/svg%3E") center/48px no-repeat;overflow:hidden}
+.cimg img{width:100%;height:100%;object-fit:cover;display:block}
+.cimg .price{position:absolute;left:12px;bottom:12px;background:rgba(10,40,44,.85);backdrop-filter:blur(4px);color:#fff;font-weight:700;font-size:1.02rem;padding:6px 13px;border-radius:9px}
+.cimg .tag{position:absolute;left:12px;top:12px;background:var(--accent);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.cimg .tag.rent{background:#3b7dd8}
+.cimg .fav{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:1.05rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.cimg .fav:hover{transform:scale(1.12)}
+.cimg .nimg{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:.72rem;padding:3px 9px;border-radius:999px}
+.cbody{padding:13px 15px 15px}
+.ctitle{font-size:1.02rem;font-weight:700;margin-bottom:3px}
+.caddr{font-size:.82rem;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:5px}
+.cstats{display:flex;gap:14px;flex-wrap:wrap;font-size:.83rem;color:var(--ink)}
+.cstats b{font-weight:700}
+.cdist{margin-top:7px;font-size:.78rem;color:var(--brand);font-weight:600}
+#empty{padding:50px 24px;text-align:center;color:var(--muted);display:none}
+#empty .big{font-size:2.4rem;margin-bottom:10px}
+
+/* ---------- Map extras ---------- */
+.mapbtns{position:absolute;top:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.mbtn{background:#fff;border:0;border-radius:10px;box-shadow:var(--shadow);padding:9px 13px;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px}
+.mbtn:hover{background:var(--brand-light)}
+.mbtn.on{background:var(--brand);color:#fff}
+.pricepin{display:inline-block;width:max-content;background:#fff;border:2px solid var(--brand);border-radius:999px;padding:3px 9px;font-size:.74rem;font-weight:800;color:var(--brand-dark);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);transform:translate(-50%,-100%);position:relative}
+.pricepin:after{content:'';position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--brand)}
+.pricepin.hl,.leaflet-marker-icon:hover .pricepin{background:var(--accent);border-color:var(--accent);color:#fff}
+.pricepin.hl:after{border-top-color:var(--accent)}
+.leaflet-popup-content-wrapper{border-radius:12px;overflow:hidden;padding:0}
+.leaflet-popup-content{margin:0;width:230px!important}
+.pop img{width:100%;height:120px;object-fit:cover;display:block}
+.pop .pb{padding:9px 12px 11px}
+.pop .pt{font-weight:700;font-size:.9rem;margin-bottom:2px}
+.pop .pa{font-size:.75rem;color:var(--muted);margin-bottom:5px}
+.pop .pp{font-weight:800;color:var(--brand-dark)}
+.pop .plink{display:inline-block;margin-top:6px;font-size:.78rem;color:var(--brand);font-weight:700;cursor:pointer}
+
+/* ---------- Modal ---------- */
+#modal{position:fixed;inset:0;background:rgba(12,30,32,.6);z-index:2000;display:none;align-items:center;justify-content:center;padding:18px}
+#modal.open{display:flex}
+.mcard{background:#fff;border-radius:18px;max-width:840px;width:100%;max-height:92vh;overflow-y:auto;position:relative}
+.mclose{position:sticky;top:10px;margin-left:calc(100% - 54px);z-index:5;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.95);box-shadow:var(--shadow);font-size:1.15rem;cursor:pointer}
+.gal{position:relative;margin-top:-50px}
+.gal .gmain{width:100%;height:min(46vh,420px);object-fit:cover;display:block;background:#dce6e7}
+.gnav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:1.15rem;cursor:pointer;box-shadow:var(--shadow)}
+.gnav.prev{left:12px}.gnav.next{right:12px}
+.thumbs{display:flex;gap:7px;padding:9px 14px 0;overflow-x:auto}
+.thumbs img{width:82px;height:58px;object-fit:cover;border-radius:8px;cursor:pointer;opacity:.55;border:2px solid transparent;flex:0 0 auto}
+.thumbs img.on{opacity:1;border-color:var(--brand)}
+.mbody{padding:18px 22px 26px}
+.mhead{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px}
+.mtitle{font-size:1.35rem;font-weight:800}
+.mprice{font-size:1.45rem;font-weight:800;color:var(--brand-dark);white-space:nowrap}
+.mprice small{font-size:.85rem;color:var(--muted);font-weight:600}
+.maddr{color:var(--muted);font-size:.92rem;margin-bottom:14px}
+.mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--brand-light);border-radius:11px;padding:10px 12px;text-align:center}
+.stat b{display:block;font-size:1.05rem}
+.stat span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.mdesc{font-size:.93rem;line-height:1.65;color:#33484b;margin-bottom:16px}
+.mfeats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}
+.mfeats span{background:#eef4f4;border-radius:999px;padding:6px 13px;font-size:.8rem;font-weight:600;color:var(--brand-dark)}
+.locbox{border:1.5px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:16px}
+.locbox h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.locbox .coords{font-family:ui-monospace,Consolas,monospace;font-size:.86rem;background:var(--bg);border-radius:8px;padding:7px 11px;display:inline-block;margin-bottom:10px}
+.loclinks{display:flex;gap:9px;flex-wrap:wrap}
+.loclinks a{text-decoration:none;font-size:.82rem;font-weight:700;color:var(--brand);border:1.5px solid var(--brand);border-radius:999px;padding:7px 14px}
+.loclinks a:hover{background:var(--brand-light)}
+.mcta{display:flex;gap:10px;flex-wrap:wrap}
+.mcta .btn{flex:1;min-width:160px;padding:13px;font-size:.95rem}
+.btn.accent{background:var(--accent);color:#fff}
+
+/* ---------- Toast & misc ---------- */
+#toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.85rem;z-index:3000;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88vw;text-align:center}
+#toast.show{opacity:1}
+#demobanner{background:#fff7ec;color:#7a5326;font-size:.78rem;padding:7px 14px;text-align:center;border-bottom:1px solid #f0e2c8}
+
+/* ---------- Mobile ---------- */
+#viewtoggle{display:none;position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:1500;background:var(--ink);border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);overflow:hidden}
+#viewtoggle button{border:0;background:transparent;color:#cfe0e2;padding:12px 26px;font-size:.9rem;font-weight:700;cursor:pointer}
+#viewtoggle button.on{background:var(--accent);color:#fff}
+@media(max-width:840px){
+  #panel{width:100%;max-width:100%;border-right:0}
+  #mapwrap{display:none;position:absolute;inset:0}
+  body.mapview #mapwrap{display:block}
+  body.mapview #panel{display:none}
+  #viewtoggle{display:flex}
+  #advfilters{grid-template-columns:1fr}
+  .logo .lg-txt{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏠 <span class="lg-txt">Casa<span>Trova</span></span></div>
+  <div class="searchwrap">
+    <div class="searchbox">
+      <input id="q" type="text" placeholder="Cerca città, zona o indirizzo… (es. Sperlonga, Roma Trastevere)" autocomplete="off">
+      <button id="qbtn" title="Cerca">🔍</button>
+    </div>
+    <div class="suggestions" id="sugg"></div>
+  </div>
+  <button class="hbtn" id="nearme">📍 Vicino a me</button>
+</header>
+
+<div id="demobanner">⚠️ Annunci dimostrativi con coordinate reali delle località — pronto per essere collegato a dati reali.</div>
+
+<div id="main">
+  <section id="panel">
+    <div id="filterbar">
+      <select class="chip" id="f-contract">
+        <option value="">Vendita e affitto</option>
+        <option value="sale">In vendita</option>
+        <option value="rent">In affitto</option>
+      </select>
+      <select class="chip" id="f-type">
+        <option value="">Tutti i tipi</option>
+        <option>Appartamento</option>
+        <option>Villa</option>
+        <option>Attico</option>
+        <option>Casa indipendente</option>
+        <option>Trilocale</option>
+        <option>Loft</option>
+      </select>
+      <button class="chip" id="advbtn">⚙️ Filtri avanzati <span class="badge" id="advcount" style="display:none">0</span></button>
+      <button class="chip" id="favfilter">❤️ Preferiti</button>
+    </div>
+
+    <div id="advfilters">
+      <div class="fgroup"><label>Prezzo (€)</label>
+        <div class="pair"><input type="number" id="f-pmin" placeholder="Min" min="0"><input type="number" id="f-pmax" placeholder="Max" min="0"></div>
+      </div>
+      <div class="fgroup"><label>Superficie (m²)</label>
+        <div class="pair"><input type="number" id="f-smin" placeholder="Min" min="0"><input type="number" id="f-smax" placeholder="Max" min="0"></div>
+      </div>
+      <div class="fgroup"><label>Locali (min)</label>
+        <select id="f-rooms"><option value="">Qualsiasi</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+      </div>
+      <div class="fgroup"><label>Bagni (min)</label>
+        <select id="f-baths"><option value="">Qualsiasi</option><option>1</option><option>2</option><option>3</option></select>
+      </div>
+      <div class="fgroup" style="grid-column:1/-1"><label>Caratteristiche</label>
+        <div class="feat" id="f-feats"></div>
+      </div>
+      <div class="factions">
+        <button class="btn ghost" id="freset">Azzera</button>
+        <button class="btn primary" id="fapply">Applica filtri</button>
+      </div>
+    </div>
+
+    <div id="resmeta">
+      <div id="count"></div>
+      <select id="sort">
+        <option value="rel">Rilevanza</option>
+        <option value="pasc">Prezzo ↑</option>
+        <option value="pdesc">Prezzo ↓</option>
+        <option value="sdesc">Superficie ↓</option>
+        <option value="new">Più recenti</option>
+        <option value="dist">Distanza</option>
+      </select>
+    </div>
+
+    <div id="list"></div>
+    <div id="empty"><div class="big">🔎</div>Nessun immobile trovato con questi criteri.<br>Prova ad allargare l'area sulla mappa o ad azzerare i filtri.</div>
+  </section>
+
+  <section id="mapwrap">
+    <div id="map"></div>
+    <div class="mapbtns">
+      <button class="mbtn on" id="areasync">🗺️ Cerca in quest'area</button>
+      <button class="mbtn" id="fitall">⛶ Vedi tutto</button>
+    </div>
+  </section>
+</div>
+
+<div id="viewtoggle">
+  <button id="vt-list" class="on">☰ Lista</button>
+  <button id="vt-map">🗺️ Mappa</button>
+</div>
+
+<div id="modal"><div class="mcard" id="mcard"></div></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script>
+/* ================= DATI ANNUNCI (demo, coordinate reali delle località) ================= */
+const U=(id,seed)=>[`https://images.unsplash.com/photo-${id}?w=900&q=60&auto=format&fit=crop`,seed];
+const IMGS={
+  h1:U('1568605114967-8130f3a36994','casa1'), h2:U('1570129477492-45c003edd2be','casa2'),
+  h3:U('1564013799919-ab600027ffc6','casa3'), h4:U('1512917774080-9991f1c4c750','casa4'),
+  h5:U('1580587771525-78b9dba3b914','casa5'), h6:U('1600596542815-ffad4c1539a9','casa6'),
+  h7:U('1600585154340-be6161a56a0c','casa7'), i1:U('1600607687939-ce8a6c25118c','int1'),
+  i2:U('1600566753086-00f18fb6b3ea','int2'), i3:U('1502672260266-1c1ef2d93688','int3'),
+  i4:U('1522708323590-d24dbb6b0267','int4'), i5:U('1560448204-e02f11c3d0e2','int5'),
+  i6:U('1493809842364-78817add7ffb','int6'), v1:U('1583608205776-bfd35f0d9f83','villa1'),
+  v2:U('1613490493576-7fde63acd811','villa2'), v3:U('1613977257363-707ba9348227','villa3'),
+  h8:U('1600047509807-ba8f99d2cdde','casa8'), h9:U('1600585152220-90363fe7e115','casa9'),
+  i7:U('1600607687920-4e2a09cf159d','int7'), i8:U('1600210492486-724fe5c67fb0','int8')
+};
+const FEATURES=['Giardino','Terrazzo','Balcone','Garage','Posto auto','Piscina','Vista mare','Ascensore','Cantina','Aria condizionata','Camino','Arredato'];
+
+const LISTINGS=[
+ {id:1,title:'Villa fronte mare con piscina',type:'Villa',contract:'sale',price:1250000,size:280,rooms:6,baths:3,floor:'Su 2 livelli',year:2008,energy:'B',city:'Sperlonga (LT)',addr:'Via Fontana della Camera 14, Sperlonga',lat:41.263861,lng:13.435672,imgs:['v1','h5','i1','i2'],feats:['Piscina','Vista mare','Giardino','Garage','Aria condizionata'],desc:'Prestigiosa villa a pochi passi dalla spiaggia di Ponente, con piscina privata a sfioro, ampio giardino mediterraneo e terrazza panoramica con vista sul golfo. Finiture di pregio, doppio salone e dependance per gli ospiti.',date:'2026-07-28'},
+ {id:2,title:'Attico panoramico sul centro storico',type:'Attico',contract:'sale',price:445000,size:120,rooms:4,baths:2,floor:'5° con ascensore',year:1972,energy:'D',city:'Gaeta (LT)',addr:'Lungomare Caboto 88, Gaeta',lat:41.213497,lng:13.571801,imgs:['h4','i5','i4'],feats:['Terrazzo','Vista mare','Ascensore','Aria condizionata'],desc:'Attico con terrazzo di 60 mq affacciato sul porto e sul golfo di Gaeta. Salone doppio con vetrate, cucina abitabile, tre camere. Ristrutturato nel 2021.',date:'2026-08-02'},
+ {id:3,title:'Trilocale a 300 m dalla spiaggia',type:'Trilocale',contract:'rent',price:1400,size:75,rooms:3,baths:1,floor:'2°',year:1985,energy:'E',city:'San Felice Circeo (LT)',addr:'Viale Europa 21, San Felice Circeo',lat:41.235103,lng:13.084702,imgs:['i3','i6','h2'],feats:['Balcone','Posto auto','Arredato','Aria condizionata'],desc:'Luminoso trilocale arredato a due passi dal mare, perfetto per la stagione estiva o per lunghi periodi. Balcone vivibile con vista pineta.',date:'2026-08-05'},
+ {id:4,title:'Villino nella pineta di Sabaudia',type:'Casa indipendente',contract:'sale',price:520000,size:160,rooms:5,baths:2,floor:'Piano terra',year:1990,energy:'D',city:'Sabaudia (LT)',addr:'Via Sant\'Andrea 45, Sabaudia',lat:41.301427,lng:13.024889,imgs:['h1','i1','i7'],feats:['Giardino','Camino','Posto auto','Cantina'],desc:'Villino immerso nel verde della pineta, a 5 minuti dalle dune di Sabaudia. Giardino di 800 mq, patio esterno e ampia zona living con camino.',date:'2026-07-15'},
+ {id:5,title:'Bilocale vista Faraglioni',type:'Appartamento',contract:'rent',price:2600,size:55,rooms:2,baths:1,floor:'1°',year:1965,energy:'F',city:'Positano (SA)',addr:'Via Pasitea 108, Positano',lat:40.628661,lng:14.484945,imgs:['i4','h6','i2'],feats:['Terrazzo','Vista mare','Arredato'],desc:'Incantevole bilocale nel cuore di Positano con terrazzino privato e vista mozzafiato sulla costa. Arredato con gusto, a pochi gradini dalla spiaggia grande.',date:'2026-08-01'},
+ {id:6,title:'Casa indipendente con limoneto',type:'Casa indipendente',contract:'sale',price:890000,size:200,rooms:5,baths:3,floor:'Su 3 livelli',year:1955,energy:'F',city:'Amalfi (SA)',addr:'Via delle Cartiere 32, Amalfi',lat:40.638026,lng:14.599329,imgs:['h5','v3','i1'],feats:['Giardino','Terrazzo','Vista mare','Camino'],desc:'Tipica casa amalfitana su tre livelli con limoneto terrazzato e vista sulla valle dei mulini. Volte a botte originali, tre terrazze e accesso indipendente.',date:'2026-06-20'},
+ {id:7,title:'Appartamento in Trastevere',type:'Appartamento',contract:'sale',price:640000,size:95,rooms:3,baths:2,floor:'3°',year:1900,energy:'E',city:'Roma',addr:'Via della Lungaretta 60, Roma',lat:41.889172,lng:12.472934,imgs:['i5','i8','h9'],feats:['Balcone','Aria condizionata','Ascensore'],desc:'Nel cuore di Trastevere, elegante appartamento ristrutturato con travi a vista, doppia esposizione e balcone su corte interna silenziosa.',date:'2026-07-30'},
+ {id:8,title:'Loft di design zona Ostiense',type:'Loft',contract:'rent',price:1850,size:110,rooms:2,baths:2,floor:'Piano terra',year:2015,energy:'B',city:'Roma',addr:'Via del Porto Fluviale 9, Roma',lat:41.869112,lng:12.476439,imgs:['i2','i7','i4'],feats:['Arredato','Aria condizionata','Posto auto'],desc:'Loft open space in ex spazio industriale riconvertito: soffitti di 4,5 metri, soppalco camera, cucina a isola e finiture contemporanee.',date:'2026-08-06'},
+ {id:9,title:'Attico con terrazza ai Parioli',type:'Attico',contract:'sale',price:1180000,size:150,rooms:5,baths:3,floor:'6° con ascensore',year:1968,energy:'D',city:'Roma',addr:'Viale Bruno Buozzi 51, Roma',lat:41.921796,lng:12.481747,imgs:['h4','i5','i1','i8'],feats:['Terrazzo','Ascensore','Garage','Aria condizionata'],desc:'Attico signorile con terrazza di 80 mq e vista su Villa Glori. Quadruple esposizioni, sala ricevimento, tre camere e box doppio.',date:'2026-07-08'},
+ {id:10,title:'Bilocale moderno Navigli',type:'Appartamento',contract:'rent',price:1600,size:60,rooms:2,baths:1,floor:'4° con ascensore',year:2019,energy:'A2',city:'Milano',addr:'Ripa di Porta Ticinese 39, Milano',lat:45.451774,lng:9.174154,imgs:['i4','i3','i6'],feats:['Balcone','Ascensore','Arredato','Aria condizionata'],desc:'Bilocale in palazzina di recente costruzione affacciata sul Naviglio Grande. Arredamento di design, domotica e balcone con esposizione ovest.',date:'2026-08-04'},
+ {id:11,title:'Trilocale CityLife con parco',type:'Trilocale',contract:'sale',price:735000,size:105,rooms:3,baths:2,floor:'9° con ascensore',year:2018,energy:'A3',city:'Milano',addr:'Via Senofonte 6, Milano',lat:45.477484,lng:9.155661,imgs:['i8','i5','h6'],feats:['Balcone','Ascensore','Garage','Aria condizionata'],desc:'Elegante trilocale al nono piano con vista sul parco di CityLife e sulle Tre Torri. Riscaldamento a pavimento, cantina e box auto incluso.',date:'2026-07-22'},
+ {id:12,title:'Villa liberty con parco privato',type:'Villa',contract:'sale',price:1950000,size:380,rooms:8,baths:4,floor:'Su 3 livelli',year:1925,energy:'F',city:'Firenze',addr:'Viale Michelangiolo 40, Firenze',lat:43.759708,lng:11.271144,imgs:['v2','h7','i1','i7'],feats:['Giardino','Garage','Camino','Cantina'],desc:'Storica villa liberty sul viale che sale a Piazzale Michelangelo: parco di 2.000 mq, affreschi originali, limonaia e dependance custode.',date:'2026-06-11'},
+ {id:13,title:'Appartamento in Oltrarno',type:'Appartamento',contract:'rent',price:1350,size:80,rooms:3,baths:1,floor:'2°',year:1880,energy:'E',city:'Firenze',addr:'Via de\' Serragli 104, Firenze',lat:43.765141,lng:11.244221,imgs:['i6','i2','h9'],feats:['Arredato','Camino'],desc:'Caratteristico appartamento fiorentino con soffitti a cassettoni nel cuore dell\'Oltrarno, tra Santo Spirito e il Giardino di Boboli.',date:'2026-08-03'},
+ {id:14,title:'Attico vista Vesuvio a Posillipo',type:'Attico',contract:'sale',price:980000,size:140,rooms:4,baths:2,floor:'7° con ascensore',year:1975,energy:'D',city:'Napoli',addr:'Via Posillipo 226, Napoli',lat:40.813801,lng:14.203514,imgs:['h4','i5','i4'],feats:['Terrazzo','Vista mare','Ascensore','Garage'],desc:'Panoramicissimo attico a Posillipo con terrazza sul golfo: vista che spazia da Capri al Vesuvio. Doppio salone e camera padronale con bagno en-suite.',date:'2026-07-19'},
+ {id:15,title:'Casa sul porticciolo di Marechiaro',type:'Casa indipendente',contract:'rent',price:2200,size:90,rooms:3,baths:2,floor:'Su 2 livelli',year:1950,energy:'F',city:'Napoli',addr:'Calata Ponticello a Marechiaro 65, Napoli',lat:40.799190,lng:14.183210,imgs:['h2','i3','i1'],feats:['Terrazzo','Vista mare','Arredato'],desc:'Casetta indipendente a due passi dal borgo di Marechiaro, con terrazzo sul mare e discesa privata agli scogli. Disponibile da settembre.',date:'2026-08-07'},
+ {id:16,title:'Appartamento sotto le Due Torri',type:'Appartamento',contract:'sale',price:395000,size:100,rooms:4,baths:2,floor:'1°',year:1600,energy:'F',city:'Bologna',addr:'Via Zamboni 16, Bologna',lat:44.495712,lng:11.348160,imgs:['i8','i6','h9'],feats:['Ascensore','Cantina'],desc:'In palazzo storico porticato a 100 metri dalle Due Torri, ampio quadrilocale con soffitti affrescati e doppi servizi. Ideale anche per investimento.',date:'2026-07-25'},
+ {id:17,title:'Villa con piscina in Costa Smeralda',type:'Villa',contract:'sale',price:3200000,size:320,rooms:7,baths:5,floor:'Su 2 livelli',year:2012,energy:'A1',city:'Porto Cervo (SS)',addr:'Via degli Asfodeli 12, Porto Cervo',lat:41.136394,lng:9.535980,imgs:['v1','v3','i2','h6'],feats:['Piscina','Vista mare','Giardino','Garage','Aria condizionata'],desc:'Villa in stile gallurese con piscina infinity e vista sul Pevero. Cinque suite, spa privata, giardino di macchia mediterranea e garage doppio.',date:'2026-06-30'},
+ {id:18,title:'Trilocale sul lungomare di Alghero',type:'Trilocale',contract:'rent',price:1100,size:70,rooms:3,baths:1,floor:'3°',year:1978,energy:'E',city:'Alghero (SS)',addr:'Lungomare Dante 20, Alghero',lat:40.554636,lng:8.316829,imgs:['i3','i4','h2'],feats:['Balcone','Vista mare','Arredato'],desc:'Trilocale con balcone affacciato sulla passeggiata a mare di Alghero, a 5 minuti a piedi dal centro storico catalano.',date:'2026-08-08'},
+ {id:19,title:'Villa con vista sull\'Etna e sul mare',type:'Villa',contract:'sale',price:760000,size:240,rooms:6,baths:3,floor:'Su 2 livelli',year:1998,energy:'D',city:'Taormina (ME)',addr:'Via Leonardo da Vinci 30, Taormina',lat:37.856041,lng:15.283094,imgs:['v3','h5','i1'],feats:['Giardino','Piscina','Vista mare','Terrazzo'],desc:'Villa panoramica tra Taormina e Castelmola: piscina con solarium, agrumeto e terrazze con vista contemporanea su Isola Bella e sull\'Etna.',date:'2026-07-12'},
+ {id:20,title:'Casa nel borgo di Polignano',type:'Casa indipendente',contract:'sale',price:340000,size:85,rooms:3,baths:1,floor:'Su 2 livelli',year:1800,energy:'F',city:'Polignano a Mare (BA)',addr:'Via Roma 24, Polignano a Mare',lat:40.995460,lng:17.219020,imgs:['h8','i6','i2'],feats:['Terrazzo','Vista mare'],desc:'Tipica casa in pietra nel centro storico di Polignano, con lastrico solare vista Adriatico a due vicoli da Lama Monachile. Perfetta come casa vacanza o B&B.',date:'2026-07-05'},
+ {id:21,title:'Trullo ristrutturato con giardino',type:'Casa indipendente',contract:'rent',price:950,size:95,rooms:3,baths:2,floor:'Piano terra',year:1890,energy:'G',city:'Monopoli (BA)',addr:'Contrada Cozzana 43, Monopoli',lat:40.926842,lng:17.276340,imgs:['h1','i1','i3'],feats:['Giardino','Piscina','Arredato','Camino'],desc:'Autentico trullo con lamia moderna, piscina privata e giardino di ulivi secolari nella campagna tra Monopoli e la costa.',date:'2026-08-02'},
+ {id:22,title:'Villa al mare a Forte dei Marmi',type:'Villa',contract:'rent',price:6500,size:260,rooms:6,baths:4,floor:'Su 2 livelli',year:2005,energy:'B',city:'Forte dei Marmi (LU)',addr:'Via Trieste 40, Forte dei Marmi',lat:43.958142,lng:10.165964,imgs:['v2','h7','i5','i8'],feats:['Giardino','Piscina','Garage','Aria condizionata','Arredato'],desc:'Villa signorile a 500 metri dal pontile, con piscina riscaldata, giardino curato e zona living open space. Affitto stagionale o annuale.',date:'2026-07-26'},
+ {id:23,title:'Bilocale fronte spiaggia',type:'Appartamento',contract:'sale',price:265000,size:50,rooms:2,baths:1,floor:'2°',year:1970,energy:'E',city:'Rimini',addr:'Lungomare Augusto Murri 47, Rimini',lat:44.049930,lng:12.593720,imgs:['i4','h2','i6'],feats:['Balcone','Vista mare','Ascensore'],desc:'Bilocale ristrutturato con balcone direttamente sul lungomare di Marina Centro. Reddito garantito da locazione turistica estiva.',date:'2026-08-01'},
+ {id:24,title:'Appartamento vista laguna',type:'Appartamento',contract:'sale',price:310000,size:88,rooms:3,baths:2,floor:'5° con ascensore',year:2010,energy:'B',city:'Jesolo (VE)',addr:'Via Bafile 300, Lido di Jesolo',lat:45.505150,lng:12.638140,imgs:['i8','i5','h6'],feats:['Terrazzo','Vista mare','Garage','Aria condizionata'],desc:'Luminoso trilocale al quinto piano con doppia terrazza: vista mare da un lato e laguna dall\'altro. Spiaggia a 100 metri.',date:'2026-07-18'},
+ {id:25,title:'Attico nuovo a Santa Marinella',type:'Attico',contract:'sale',price:420000,size:110,rooms:4,baths:2,floor:'4° con ascensore',year:2022,energy:'A2',city:'Santa Marinella (RM)',addr:'Via Aurelia 401, Santa Marinella',lat:42.034480,lng:11.853980,imgs:['h6','i7','i2'],feats:['Terrazzo','Vista mare','Garage','Aria condizionata','Ascensore'],desc:'Attico di nuova costruzione con terrazzo a livello di 45 mq vista mare, classe energetica A2, box auto e cantina. A 40 minuti da Roma.',date:'2026-08-05'},
+ {id:26,title:'Mansarda in centro a Torino',type:'Appartamento',contract:'rent',price:980,size:65,rooms:2,baths:1,floor:'6° con ascensore',year:1910,energy:'E',city:'Torino',addr:'Via Po 18, Torino',lat:45.068580,lng:7.690380,imgs:['i6','i3','i7'],feats:['Ascensore','Arredato'],desc:'Romantica mansarda con travi a vista su Via Po, tra Piazza Castello e la Mole. Arredata con cura, ideale per professionisti.',date:'2026-08-06'},
+ {id:27,title:'Villa d\'epoca sul lago di Como',type:'Villa',contract:'sale',price:2450000,size:400,rooms:9,baths:5,floor:'Su 3 livelli',year:1902,energy:'F',city:'Como',addr:'Via Torno 36, Como',lat:45.820640,lng:9.089290,imgs:['v2','h7','i1','i5'],feats:['Giardino','Vista mare','Garage','Camino','Cantina'],desc:'Villa d\'epoca con parco degradante verso il lago, darsena privata e limonaia. Interni con affreschi e pavimenti originali in seminato veneziano.',date:'2026-06-25'},
+ {id:28,title:'Quadrilocale con giardino privato',type:'Appartamento',contract:'sale',price:298000,size:125,rooms:4,baths:2,floor:'Piano terra',year:2001,energy:'C',city:'Latina',addr:'Viale Le Corbusier 39, Latina',lat:41.457400,lng:12.898350,imgs:['h9','i8','i3'],feats:['Giardino','Garage','Cantina','Aria condizionata'],desc:'Ampio quadrilocale al piano terra con giardino privato di 150 mq, doppio garage e taverna. Zona residenziale servita, a 20 minuti dal mare.',date:'2026-07-29'},
+];
+
+/* ================= STATO ================= */
+const state={contract:'',type:'',pmin:null,pmax:null,smin:null,smax:null,rooms:null,baths:null,feats:new Set(),sort:'rel',areaSync:true,favOnly:false,userPos:null};
+let favs=new Set();
+try{const s=localStorage.getItem('ct_favs');if(s)favs=new Set(JSON.parse(s))}catch(e){}
+const saveFavs=()=>{try{localStorage.setItem('ct_favs',JSON.stringify([...favs]))}catch(e){}};
+const fmtP=(l)=>l.contract==='rent'?'€ '+l.price.toLocaleString('it-IT')+'/mese':'€ '+l.price.toLocaleString('it-IT');
+const imgUrl=(k,i=0)=>IMGS[k]?IMGS[k][0]:'';
+const imgFall=(k)=>IMGS[k]?`https://picsum.photos/seed/${IMGS[k][1]}/900/560`:'';
+const PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="900" height="560" fill="#dce6e7"/><text x="450" y="300" font-size="90" text-anchor="middle">🏠</text></svg>');
+window.imgErr=(el,k)=>{if(!el.dataset.f){el.dataset.f=1;el.src=imgFall(k)}else if(el.classList.contains('gmain')){el.onerror=null;el.src=PLACEHOLDER}else{el.style.display='none'}};
+const toast=(m)=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)};
+const dist=(a,b,c,d)=>{const R=6371,dLa=(c-a)*Math.PI/180,dLo=(d-b)*Math.PI/180,x=Math.sin(dLa/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))};
+
+/* ================= MAPPA ================= */
+let map=null,cluster=null,MAPOK=false;
+const markers={};
+let userMarker=null;
+try{
+  map=L.map('map',{zoomControl:false}).setView([42.3,12.5],6);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+  cluster=(typeof L.markerClusterGroup==='function')?L.markerClusterGroup({maxClusterRadius:46,showCoverageOnHover:false}):L.layerGroup();
+  map.addLayer(cluster);
+  MAPOK=true;
+}catch(e){
+  console.warn('Mappa non disponibile:',e);
+  document.getElementById('mapwrap').innerHTML='<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#5f7477;padding:30px;text-align:center">🗺️ Mappa non disponibile (verifica la connessione)</div>';
+  state.areaSync=false;
+}
+
+function pinIcon(l,hl){
+  const short=l.contract==='rent'?('€'+(l.price>=1000?(l.price/1000).toFixed(1).replace('.0','')+'k':l.price)+'/m'):('€'+(l.price>=1000000?(l.price/1000000).toFixed(2).replace(/\.?0+$/,'')+'M':Math.round(l.price/1000)+'k'));
+  return L.divIcon({className:'',html:`<div class="pricepin${hl?' hl':''}">${short}</div>`,iconSize:[0,0]});
+}
+function buildMarkers(items){
+  if(!MAPOK)return;
+  cluster.clearLayers();
+  items.forEach(l=>{
+    const m=L.marker([l.lat,l.lng],{icon:pinIcon(l,false)});
+    m.bindPopup(`<div class="pop"><img src="${imgUrl(l.imgs[0])}" onerror="imgErr(this,'${l.imgs[0]}')" alt=""><div class="pb"><div class="pt">${l.title}</div><div class="pa">📍 ${l.addr}</div><div class="pp">${fmtP(l)}</div><span class="plink" onclick="openDetail(${l.id})">Vedi scheda completa →</span></div></div>`);
+    m.on('click',()=>highlightCard(l.id));
+    markers[l.id]=m;
+    cluster.addLayer(m);
+  });
+}
+
+/* ================= FILTRI ================= */
+function applyFilters(){
+  let out=LISTINGS.filter(l=>{
+    if(state.favOnly&&!favs.has(l.id))return false;
+    if(state.contract&&l.contract!==state.contract)return false;
+    if(state.type&&l.type!==state.type)return false;
+    if(state.pmin!=null&&l.price<state.pmin)return false;
+    if(state.pmax!=null&&l.price>state.pmax)return false;
+    if(state.smin!=null&&l.size<state.smin)return false;
+    if(state.smax!=null&&l.size>state.smax)return false;
+    if(state.rooms&&l.rooms<state.rooms)return false;
+    if(state.baths&&l.baths<state.baths)return false;
+    for(const f of state.feats)if(!l.feats.includes(f))return false;
+    return true;
+  });
+  if(MAPOK&&state.areaSync&&map.getZoom()>6){const b=map.getBounds();out=out.filter(l=>b.contains([l.lat,l.lng]));}
+  const s=state.sort;
+  if(s==='pasc')out.sort((a,b)=>a.price-b.price);
+  else if(s==='pdesc')out.sort((a,b)=>b.price-a.price);
+  else if(s==='sdesc')out.sort((a,b)=>b.size-a.size);
+  else if(s==='new')out.sort((a,b)=>b.date.localeCompare(a.date));
+  else if(s==='dist'&&state.userPos)out.sort((a,b)=>dist(state.userPos[0],state.userPos[1],a.lat,a.lng)-dist(state.userPos[0],state.userPos[1],b.lat,b.lng));
+  return out;
+}
+
+function render(rebuildMap=true){
+  const items=applyFilters();
+  const list=document.getElementById('list');
+  document.getElementById('count').innerHTML=`<b>${items.length}</b> immobil${items.length===1?'e':'i'} trovat${items.length===1?'o':'i'}`;
+  document.getElementById('empty').style.display=items.length?'none':'block';
+  list.innerHTML=items.map(l=>{
+    const d=state.userPos?dist(state.userPos[0],state.userPos[1],l.lat,l.lng):null;
+    return `<div class="card" id="card-${l.id}" onclick="openDetail(${l.id})" onmouseenter="hlMarker(${l.id},true)" onmouseleave="hlMarker(${l.id},false)">
+      <div class="cimg">
+        <img loading="lazy" src="${imgUrl(l.imgs[0])}" onerror="imgErr(this,'${l.imgs[0]}')" alt="">
+        <span class="tag${l.contract==='rent'?' rent':''}">${l.contract==='rent'?'Affitto':'Vendita'}</span>
+        <button class="fav" onclick="event.stopPropagation();toggleFav(${l.id})">${favs.has(l.id)?'❤️':'🤍'}</button>
+        <span class="price">${fmtP(l)}</span>
+        <span class="nimg">📷 ${l.imgs.length}</span>
+      </div>
+      <div class="cbody">
+        <div class="ctitle">${l.title}</div>
+        <div class="caddr">📍 ${l.addr}</div>
+        <div class="cstats"><span><b>${l.size}</b> m²</span><span><b>${l.rooms}</b> locali</span><span><b>${l.baths}</b> bagn${l.baths===1?'o':'i'}</span><span>${l.type}</span></div>
+        ${d!=null?`<div class="cdist">📏 a ${d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km'} da te</div>`:''}
+      </div></div>`;
+  }).join('');
+  if(rebuildMap)buildMarkers(items);
+  const n=activeFilterCount();
+  const ac=document.getElementById('advcount');
+  ac.style.display=n?'':'none';ac.textContent=n;
+}
+function activeFilterCount(){let n=0;if(state.pmin!=null)n++;if(state.pmax!=null)n++;if(state.smin!=null)n++;if(state.smax!=null)n++;if(state.rooms)n++;if(state.baths)n++;n+=state.feats.size;return n}
+
+/* ================= INTERAZIONI ================= */
+window.hlMarker=(id,on)=>{const m=markers[id];if(!m)return;const l=LISTINGS.find(x=>x.id===id);m.setIcon(pinIcon(l,on));if(on)m.setZIndexOffset(1000);else m.setZIndexOffset(0)};
+window.highlightCard=(id)=>{const c=document.getElementById('card-'+id);if(!c)return;document.querySelectorAll('.card.hl').forEach(x=>x.classList.remove('hl'));c.classList.add('hl');c.scrollIntoView({block:'nearest',behavior:'smooth'});setTimeout(()=>c.classList.remove('hl'),2200)};
+window.toggleFav=(id)=>{if(favs.has(id)){favs.delete(id)}else{favs.add(id);toast('Aggiunto ai preferiti ❤️')}saveFavs();render(false)};
+
+/* ---------- Dettaglio ---------- */
+let galIdx=0,galItem=null;
+window.openDetail=(id)=>{
+  const l=LISTINGS.find(x=>x.id===id);if(!l)return;galItem=l;galIdx=0;
+  const gm=(i)=>`${imgUrl(l.imgs[i])}`;
+  document.getElementById('mcard').innerHTML=`
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <div class="gal">
+      <img class="gmain" id="gmain" src="${gm(0)}" onerror="imgErr(this,'${l.imgs[0]}')" alt="">
+      ${l.imgs.length>1?'<button class="gnav prev" onclick="galMove(-1)">‹</button><button class="gnav next" onclick="galMove(1)">›</button>':''}
+    </div>
+    ${l.imgs.length>1?`<div class="thumbs">${l.imgs.map((k,i)=>`<img src="${imgUrl(k)}" onerror="imgErr(this,'${k}')" class="${i===0?'on':''}" onclick="galTo(${i})" alt="">`).join('')}</div>`:''}
+    <div class="mbody">
+      <div class="mhead">
+        <div><div class="mtitle">${l.title}</div></div>
+        <div class="mprice">${fmtP(l)}<br><small>${l.contract==='sale'?('€ '+Math.round(l.price/l.size).toLocaleString('it-IT')+'/m²'):''}</small></div>
+      </div>
+      <div class="maddr">📍 ${l.addr} — ${l.city}</div>
+      <div class="mstats">
+        <div class="stat"><b>${l.size} m²</b><span>Superficie</span></div>
+        <div class="stat"><b>${l.rooms}</b><span>Locali</span></div>
+        <div class="stat"><b>${l.baths}</b><span>Bagni</span></div>
+        <div class="stat"><b>${l.floor}</b><span>Piano</span></div>
+        <div class="stat"><b>${l.year}</b><span>Anno</span></div>
+        <div class="stat"><b>${l.energy}</b><span>Classe energ.</span></div>
+      </div>
+      <p class="mdesc">${l.desc}</p>
+      <div class="mfeats">${l.feats.map(f=>`<span>✓ ${f}</span>`).join('')}</div>
+      <div class="locbox">
+        <h4>📌 Localizzazione precisa</h4>
+        <div class="coords">${l.lat.toFixed(6)}, ${l.lng.toFixed(6)}</div>
+        <div class="loclinks">
+          <a href="https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}" target="_blank" rel="noopener">Apri in Google Maps</a>
+          <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}" target="_blank" rel="noopener">Street View</a>
+          <a href="#" onclick="event.preventDefault();closeModal();flyToListing(${l.id})">Mostra sulla mappa</a>
+        </div>
+      </div>
+      <div class="mcta">
+        <button class="btn primary" onclick="toast('Richiesta inviata! Un agente ti contatterà (demo)')">✉️ Contatta l'agenzia</button>
+        <button class="btn accent" onclick="toast('Visita richiesta! Ti proporremo 3 orari (demo)')">📅 Prenota visita</button>
+        <button class="btn ghost" onclick="toggleFav(${l.id});openDetail(${l.id})">${favs.has(l.id)?'❤️ Salvato':'🤍 Salva'}</button>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+};
+window.closeModal=()=>document.getElementById('modal').classList.remove('open');
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+window.galMove=(d)=>galTo((galIdx+d+galItem.imgs.length)%galItem.imgs.length);
+window.galTo=(i)=>{galIdx=i;const g=document.getElementById('gmain');g.style.display='';delete g.dataset.f;g.onerror=()=>imgErr(g,galItem.imgs[i]);g.src=imgUrl(galItem.imgs[i]);document.querySelectorAll('.thumbs img').forEach((t,j)=>t.classList.toggle('on',j===i))};
+window.flyToListing=(id)=>{if(!MAPOK)return;const l=LISTINGS.find(x=>x.id===id);if(!l)return;if(document.body.classList.contains('mapview')||innerWidth>840){}else setView('map');map.flyTo([l.lat,l.lng],16,{duration:1.2});setTimeout(()=>{const m=markers[id];if(m)m.openPopup()},1300)};
+
+/* ---------- Ricerca località (Nominatim) ---------- */
+const q=document.getElementById('q'),sugg=document.getElementById('sugg');
+let sT=null;
+async function geocode(text,limit=5){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=it&addressdetails=1&limit=${limit}&q=${encodeURIComponent(text)}`,{headers:{'Accept-Language':'it'}});
+  return r.ok?r.json():[];
+}
+q.addEventListener('input',()=>{clearTimeout(sT);const v=q.value.trim();if(v.length<3){sugg.style.display='none';return}
+  sT=setTimeout(async()=>{try{const res=await geocode(v);if(!res.length){sugg.style.display='none';return}
+    sugg.innerHTML=res.map(r=>`<div data-lat="${r.lat}" data-lon="${r.lon}" data-type="${r.addresstype||r.type}">📍 ${r.display_name}</div>`).join('');
+    sugg.style.display='block';
+    sugg.querySelectorAll('div').forEach(d=>d.addEventListener('click',()=>{goTo(+d.dataset.lat,+d.dataset.lon,d.dataset.type);q.value=d.textContent.replace('📍 ','');sugg.style.display='none'}));
+  }catch(e){}},350);
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchwrap'))sugg.style.display='none'});
+async function doSearch(){const v=q.value.trim();if(!v)return;sugg.style.display='none';
+  try{const res=await geocode(v,1);if(res.length)goTo(+res[0].lat,+res[0].lon,res[0].addresstype||res[0].type);else toast('Località non trovata')}catch(e){toast('Errore di ricerca, riprova')}}
+document.getElementById('qbtn').addEventListener('click',doSearch);
+q.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
+function goTo(lat,lon,type){
+  if(!MAPOK)return;
+  const z=['house','building','residential','address'].includes(type)?17:['suburb','neighbourhood','quarter'].includes(type)?14:['city','town'].includes(type)?13:['village','hamlet'].includes(type)?14:11;
+  if(innerWidth<=840)setView('map');
+  map.flyTo([lat,lon],z,{duration:1.3});
+}
+
+/* ---------- Vicino a me ---------- */
+document.getElementById('nearme').addEventListener('click',()=>{
+  if(!navigator.geolocation){toast('Geolocalizzazione non supportata');return}
+  toast('Rilevo la tua posizione…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    state.userPos=[p.coords.latitude,p.coords.longitude];
+    if(MAPOK){
+      if(userMarker)map.removeLayer(userMarker);
+      userMarker=L.circleMarker(state.userPos,{radius:9,color:'#fff',weight:3,fillColor:'#3b7dd8',fillOpacity:1}).addTo(map).bindPopup('📍 Sei qui');
+      if(innerWidth<=840)setView('map');
+      map.flyTo(state.userPos,12,{duration:1.2});
+    }
+    document.getElementById('sort').value='dist';state.sort='dist';
+    render();
+    toast('Ordinati per distanza da te');
+  },()=>toast('Impossibile rilevare la posizione'),{enableHighAccuracy:true,timeout:9000});
+});
+
+/* ---------- Controlli ---------- */
+document.getElementById('f-contract').addEventListener('change',e=>{state.contract=e.target.value;render()});
+document.getElementById('f-type').addEventListener('change',e=>{state.type=e.target.value;render()});
+document.getElementById('sort').addEventListener('change',e=>{state.sort=e.target.value;if(state.sort==='dist'&&!state.userPos){toast('Prima attiva "Vicino a me" 📍')}render(false)});
+document.getElementById('advbtn').addEventListener('click',()=>document.getElementById('advfilters').classList.toggle('open'));
+document.getElementById('favfilter').addEventListener('click',e=>{state.favOnly=!state.favOnly;e.currentTarget.classList.toggle('active',state.favOnly);render()});
+const featBox=document.getElementById('f-feats');
+FEATURES.forEach(f=>{const s=document.createElement('span');s.textContent=f;s.addEventListener('click',()=>{s.classList.toggle('on');if(state.feats.has(f))state.feats.delete(f);else state.feats.add(f)});featBox.appendChild(s)});
+document.getElementById('fapply').addEventListener('click',()=>{
+  const v=id=>{const x=document.getElementById(id).value;return x===''?null:+x};
+  state.pmin=v('f-pmin');state.pmax=v('f-pmax');state.smin=v('f-smin');state.smax=v('f-smax');
+  state.rooms=v('f-rooms');state.baths=v('f-baths');
+  document.getElementById('advfilters').classList.remove('open');render();
+});
+document.getElementById('freset').addEventListener('click',()=>{
+  ['f-pmin','f-pmax','f-smin','f-smax'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('f-rooms').value='';document.getElementById('f-baths').value='';
+  state.pmin=state.pmax=state.smin=state.smax=state.rooms=state.baths=null;state.feats.clear();
+  featBox.querySelectorAll('span').forEach(s=>s.classList.remove('on'));render();
+});
+document.getElementById('areasync').addEventListener('click',e=>{state.areaSync=!state.areaSync;e.currentTarget.classList.toggle('on',state.areaSync);render()});
+document.getElementById('fitall').addEventListener('click',()=>{if(!MAPOK)return;const items=applyFilters();if(!items.length)return;map.flyToBounds(L.latLngBounds(items.map(l=>[l.lat,l.lng])).pad(0.15),{duration:1})});
+let moveT=null;
+if(MAPOK)map.on('moveend',()=>{if(!state.areaSync)return;clearTimeout(moveT);moveT=setTimeout(()=>render(false)||buildMarkers(applyFilters()),250)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(document.getElementById('modal').classList.contains('open')){if(e.key==='ArrowRight'&&galItem)galMove(1);if(e.key==='ArrowLeft'&&galItem)galMove(-1)}});
+
+/* ---------- Mobile view toggle ---------- */
+function setView(v){document.body.classList.toggle('mapview',v==='map');document.getElementById('vt-list').classList.toggle('on',v==='list');document.getElementById('vt-map').classList.toggle('on',v==='map');if(v==='map'&&MAPOK)setTimeout(()=>map.invalidateSize(),80)}
+document.getElementById('vt-list').addEventListener('click',()=>setView('list'));
+document.getElementById('vt-map').addEventListener('click',()=>setView('map'));
+
+/* ---------- Avvio ---------- */
+render();
+if(MAPOK)map.fitBounds(L.latLngBounds(LISTINGS.map(l=>[l.lat,l.lng])).pad(0.1));
+</script>
+</body>
+</html>
