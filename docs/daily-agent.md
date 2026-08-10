@@ -19,10 +19,14 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
    `size` (m² when available), rooms, baths, `zone`, `town`, address,
    latitude/longitude (geocoded), a short description, and — when available — a
    `url` back to the source listing.
-3. Rewrites the `LISTINGS` array in [`../src/data.js`](../src/data.js) with the
-   fresh results (keeping only the monitored zones) and sets `LAST_UPDATED` to
-   the run date. It keeps the exported `FEATURES`, `ZONES`, and `SOLD`.
-4. Runs `npm ci && npm run build` to confirm the app still compiles.
+3. Rewrites the listings in [`../public/data.json`](../public/data.json) with the
+   fresh results (keeping only the monitored zones) and sets `updated` to the
+   run date. It keeps `features`, `zones`, and `sold`. The app fetches this
+   file at runtime, so data updates need no rebuild.
+4. Runs `node scripts/validate-data.mjs --spot-check 3` (quality gate: valid
+   coordinates, real source urls, no duplicates, live spot-checks) and fixes
+   anything it reports; the deploy workflow runs the same gate and refuses
+   bad data. Then `npm ci && npm run build` to confirm the app compiles.
 5. Commits and pushes to `main`, which triggers the GitHub Pages deploy so the
    live site updates automatically.
 6. If a source can't be fetched for a zone, it keeps that zone's previous
@@ -58,9 +62,9 @@ The agent is a **Claude Code Routine** (scheduled trigger). To change the time,
 pause, or remove it, ask Claude to *update / disable / delete the "CasaTrova
 daily listings agent" routine*, or manage it from the Claude Code triggers UI.
 
-## Data contract (`src/data.js`)
+## Data contract (`public/data.json`)
 
-Each listing object:
+`{updated, zones, features, sold, listings}` — each listing object:
 
 ```js
 {

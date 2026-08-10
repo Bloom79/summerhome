@@ -5,7 +5,7 @@
 //
 // Reads ISSUE_BODY from the environment, scrapes the right portal for the
 // country (Rightmove for the UK, MyHome.ie for Ireland), and rewrites
-// src/data.js + docs/extra-zones.json. Outcome goes to $GITHUB_OUTPUT:
+// public/data.json + docs/extra-zones.json. Outcome goes to $GITHUB_OUTPUT:
 //   status = ok | none | error   added = N   zone = <name>   msg = <detail>
 // Exit code is always 0 — the workflow branches on `status`.
 
@@ -70,11 +70,12 @@ const scotland = addr.state === 'Scotland' || (cc === 'gb' && lat > 54.6)
 const zoneName = `${town} (${cc === 'ie' ? 'Irlanda' : scotland ? 'Scozia' : 'UK'})`
 
 // ---- Existing data ----
-const dataPath = ROOT + 'src/data.js'
-let data = readFileSync(dataPath, 'utf8')
-const existingUrls = new Set([...data.matchAll(/"url": ?"([^"]+)"/g)].map((x) => x[1]))
-if (data.includes(JSON.stringify(zoneName)))
+const dataPath = ROOT + 'public/data.json'
+const db = JSON.parse(readFileSync(dataPath, 'utf8'))
+const existingUrls = new Set([...db.listings, ...db.sold].map((l) => l.url).filter(Boolean))
+if (db.zones.includes(zoneName))
   finish('none', `la zona «${zoneName}» è già nel portale`, zoneName)
+const stats = { candidates: 0, kept: 0, dropQuality: 0, dropBounds: 0, dropDup: 0 }
 
 // ---- Full-text enrichment rules (same as the daily agent) ----
 const SEA = [
@@ -114,17 +115,18 @@ if (cc === 'ie') {
       for (const it of items) { const u = it.url || it.item?.url; if (u) brochures.add(u) }
     } catch { /* other ld+json blocks */ }
   }
-  const candidates = [...brochures].filter((u) => !existingUrls.has(u)).slice(0, CAP * 2)
+  stats.candidates = brochures.size
+  const candidates = [...brochures].filter((u) => existingUrls.has(u) ? (stats.dropDup++, false) : true).slice(0, CAP * 2)
   const parsed = await pmap(candidates, async (u) => {
     let page
     try { page = await get(u) } catch { return null }
     const title = /<title>([^<]*)/.exec(page)?.[1] || ''
-    if (/^(Sold|Sale Agreed)/i.test(title.trim())) return null
+    if (/^(Sold|Sale Agreed)/i.test(title.trim())) { stats.dropQuality++; return null }
     const price = +(/€\s?([\d,]+)/.exec(title)?.[1] || '').replace(/,/g, '')
     const cm = /BrochureMap":\{"longitude":(-?[\d.]+),"latitude":(-?[\d.]+)/.exec(page)
-    if (!price || !cm) return null
+    if (!price || !cm) { stats.dropQuality++; return null }
     const [plng, plat] = [+cm[1], +cm[2]]
-    if (!inBox(plat, plng)) return null
+    if (!inBox(plat, plng)) { stats.dropBounds++; return null }
     const beds = +(/"NumberOfBeds":(\d+)/.exec(page)?.[1] || 0) || null
     const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
     const text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
@@ -165,14 +167,16 @@ if (cc === 'ie') {
   }
   const seen = new Set()
   const candidates = props.filter((p) => {
-    if (p.transactionType && p.transactionType !== 'buy') return false
+    stats.candidates++
+    if (p.transactionType && p.transactionType !== 'buy') { stats.dropQuality++; return false }
     const pla = p.location?.latitude, pln = p.location?.longitude
-    if (!pla || !pln || !inBox(pla, pln)) return false
+    if (!pla || !pln) { stats.dropQuality++; return false }
+    if (!inBox(pla, pln)) { stats.dropBounds++; return false }
     const sub = (p.propertySubType || '').toLowerCase()
-    if (/land|plot|site|garage|parking/.test(sub)) return false
-    if (!p.price?.amount) return false
+    if (/land|plot|site|garage|parking/.test(sub)) { stats.dropQuality++; return false }
+    if (!p.price?.amount) { stats.dropQuality++; return false }
     const url = `https://www.rightmove.co.uk/properties/${p.id}`
-    if (existingUrls.has(url) || seen.has(url)) return false
+    if (existingUrls.has(url) || seen.has(url)) { stats.dropDup++; return false }
     seen.add(url)
     return true
   }).slice(0, CAP)
@@ -200,15 +204,12 @@ if (cc === 'ie') {
 
 if (!listings.length) finish('none', `nessun annuncio in vendita trovato nell'area di ${town}`, zoneName)
 
-// ---- Write src/data.js ----
-const zres = data.replace(/(export const ZONES = \[[\s\S]*?)(\n\])/, (_, a, b) => `${a}\n  ${JSON.stringify(zoneName)},${b}`)
-if (zres === data) finish('error', 'struttura ZONES inattesa in src/data.js')
-data = zres
-const maxId = Math.max(...[...data.matchAll(/\{"id": ?(\d+),/g)].map((x) => +x[1]))
+// ---- Write public/data.json ----
+const maxId = Math.max(0, ...db.listings.map((l) => l.id))
 listings.forEach((l, i) => { l.id = maxId + 1 + i })
-const endIdx = data.lastIndexOf(']')
-data = data.slice(0, endIdx) + listings.map((l) => '  ' + JSON.stringify(l) + ',').join('\n') + '\n' + data.slice(endIdx)
-writeFileSync(dataPath, data)
+db.zones.push(zoneName)
+db.listings.push(...listings)
+writeFileSync(dataPath, JSON.stringify(db))
 
 // ---- Record the zone for the daily agent's refreshes ----
 const ezPath = ROOT + 'docs/extra-zones.json'
@@ -221,4 +222,6 @@ if (!ez.some((z) => z.zone === zoneName)) {
   writeFileSync(ezPath, JSON.stringify(ez, null, 2) + '\n')
 }
 
-finish('ok', `aggiunte ${listings.length} case`, zoneName, listings.length)
+const sv = listings.filter((l) => l.seaView).length
+const ft = listings.filter((l) => l.feats.length).length
+finish('ok', `${stats.candidates} annunci esaminati → ${listings.length} pubblicati (${stats.dropBounds} fuori area, ${stats.dropDup} già noti, ${stats.dropQuality} scartati per dati incompleti) · vista mare: ${sv} · con caratteristiche: ${ft}`, zoneName, listings.length)

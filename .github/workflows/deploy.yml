@@ -23,6 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Same gate the cerca-qui workflow runs: bad data never goes live —
+      # a failed check keeps the previously deployed site untouched.
+      - name: Quality gate
+        run: node scripts/validate-data.mjs
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -34,6 +39,14 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Shared with the cerca-qui workflow: when only data changed, it reuses
+      # this dist and skips npm install/build entirely.
+      - name: Cache built site
+        uses: actions/cache/save@v4
+        with:
+          path: dist
+          key: dist-${{ hashFiles('package-lock.json', 'src/**', 'index.html', 'vite.config.js') }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

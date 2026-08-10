@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { LISTINGS, SOLD, LAST_UPDATED } from './data.js'
 import { dist } from './utils.js'
 import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
@@ -34,8 +33,12 @@ function loadIdSet(key) {
 }
 
 
-export default function App() {
+export default function App({ initialDb }) {
   const { t } = useI18n()
+  // Portal data (listings/zones/sold/updated) — hot-swappable: a handled
+  // 'Cerca qui' request refreshes it in place, no page reload.
+  const [db, setDb] = useState(initialDb)
+  const { listings: LISTINGS, sold: SOLD, updated: LAST_UPDATED } = db
   const [filters, setFilters] = useState(initialFilters)
   const [sort, setSort] = useState('rel')
   const [favOnly, setFavOnly] = useState(false)
@@ -129,14 +132,14 @@ export default function App() {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [filters, favOnly, seaOnly, gardenOnly, favs])
+  }), [LISTINGS, filters, favOnly, seaOnly, gardenOnly, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
   const soldItems = useMemo(() =>
     SOLD.map((s, i) => ({ ...s, id: 'sold-' + i }))
       .filter((s) => !filters.zone || s.zone === filters.zone),
-    [filters.zone])
+    [SOLD, filters.zone])
 
   useEffect(() => { criteriaRef.current = soldView ? soldItems : criteriaItems }, [criteriaItems, soldItems, soldView])
 
@@ -168,7 +171,7 @@ export default function App() {
     if (animate) map.flyToBounds(b, { duration: 0.7, maxZoom: 13 })
     else map.fitBounds(b, { maxZoom: 13 })
     needsFitRef.current = false
-  }, [])
+  }, [LISTINGS])
 
   // Re-fit when the filter criteria change — not on favouriting or map pans.
   const firstFit = useRef(true)
@@ -247,7 +250,7 @@ export default function App() {
     if (window.innerWidth <= 840) setMobileView('map')
     setHighlightId(id)
     mapRef.current?.flyTo([l.lat, l.lng], 16, { duration: 1.2 })
-  }, [])
+  }, [LISTINGS])
 
   // "Trova nuove case qui": ask the daily agent for NEW listings in the area
   // the user is looking at (different from areaSync, which only filters the
@@ -309,14 +312,15 @@ export default function App() {
 
   // After a send, follow the request live: the worker's /status route (which
   // reads the GitHub issue with its own token) says whether the agent is
-  // still searching or done, then we watch our own site until the new build
-  // is actually published — that's when "reload" will show the houses.
+  // still searching or done. Once done, the fresh data.json is pulled from
+  // the repo's raw endpoint (available seconds after the agent pushes, before
+  // the Pages deploy even finishes) and hot-swapped in — the new houses
+  // appear on the map with no reload, with their zone filter selected.
   const watchAgentRequest = useCallback((issueUrl) => {
     const m = /\/issues\/(\d+)/.exec(issueUrl || '')
     if (!m) return
     clearInterval(watchRef.current)
     const t0 = Date.now()
-    const initialJs = document.querySelector('script[src*="assets/index"]')?.getAttribute('src') || ''
     let mode = 'status'
     let found = { zone: null, added: null }
     setAgentStatus({ phase: 'working', t0 })
@@ -329,20 +333,24 @@ export default function App() {
             clearInterval(watchRef.current)
             setAgentStatus({ phase: j.outcome, t0 })
           } else if (j.outcome === 'ok' && j.state === 'closed') {
-            mode = 'bundle'
+            mode = 'raw'
             found = { zone: j.zone, added: j.added }
             setAgentStatus({ phase: 'publishing', ...found, t0 })
           }
         } else {
-          const html = await (await fetch(window.location.href, { cache: 'no-store' })).text()
-          const cur = (html.match(/assets\/index-[^"']+\.js/) || [])[0] || ''
-          if (cur && !initialJs.includes(cur)) {
+          const fresh = await (await fetch(
+            `https://raw.githubusercontent.com/bloom79/summerhome/main/public/data.json?t=${Date.now()}`,
+            { cache: 'no-store' }
+          )).json()
+          if (!found.zone || fresh.zones.includes(found.zone)) {
             clearInterval(watchRef.current)
+            setDb(fresh)
+            if (found.zone) setFilters((f) => ({ ...f, zone: found.zone }))
             setAgentStatus({ phase: 'ready', ...found, t0 })
           }
         }
       } catch { /* transient; keep polling */ }
-    }, 10000)
+    }, 8000)
   }, [])
 
   // Direct one-tap send through the Cloudflare Worker (docs/cerca-qui-worker.md).
@@ -392,6 +400,9 @@ export default function App() {
       <div id="main">
         <ListPanel
           items={displayItems}
+          zones={db.zones}
+          features={db.features}
+          updated={LAST_UPDATED}
           filters={filters}
           favOnly={favOnly}
           seaOnly={seaOnly}
@@ -506,9 +517,6 @@ export default function App() {
               {agentStatus.phase === 'deferred' && t('agst_deferred')}
               {busy && ` · ${elapsed}`}
             </span>
-            {agentStatus.phase === 'ready' && (
-              <button className="reload" onClick={() => window.location.reload()}>{t('agent_reload')}</button>
-            )}
             <button className="dismiss" onClick={() => { clearInterval(watchRef.current); setAgentStatus(null) }}>✕</button>
           </div>
         )

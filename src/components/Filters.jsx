@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { FEATURES, ZONES } from '../data.js'
 import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, soldView, soldCount, onToggleSold }) {
+export default function Filters({ zones, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, soldView, soldCount, onToggleSold }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -61,7 +60,7 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
       <div id="filterbar">
         <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
           <option value="">{t('all_zones')}</option>
-          {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+          {zones.map((z) => <option key={z} value={z}>{z}</option>)}
         </select>
         <div className="msel" ref={priceRef}>
           <button className={'chip' + (bands.length ? ' active' : '')} onClick={() => setPriceOpen((o) => !o)}>
@@ -127,7 +126,7 @@ export default function Filters({ filters, onImmediate, onApplyAdvanced, favOnly
           <div className="fgroup" style={{ gridColumn: '1/-1' }}>
             <label>{t('f_features')}</label>
             <div className="feat">
-              {FEATURES.map((f) => (
+              {features.map((f) => (
                 <span key={f} className={draft.feats.includes(f) ? 'on' : ''} onClick={() => toggleFeat(f)}>{featLabel(f)}</span>
               ))}
             </div>
