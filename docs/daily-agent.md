@@ -1,7 +1,8 @@
 # Daily listings agent
 
 A scheduled agent refreshes the portal's property listings once per day, for
-**only** these coastal areas:
+the built-in coastal areas below **plus any area requested from the map with
+the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-areas)):
 
 - **Burtonport / The Rosses** — Co. Donegal, Ireland (prices in **EUR**)
 - **North Berwick** (incl. Gullane, Dirleton) — East Lothian, Scotland (**GBP**)
@@ -10,22 +11,39 @@ A scheduled agent refreshes the portal's property listings once per day, for
 
 ## What the agent does on each run
 
-1. Searches current for-sale / to-let property listings in the four areas above,
-   using public sources (e.g. **Daft.ie** for Donegal; **Rightmove / ESPC /
-   Zoopla** for the Scottish villages).
+1. Searches current for-sale / to-let property listings in the monitored areas
+   (built-in + user-requested), using public sources (**MyHome.ie** for
+   Ireland; **Rightmove** for Scotland/UK).
 2. Extracts structured data for each property: title, type, contract
    (`sale`/`rent`), `price`, `currency` (`EUR` for Ireland, `GBP` for Scotland),
    `size` (m² when available), rooms, baths, `zone`, `town`, address,
    latitude/longitude (geocoded), a short description, and — when available — a
    `url` back to the source listing.
 3. Rewrites the `LISTINGS` array in [`../src/data.js`](../src/data.js) with the
-   fresh results (keeping only the four zones) and sets `LAST_UPDATED` to the
-   run date. It keeps the exported `IMGS`, `FEATURES`, and `ZONES`.
+   fresh results (keeping only the monitored zones) and sets `LAST_UPDATED` to
+   the run date. It keeps the exported `FEATURES`, `ZONES`, and `SOLD`.
 4. Runs `npm ci && npm run build` to confirm the app still compiles.
 5. Commits and pushes to `main`, which triggers the GitHub Pages deploy so the
    live site updates automatically.
 6. If a source can't be fetched for a zone, it keeps that zone's previous
    listings rather than emptying it, and makes no commit if nothing changed.
+
+## Cerca qui (user-requested areas)
+
+Pan/zoom the map to any area and press **🤖 Trova nuove case qui**. The portal
+opens a prefilled GitHub issue on this repo (title `Cerca qui: <place>`, label
+`cerca-qui`) containing a JSON block with the map centre, zoom and bounds —
+confirming the issue on GitHub queues the request. On its next run the agent:
+
+1. Reads every open `Cerca qui:` issue.
+2. Scrapes real listings for that area from the right portal for the country
+   (MyHome.ie for the Republic of Ireland, Rightmove for the UK), keeping only
+   houses inside the requested map bounds.
+3. Adds the area as a new zone in `src/data.js` and records its search config
+   in [`extra-zones.json`](extra-zones.json), so every future daily run keeps
+   refreshing it like the built-in zones.
+4. Closes the issue with a comment saying how many houses were added (or that
+   nothing is for sale there right now).
 
 ## Schedule
 

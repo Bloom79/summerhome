@@ -27,7 +27,7 @@ function MapBridge({ onReady, onBoundsChange }) {
 
 export default function MapPanel({
   items, highlightId, userPos, areaSync, seen, soldView,
-  onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
+  onToggleAreaSync, onFitAll, onAgentSearchHere, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
   return (
@@ -83,6 +83,7 @@ export default function MapPanel({
 
       <div className="mapbtns">
         <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>
+        <button className="mbtn agent" onClick={onAgentSearchHere}>{t('map_agent_here')}</button>
         <button className="mbtn" onClick={onFitAll}>{t('map_see_all')}</button>
       </div>
     </section>

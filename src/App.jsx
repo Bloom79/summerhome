@@ -241,6 +241,54 @@ export default function App() {
     mapRef.current?.flyTo([l.lat, l.lng], 16, { duration: 1.2 })
   }, [])
 
+  // "Trova nuove case qui": file a request for the area the user is looking
+  // at. The portal is static, so the queue is a prefilled GitHub issue that
+  // the daily agent reads on its next run (see docs/daily-agent.md). The tab
+  // opens synchronously (popup blockers) and navigates after a best-effort
+  // reverse geocode of the map centre names the place.
+  const onAgentSearchHere = useCallback(async () => {
+    const map = mapRef.current
+    if (!map) return
+    const z = map.getZoom()
+    if (z < 9) { toast(t('t_agent_zoom')); return }
+    const w = window.open('about:blank', '_blank')
+    const c = map.getCenter()
+    const b = map.getBounds()
+    let place = ''
+    try {
+      const ctl = new AbortController()
+      const kill = setTimeout(() => ctl.abort(), 2500)
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${c.lat}&lon=${c.lng}&zoom=12&accept-language=it,en`,
+        { signal: ctl.signal }
+      )
+      clearTimeout(kill)
+      const j = await r.json()
+      place = j.name || (j.display_name || '').split(',').slice(0, 2).join(',').trim()
+    } catch { /* coords-only request */ }
+    const req = {
+      place: place || null,
+      lat: +c.lat.toFixed(5), lng: +c.lng.toFixed(5), zoom: z,
+      bounds: {
+        north: +b.getNorth().toFixed(5), south: +b.getSouth().toFixed(5),
+        east: +b.getEast().toFixed(5), west: +b.getWest().toFixed(5),
+      },
+    }
+    const title = `Cerca qui: ${place || `${req.lat}, ${req.lng}`}`
+    const body = [
+      'Richiesta **"Cerca qui"** inviata dal portale CasaTrova: aggiungere annunci in quest\'area della mappa.',
+      '',
+      '```json',
+      JSON.stringify(req, null, 2),
+      '```',
+      '',
+      '_Gestita dall\'agente giornaliero: definisce la zona, cerca gli annunci sui portali del paese giusto, li aggiunge al portale e chiude questa issue._',
+    ].join('\n')
+    const url = `https://github.com/bloom79/summerhome/issues/new?labels=cerca-qui&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`
+    if (w) { w.location = url; toast(t('t_agent_sent')) }
+    else toast(t('t_agent_popup'))
+  }, [toast, t])
+
   const onFitAll = useCallback(() => {
     const src = soldView ? soldItems : items
     if (!mapRef.current || !src.length) return
@@ -300,6 +348,7 @@ export default function App() {
           soldView={soldView}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
+          onAgentSearchHere={onAgentSearchHere}
           onMarkerClick={onMarkerClick}
           onOpen={openDetail}
           onSeen={markSeen}
