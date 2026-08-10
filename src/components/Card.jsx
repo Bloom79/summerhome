@@ -1,10 +1,12 @@
 import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
+import { LAST_UPDATED } from '../data.js'
 import { useI18n } from '../i18n.jsx'
 
 export default function Card({ l, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
+  const isNew = l.date === LAST_UPDATED
   return (
     <div
       className={'card' + (highlighted ? ' hl' : '') + (seen ? ' seen' : '')}
@@ -23,7 +25,7 @@ export default function Card({ l, fav, seen, highlighted, userPos, onOpen, onTog
         {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
       </div>
       <div className="cbody">
-        <div className="ctitle">{l.title}</div>
+        <div className="ctitle">{isNew && <span className="newb">✨ {t('new_badge')}</span>}{l.title}</div>
         <div className="caddr">📍 {l.addr}</div>
         <div className="cstats">
           {l.size ? <span><b>{l.size}</b> m²</span> : null}

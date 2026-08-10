@@ -26,14 +26,17 @@ function MapBridge({ onReady, onBoundsChange }) {
 }
 
 export default function MapPanel({
-  items, highlightId, userPos, areaSync, seen, initialBounds,
+  items, highlightId, userPos, areaSync, seen,
   onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
   return (
     <section id="mapwrap">
       <div id="map">
-        <MapContainer bounds={initialBounds} zoomControl={false} style={{ height: '100%', width: '100%' }}>
+        {/* Fallback view only: the real fit happens in App (fitToCriteria),
+            re-armed by a ResizeObserver so a map mounted hidden (mobile list
+            view) fits correctly the moment it becomes visible. */}
+        <MapContainer center={[56.2, -5.3]} zoom={6} zoomControl={false} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}

@@ -32,9 +32,6 @@ function loadIdSet(key) {
   return new Set()
 }
 
-// Bounds covering every listing — the map's initial view, so it opens on the
-// houses' area instead of a whole-continent default.
-const ALL_BOUNDS = L.latLngBounds(LISTINGS.map((l) => [l.lat, l.lng])).pad(0.1)
 
 export default function App() {
   const { t } = useI18n()
@@ -59,6 +56,14 @@ export default function App() {
   const cardRefs = useRef({})
   const toastTimer = useRef(null)
   const hlTimer = useRef(null)
+  // Latest filter-matching listings, readable from stable callbacks.
+  const criteriaRef = useRef(LISTINGS)
+  // True while the map still needs its first real fit. A map mounted inside a
+  // hidden container (mobile starts in list view) has size 0x0: Leaflet then
+  // resolves any fit to zoom 0 — the whole world. So fits only "count" when
+  // the container has a real size; until then this stays true and the
+  // ResizeObserver below retries as soon as the map becomes visible.
+  const needsFitRef = useRef(true)
 
   const toast = useCallback((m) => {
     setToastMsg(m)
@@ -115,6 +120,8 @@ export default function App() {
     return true
   }), [filters, favOnly, seaOnly, gardenOnly, favs])
 
+  useEffect(() => { criteriaRef.current = criteriaItems }, [criteriaItems])
+
   const items = useMemo(() => {
     let out = criteriaItems
     if (areaSync && bounds && mapZoom > 6) {
@@ -132,25 +139,43 @@ export default function App() {
     return arr
   }, [criteriaItems, areaSync, bounds, mapZoom, sort, userPos])
 
-  // Fit the map to the filtered houses whenever the filter criteria change, so
-  // the view always covers exactly the current results (and no more). Keyed on
-  // the criteria only — not on favouriting or on map movement.
+  // Fit the map to the current filter-matching houses. Only counts as done
+  // when the container has a real size; otherwise it is deferred (needsFit)
+  // until the ResizeObserver sees the map become visible.
+  const fitToCriteria = useCallback((map, animate) => {
+    const s = map.getSize()
+    if (!s.x || !s.y) { needsFitRef.current = true; return }
+    const src = criteriaRef.current.length ? criteriaRef.current : LISTINGS
+    const b = L.latLngBounds(src.map((l) => [l.lat, l.lng])).pad(0.12)
+    if (animate) map.flyToBounds(b, { duration: 0.7, maxZoom: 13 })
+    else map.fitBounds(b, { maxZoom: 13 })
+    needsFitRef.current = false
+  }, [])
+
+  // Re-fit when the filter criteria change — not on favouriting or map pans.
+  const firstFit = useRef(true)
   useEffect(() => {
+    if (firstFit.current) { firstFit.current = false; return }
     const map = mapRef.current
-    if (!map || !criteriaItems.length) return
-    const b = L.latLngBounds(criteriaItems.map((l) => [l.lat, l.lng])).pad(0.12)
-    map.flyToBounds(b, { duration: 0.7, maxZoom: 13 })
+    if (!map) { needsFitRef.current = true; return }
+    fitToCriteria(map, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, seaOnly, gardenOnly, favOnly])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
     mapRef.current = map
-    map.fitBounds(ALL_BOUNDS)
-    // Re-fit after layout settles: if the container was still sizing itself on
-    // first paint, the initial fit computes a wrong (world-level) zoom.
-    setTimeout(() => { map.invalidateSize(); map.fitBounds(ALL_BOUNDS) }, 150)
-  }, [])
+    window.ctMap = map
+    fitToCriteria(map, false)
+    // Whenever the container gains or changes size (first layout, mobile
+    // list->map switch, rotation), refresh Leaflet's size and run any fit
+    // that had to be deferred while the map was hidden.
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize()
+      if (needsFitRef.current) fitToCriteria(map, false)
+    })
+    ro.observe(map.getContainer())
+  }, [fitToCriteria])
 
   const onBoundsChange = useCallback((b, z) => {
     setBounds(b)
@@ -257,7 +282,6 @@ export default function App() {
           userPos={userPos}
           areaSync={areaSync}
           seen={seen}
-          initialBounds={ALL_BOUNDS}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
           onMarkerClick={onMarkerClick}
