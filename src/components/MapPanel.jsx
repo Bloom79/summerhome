@@ -5,10 +5,10 @@ import { fmtP, shortP, imgUrl, handleImgError, hostOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
-const pinIcon = (l, hl) =>
+const pinIcon = (l, hl, seen) =>
   L.divIcon({
     className: '',
-    html: `<div class="pricepin${hl ? ' hl' : ''}">${shortP(l)}</div>`,
+    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}">${shortP(l)}</div>`,
     iconSize: [0, 0],
   })
 
@@ -26,14 +26,14 @@ function MapBridge({ onReady, onBoundsChange }) {
 }
 
 export default function MapPanel({
-  items, highlightId, userPos, areaSync,
-  onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onMapReady, onBoundsChange,
+  items, highlightId, userPos, areaSync, seen, initialBounds,
+  onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
   return (
     <section id="mapwrap">
       <div id="map">
-        <MapContainer center={[56.4, -4.5]} zoom={5} zoomControl={false} style={{ height: '100%', width: '100%' }}>
+        <MapContainer bounds={initialBounds} zoomControl={false} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
@@ -46,7 +46,7 @@ export default function MapPanel({
             <Marker
               key={l.id}
               position={[l.lat, l.lng]}
-              icon={pinIcon(l, l.id === highlightId)}
+              icon={pinIcon(l, l.id === highlightId, seen && seen.has(l.id))}
               eventHandlers={{ click: () => onMarkerClick(l.id) }}
             >
               <Popup>
@@ -59,7 +59,7 @@ export default function MapPanel({
                     <div className="pa">📍 {l.addr}</div>
                     <div className="pp">{fmtP(l)}</div>
                     {l.url && (
-                      <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer">
+                      <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer" onClick={() => onSeen && onSeen(l.id)}>
                         🔗 {t('view_on', { host: hostOf(l.url) })} →
                       </a>
                     )}

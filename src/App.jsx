@@ -23,14 +23,18 @@ const inPriceBands = (price, ids) => {
   })
 }
 
-// Load favourites from localStorage once.
-function loadFavs() {
+// Load a Set of listing ids from localStorage once.
+function loadIdSet(key) {
   try {
-    const s = localStorage.getItem('ct_favs')
+    const s = localStorage.getItem(key)
     if (s) return new Set(JSON.parse(s))
   } catch { /* ignore */ }
   return new Set()
 }
+
+// Bounds covering every listing — the map's initial view, so it opens on the
+// houses' area instead of a whole-continent default.
+const ALL_BOUNDS = L.latLngBounds(LISTINGS.map((l) => [l.lat, l.lng])).pad(0.1)
 
 export default function App() {
   const { t } = useI18n()
@@ -38,7 +42,9 @@ export default function App() {
   const [sort, setSort] = useState('rel')
   const [favOnly, setFavOnly] = useState(false)
   const [seaOnly, setSeaOnly] = useState(false)
-  const [favs, setFavs] = useState(loadFavs)
+  const [gardenOnly, setGardenOnly] = useState(false)
+  const [favs, setFavs] = useState(() => loadIdSet('ct_favs'))
+  const [seen, setSeen] = useState(() => loadIdSet('ct_seen'))
   const [userPos, setUserPos] = useState(null)
   const [areaSync, setAreaSync] = useState(true)
   const [bounds, setBounds] = useState(null)
@@ -72,6 +78,23 @@ export default function App() {
     })
   }, [toast])
 
+  // ---- Seen listings (viewed detail/photos/source) — persisted ----
+  const markSeen = useCallback((id) => {
+    setSeen((prev) => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      try { localStorage.setItem('ct_seen', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
+
+  // Opening a listing's detail marks it as seen.
+  const openDetail = useCallback((id) => {
+    markSeen(id)
+    setSelectedId(id)
+  }, [markSeen])
+
   // ---- Derived list ----
   // Listings matching the filter criteria (zone/price/type/…) but NOT the map
   // viewport. The map fits itself to THIS set, so panning the map never fights
@@ -79,6 +102,7 @@ export default function App() {
   const criteriaItems = useMemo(() => LISTINGS.filter((l) => {
     if (favOnly && !favs.has(l.id)) return false
     if (seaOnly && !l.seaView) return false
+    if (gardenOnly && !l.feats.includes('Giardino')) return false
     if (filters.zone && l.zone !== filters.zone) return false
     if (filters.contract && l.contract !== filters.contract) return false
     if (filters.type && l.type !== filters.type) return false
@@ -89,7 +113,7 @@ export default function App() {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [filters, favOnly, seaOnly, favs])
+  }), [filters, favOnly, seaOnly, gardenOnly, favs])
 
   const items = useMemo(() => {
     let out = criteriaItems
@@ -117,13 +141,15 @@ export default function App() {
     const b = L.latLngBounds(criteriaItems.map((l) => [l.lat, l.lng])).pad(0.12)
     map.flyToBounds(b, { duration: 0.7, maxZoom: 13 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, seaOnly, favOnly])
+  }, [filters, seaOnly, gardenOnly, favOnly])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
     mapRef.current = map
-    const b = L.latLngBounds(LISTINGS.map((l) => [l.lat, l.lng])).pad(0.1)
-    map.fitBounds(b)
+    map.fitBounds(ALL_BOUNDS)
+    // Re-fit after layout settles: if the container was still sizing itself on
+    // first paint, the initial fit computes a wrong (world-level) zoom.
+    setTimeout(() => { map.invalidateSize(); map.fitBounds(ALL_BOUNDS) }, 150)
   }, [])
 
   const onBoundsChange = useCallback((b, z) => {
@@ -206,7 +232,9 @@ export default function App() {
           filters={filters}
           favOnly={favOnly}
           seaOnly={seaOnly}
+          gardenOnly={gardenOnly}
           favs={favs}
+          seen={seen}
           userPos={userPos}
           sort={sort}
           highlightId={highlightId}
@@ -214,9 +242,11 @@ export default function App() {
           onApplyAdvanced={(adv) => setFilters((f) => ({ ...f, ...adv }))}
           onToggleFavOnly={() => setFavOnly((v) => !v)}
           onToggleSea={() => setSeaOnly((v) => !v)}
+          onToggleGarden={() => setGardenOnly((v) => !v)}
           onSortChange={onSortChange}
-          onOpen={setSelectedId}
+          onOpen={openDetail}
           onToggleFav={toggleFav}
+          onSeen={markSeen}
           onHover={onHover}
           cardRefs={cardRefs}
         />
@@ -226,10 +256,13 @@ export default function App() {
           highlightId={highlightId}
           userPos={userPos}
           areaSync={areaSync}
+          seen={seen}
+          initialBounds={ALL_BOUNDS}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
           onMarkerClick={onMarkerClick}
-          onOpen={setSelectedId}
+          onOpen={openDetail}
+          onSeen={markSeen}
           onMapReady={onMapReady}
           onBoundsChange={onBoundsChange}
         />

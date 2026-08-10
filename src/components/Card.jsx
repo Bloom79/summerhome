@@ -1,13 +1,13 @@
 import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav, onHover }) {
+export default function Card({ l, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   return (
     <div
-      className={'card' + (highlighted ? ' hl' : '')}
+      className={'card' + (highlighted ? ' hl' : '') + (seen ? ' seen' : '')}
       onClick={() => onOpen(l.id)}
       onMouseEnter={() => onHover(l.id, true)}
       onMouseLeave={() => onHover(l.id, false)}
@@ -17,6 +17,7 @@ export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav
           ? <img loading="lazy" src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
           : <div className="cimg-ph">📷</div>}
         <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
+        {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>
         <span className="price">{fmtP(l)}</span>
         {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
@@ -37,7 +38,7 @@ export default function Card({ l, fav, highlighted, userPos, onOpen, onToggleFav
             href={l.url}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); if (onSeen) onSeen(l.id) }}
           >
             🔗 {t('view_on', { host: hostOf(l.url) })} →
           </a>

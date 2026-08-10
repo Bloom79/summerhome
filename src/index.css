@@ -172,3 +172,12 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
   #advfilters{grid-template-columns:1fr}
   .logo .lg-txt{display:none}
 }
+
+/* ---- Seen (already viewed) listings ---- */
+.card.seen{opacity:.72}
+.card.seen:not(.hl){border-color:#c3ced1}
+.card.seen:hover{opacity:1}
+.card.seen .cimg img{filter:saturate(.55)}
+.cimg .seenb{position:absolute;left:12px;top:44px;background:#5b6770;color:#fff;font-size:.7rem;font-weight:700;letter-spacing:.03em;padding:4px 10px;border-radius:999px}
+.pricepin.seen:not(.hl){background:#e7ebed;border-color:#7d8a90;color:#4c585e}
+.pricepin.seen:not(.hl):after{border-top-color:#7d8a90}

@@ -3,9 +3,9 @@ import Card from './Card.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, filters, favOnly, seaOnly, favs, userPos, sort, highlightId,
-  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onSortChange,
-  onOpen, onToggleFav, onHover, cardRefs,
+  items, filters, favOnly, seaOnly, gardenOnly, favs, seen, userPos, sort, highlightId,
+  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onSortChange,
+  onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
   return (
@@ -18,6 +18,8 @@ export default function ListPanel({
         onToggleFavOnly={onToggleFavOnly}
         seaOnly={seaOnly}
         onToggleSea={onToggleSea}
+        gardenOnly={gardenOnly}
+        onToggleGarden={onToggleGarden}
       />
 
       <div id="resmeta">
@@ -41,10 +43,12 @@ export default function ListPanel({
               <Card
                 l={l}
                 fav={favs.has(l.id)}
+                seen={seen.has(l.id)}
                 highlighted={highlightId === l.id}
                 userPos={userPos}
                 onOpen={onOpen}
                 onToggleFav={onToggleFav}
+                onSeen={onSeen}
                 onHover={onHover}
               />
             </div>
