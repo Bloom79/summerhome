@@ -60,3 +60,15 @@ mostra il vecchio percorso GitHub come ripiego.
 - Il worker accetta richieste solo dalle origini del portale (CORS) e rifiuta
   aree fuori UK/Irlanda o troppo larghe: può creare issue, nient'altro.
 - Piano gratuito Cloudflare: 100.000 richieste/giorno — più che sufficiente.
+
+## Avvisi push (`/subscribe`, `/check`)
+
+Il worker gestisce anche gli **avvisi sulle case**: il portale registra la
+sottoscrizione web-push del browser insieme ai criteri scelti dall'utente
+(zona, prezzo massimo, camere minime, vista mare, giardino, tipi di evento:
+nuove / ribassi / vendute) su **Workers KV**. A ogni aggiornamento dei dati i
+workflow chiamano `POST /check` (e un cron ogni 30 minuti fa da rete di
+sicurezza): il worker confronta `public/data.json` con lo snapshot precedente,
+calcola gli eventi e invia una notifica push **solo** a chi ha criteri
+corrispondenti. Le chiavi VAPID: la pubblica sta in `src/config.js` e in
+`wrangler.toml`, la privata è il secret `VAPID_PRIVATE_KEY`.
