@@ -29,6 +29,48 @@ export default {
       'Access-Control-Allow-Headers': 'Content-Type',
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+
+    const ghAuth = (path, init = {}) =>
+      fetch('https://api.github.com' + path, {
+        ...init,
+        headers: {
+          Authorization: 'Bearer ' + env.GITHUB_TOKEN,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'casatrova-cerca-qui-worker',
+          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        },
+      })
+
+    // GET /status?issue=N — live progress for the portal's status widget.
+    // Uses the worker's token, so the portal never hits GitHub's anonymous
+    // rate limit. Outcome is derived from the workflow's closing comment.
+    if (request.method === 'GET') {
+      const u = new URL(request.url)
+      if (u.pathname !== '/status') return json({ error: 'not found' }, 404, cors)
+      const n = +u.searchParams.get('issue')
+      if (!n) return json({ error: 'issue param required' }, 400, cors)
+      const r = await ghAuth(`/repos/${REPO}/issues/${n}`)
+      if (!r.ok) return json({ error: 'github ' + r.status }, 502, cors)
+      const it = await r.json()
+      let outcome = null, zone = null, added = null
+      if (it.comments > 0) {
+        const cr = await ghAuth(`/repos/${REPO}/issues/${n}/comments`)
+        if (cr.ok) {
+          const cs = await cr.json()
+          const last = (cs[cs.length - 1] || {}).body || ''
+          zone = (/Zona \*\*(.+?)\*\*/.exec(last) || [])[1] || null
+          added = +((/\*\*(\d+) case\*\*/.exec(last) || [])[1] || 0) || null
+          if (/aggiunta al portale/i.test(last)) outcome = 'ok'
+          else if (/Nessuna zona aggiunta/i.test(last)) outcome = 'none'
+          else if (/agente giornaliero/i.test(last)) outcome = 'deferred'
+        }
+      }
+      if (!outcome && it.state === 'closed') outcome = 'ok'
+      return json({ state: it.state, outcome, zone, added }, 200, {
+        ...cors, 'Cache-Control': 'no-store',
+      })
+    }
+
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405, cors)
 
     let req
@@ -41,16 +83,7 @@ export default {
     if (!bounds || !num(bounds.north) || !num(bounds.south) || !num(bounds.east) || !num(bounds.west))
       return json({ error: 'missing bounds' }, 400, cors)
 
-    const gh = (path, init = {}) =>
-      fetch('https://api.github.com' + path, {
-        ...init,
-        headers: {
-          Authorization: 'Bearer ' + env.GITHUB_TOKEN,
-          Accept: 'application/vnd.github+json',
-          'User-Agent': 'casatrova-cerca-qui-worker',
-          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        },
-      })
+    const gh = ghAuth
 
     // Dedupe: an open request within ~3 km of this point is the same request.
     const listRes = await gh(`/repos/${REPO}/issues?state=open&per_page=50`)

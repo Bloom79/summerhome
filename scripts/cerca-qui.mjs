@@ -10,7 +10,7 @@
 // Exit code is always 0 — the workflow branches on `status`.
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'fs'
-import { spawnSync } from 'child_process'
+import { execFile } from 'child_process'
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 const ROOT = new URL('..', import.meta.url).pathname
@@ -26,10 +26,19 @@ const finish = (status, msg, zone = '', added = 0) => {
 }
 
 // curl instead of fetch: it honors proxy/CA env everywhere the script runs.
-const get = async (url) => {
-  const r = spawnSync('curl', ['-sf', '--max-time', '25', '-A', UA, url], { maxBuffer: 64e6 })
-  if (r.status !== 0) throw new Error(`curl ${r.status} ${url}`)
-  return r.stdout.toString()
+const get = (url) => new Promise((resolve, reject) =>
+  execFile('curl', ['-sf', '--max-time', '25', '-A', UA, url], { maxBuffer: 64e6 },
+    (e, so) => (e ? reject(new Error(`curl ${url}`)) : resolve(so.toString()))))
+
+// Bounded-concurrency map: detail pages download in parallel (8 at a time)
+// so quality enrichment (full-text seaView/feats) doesn't cost minutes.
+const pmap = async (items, fn, limit = 8) => {
+  const res = new Array(items.length)
+  let i = 0
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) || 1 }, async () => {
+    while (i < items.length) { const k = i++; res[k] = await fn(items[k], k) }
+  }))
+  return res
 }
 
 // ---- Parse the request ----
@@ -105,29 +114,29 @@ if (cc === 'ie') {
       for (const it of items) { const u = it.url || it.item?.url; if (u) brochures.add(u) }
     } catch { /* other ld+json blocks */ }
   }
-  for (const u of brochures) {
-    if (listings.length >= CAP) break
-    if (existingUrls.has(u)) continue
+  const candidates = [...brochures].filter((u) => !existingUrls.has(u)).slice(0, CAP * 2)
+  const parsed = await pmap(candidates, async (u) => {
     let page
-    try { page = await get(u) } catch { continue }
+    try { page = await get(u) } catch { return null }
     const title = /<title>([^<]*)/.exec(page)?.[1] || ''
-    if (/^(Sold|Sale Agreed)/i.test(title.trim())) continue
+    if (/^(Sold|Sale Agreed)/i.test(title.trim())) return null
     const price = +(/€\s?([\d,]+)/.exec(title)?.[1] || '').replace(/,/g, '')
     const cm = /BrochureMap":\{"longitude":(-?[\d.]+),"latitude":(-?[\d.]+)/.exec(page)
-    if (!price || !cm) continue
+    if (!price || !cm) return null
     const [plng, plat] = [+cm[1], +cm[2]]
-    if (!inBox(plat, plng)) continue
+    if (!inBox(plat, plng)) return null
     const beds = +(/"NumberOfBeds":(\d+)/.exec(page)?.[1] || 0) || null
     const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
     const text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
     const addrTxt = title.split(/ [-–] /)[0].replace(/€.*$/, '').trim() || town
-    listings.push({
+    return {
       id: 0, title: addrTxt, type: 'Casa indipendente', contract: 'sale', price, currency: 'EUR',
       size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
       zone: zoneName, town, addr: addrTxt, lat: plat, lng: plng, imgs,
       feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url: u,
-    })
-  }
+    }
+  })
+  listings.push(...parsed.filter(Boolean).slice(0, CAP))
 } else {
   // ---- Rightmove ----
   let loc
@@ -138,12 +147,13 @@ if (cc === 'ie') {
   if (!loc) finish('error', `località Rightmove non trovata per ${town}`)
   loc = `REGION^${loc.id}`
   searchKeys = [loc.replace('REGION^', '')]
-  const props = []
-  for (const index of [0, 24]) {
-    let html
+  const pages = await pmap([0, 24], async (index) => {
     try {
-      html = await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=${encodeURIComponent(loc)}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}`)
-    } catch { continue }
+      return await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=${encodeURIComponent(loc)}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}`)
+    } catch { return '' }
+  }, 2)
+  const props = []
+  for (const html of pages) {
     const k = html.indexOf('"properties":[')
     if (k < 0) continue
     let i = html.indexOf('[', k), depth = 0, j = i
@@ -154,33 +164,38 @@ if (cc === 'ie') {
     try { props.push(...JSON.parse(html.slice(i, j + 1))) } catch { /* partial page */ }
   }
   const seen = new Set()
-  for (const p of props) {
-    if (listings.length >= CAP) break
-    if (p.transactionType && p.transactionType !== 'buy') continue
+  const candidates = props.filter((p) => {
+    if (p.transactionType && p.transactionType !== 'buy') return false
     const pla = p.location?.latitude, pln = p.location?.longitude
-    if (!pla || !pln || !inBox(pla, pln)) continue
+    if (!pla || !pln || !inBox(pla, pln)) return false
     const sub = (p.propertySubType || '').toLowerCase()
-    if (/land|plot|site|garage|parking/.test(sub)) continue
-    if (!p.price?.amount) continue
+    if (/land|plot|site|garage|parking/.test(sub)) return false
+    if (!p.price?.amount) return false
     const url = `https://www.rightmove.co.uk/properties/${p.id}`
-    if (existingUrls.has(url) || seen.has(url)) continue
+    if (existingUrls.has(url) || seen.has(url)) return false
     seen.add(url)
+    return true
+  }).slice(0, CAP)
+  const enriched = await pmap(candidates, async (p) => {
+    const sub = (p.propertySubType || '').toLowerCase()
+    const url = `https://www.rightmove.co.uk/properties/${p.id}`
     let text = ''
     try {
       const page = await get(url)
       const kf = page.indexOf('"keyFeatures"')
       text = (kf >= 0 ? page.slice(kf, kf + 6000) : page.slice(0, 60000)).replace(/<[^>]+>/g, ' ')
     } catch { /* enrich is best-effort */ }
-    listings.push({
+    return {
       id: 0, title: p.displayAddress, contract: 'sale',
       type: /bungalow/.test(sub) ? 'Bungalow' : /flat|apartment/.test(sub) ? 'Appartamento' : /cottage/.test(sub) ? 'Cottage' : 'Casa indipendente',
       price: p.price.amount, currency: 'GBP',
       size: null, rooms: p.bedrooms ?? null, baths: p.bathrooms || null, floor: null, year: null, energy: null,
-      zone: zoneName, town, addr: p.displayAddress, lat: pla, lng: pln,
+      zone: zoneName, town, addr: p.displayAddress, lat: p.location.latitude, lng: p.location.longitude,
       imgs: (p.propertyImages?.images || []).slice(0, 6).map((im) => (im.srcUrl || '').replace('media.rightmove.co.uk:443', 'media.rightmove.co.uk')).filter(Boolean),
       feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url,
-    })
-  }
+    }
+  })
+  listings.push(...enriched)
 }
 
 if (!listings.length) finish('none', `nessun annuncio in vendita trovato nell'area di ${town}`, zoneName)

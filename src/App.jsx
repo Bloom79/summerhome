@@ -55,9 +55,11 @@ export default function App() {
   const [toastOn, setToastOn] = useState(false)
   // "Trova nuove case qui" panel: null | {loading} | {place, coords, url}
   const [agentReq, setAgentReq] = useState(null)
-  // Outcome banner once a sent request is processed: null | {ok: bool}
-  const [agentDone, setAgentDone] = useState(null)
+  // Live status of a sent request: null | {phase, zone, added, t0}
+  // phase: working | publishing | ready | none | deferred
+  const [agentStatus, setAgentStatus] = useState(null)
   const watchRef = useRef(null)
+  const [, setStatusTick] = useState(0)
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -297,29 +299,50 @@ export default function App() {
     setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url, req } : prev))
   }, [toast, t])
 
-  // After a send, watch the request's GitHub issue (public API, anonymous):
-  // the instant workflow closes it when done, and we surface that in-page so
-  // the user doesn't have to guess whether anything happened.
-  const watchAgentIssue = useCallback((issueUrl) => {
-    const m = /github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)/.exec(issueUrl || '')
+  // Ticker so the elapsed time in the status widget re-renders each second.
+  useEffect(() => {
+    const active = agentStatus && (agentStatus.phase === 'working' || agentStatus.phase === 'publishing')
+    if (!active) return
+    const iv = setInterval(() => setStatusTick((x) => x + 1), 1000)
+    return () => clearInterval(iv)
+  }, [agentStatus])
+
+  // After a send, follow the request live: the worker's /status route (which
+  // reads the GitHub issue with its own token) says whether the agent is
+  // still searching or done, then we watch our own site until the new build
+  // is actually published — that's when "reload" will show the houses.
+  const watchAgentRequest = useCallback((issueUrl) => {
+    const m = /\/issues\/(\d+)/.exec(issueUrl || '')
     if (!m) return
-    const api = `https://api.github.com/repos/${m[1]}/issues/${m[2]}`
     clearInterval(watchRef.current)
     const t0 = Date.now()
+    const initialJs = document.querySelector('script[src*="assets/index"]')?.getAttribute('src') || ''
+    let mode = 'status'
+    let found = { zone: null, added: null }
+    setAgentStatus({ phase: 'working', t0 })
     watchRef.current = setInterval(async () => {
-      if (Date.now() - t0 > 12 * 60000) { clearInterval(watchRef.current); return }
+      if (Date.now() - t0 > 15 * 60000) { clearInterval(watchRef.current); return }
       try {
-        const issue = await (await fetch(api, { headers: { Accept: 'application/vnd.github+json' } })).json()
-        if (issue.state !== 'closed') return
-        clearInterval(watchRef.current)
-        let ok = true
-        try {
-          const cs = await (await fetch(`${api}/comments`)).json()
-          ok = !/Nessuna zona aggiunta/i.test(cs[cs.length - 1]?.body || '')
-        } catch { /* assume success */ }
-        setAgentDone({ ok })
+        if (mode === 'status') {
+          const j = await (await fetch(`${CERCA_QUI_ENDPOINT}/status?issue=${m[1]}`)).json()
+          if (j.outcome === 'none' || j.outcome === 'deferred') {
+            clearInterval(watchRef.current)
+            setAgentStatus({ phase: j.outcome, t0 })
+          } else if (j.outcome === 'ok' && j.state === 'closed') {
+            mode = 'bundle'
+            found = { zone: j.zone, added: j.added }
+            setAgentStatus({ phase: 'publishing', ...found, t0 })
+          }
+        } else {
+          const html = await (await fetch(window.location.href, { cache: 'no-store' })).text()
+          const cur = (html.match(/assets\/index-[^"']+\.js/) || [])[0] || ''
+          if (cur && !initialJs.includes(cur)) {
+            clearInterval(watchRef.current)
+            setAgentStatus({ phase: 'ready', ...found, t0 })
+          }
+        }
       } catch { /* transient; keep polling */ }
-    }, 20000)
+    }, 10000)
   }, [])
 
   // Direct one-tap send through the Cloudflare Worker (docs/cerca-qui-worker.md).
@@ -337,13 +360,12 @@ export default function App() {
       const j = await r.json().catch(() => null)
       if (!r.ok || !j || !j.ok) throw new Error('send failed')
       setAgentReq(null)
-      setAgentDone(null)
       toast(t(j.duplicate ? 't_agent_dup' : 't_agent_ok'))
-      watchAgentIssue(j.issueUrl)
+      watchAgentRequest(j.issueUrl)
     } catch {
       setAgentReq({ ...cur, sending: false, failed: true })
     }
-  }, [agentReq, toast, t, watchAgentIssue])
+  }, [agentReq, toast, t, watchAgentRequest])
 
   const onFitAll = useCallback(() => {
     const src = soldView ? soldItems : items
@@ -469,15 +491,28 @@ export default function App() {
         </div>
       )}
 
-      {agentDone && (
-        <div id="agentdone">
-          <span>{t(agentDone.ok ? 'agent_done_ok' : 'agent_done_none')}</span>
-          {agentDone.ok && (
-            <button className="reload" onClick={() => window.location.reload()}>{t('agent_reload')}</button>
-          )}
-          <button className="dismiss" onClick={() => setAgentDone(null)}>✕</button>
-        </div>
-      )}
+      {agentStatus && (() => {
+        const busy = agentStatus.phase === 'working' || agentStatus.phase === 'publishing'
+        const el = Math.floor((Date.now() - agentStatus.t0) / 1000)
+        const elapsed = `${Math.floor(el / 60)}:${String(el % 60).padStart(2, '0')}`
+        return (
+          <div id="agentdone">
+            {busy && <span className="spin" />}
+            <span>
+              {agentStatus.phase === 'working' && t('agst_working')}
+              {agentStatus.phase === 'publishing' && t('agst_publishing', { n: agentStatus.added ?? '…' })}
+              {agentStatus.phase === 'ready' && t('agst_ready', { n: agentStatus.added ?? '', zone: agentStatus.zone || '' })}
+              {agentStatus.phase === 'none' && t('agst_none')}
+              {agentStatus.phase === 'deferred' && t('agst_deferred')}
+              {busy && ` · ${elapsed}`}
+            </span>
+            {agentStatus.phase === 'ready' && (
+              <button className="reload" onClick={() => window.location.reload()}>{t('agent_reload')}</button>
+            )}
+            <button className="dismiss" onClick={() => { clearInterval(watchRef.current); setAgentStatus(null) }}>✕</button>
+          </div>
+        )
+      })()}
 
       <div id="toast" className={toastOn ? 'show' : ''}>{toastMsg}</div>
     </div>

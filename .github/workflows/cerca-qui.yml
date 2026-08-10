@@ -12,7 +12,8 @@ on:
 permissions:
   contents: write
   issues: write
-  actions: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: cerca-qui
@@ -22,6 +23,8 @@ jobs:
     if: startsWith(github.event.issue.title, 'Cerca qui:')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment:
+      name: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,11 +59,20 @@ jobs:
           git pull --rebase origin main
           git push origin main
 
-      - name: Trigger Pages deploy
+      # Publish straight from this run — no second workflow, ~1 min saved.
+      - name: Setup Pages
         if: steps.proc.outputs.status == 'ok'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY"
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        if: steps.proc.outputs.status == 'ok'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        if: steps.proc.outputs.status == 'ok'
+        uses: actions/deploy-pages@v4
 
       - name: Close issue — homes added
         if: steps.proc.outputs.status == 'ok'
