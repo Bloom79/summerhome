@@ -5,10 +5,10 @@ import { fmtP, shortP, imgUrl, handleImgError, hostOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
-const pinIcon = (l, hl, seen) =>
+const pinIcon = (l, hl, seen, sold) =>
   L.divIcon({
     className: '',
-    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}">${shortP(l)}</div>`,
+    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}${sold ? ' sold' : ''}">${shortP(l)}</div>`,
     iconSize: [0, 0],
   })
 
@@ -26,7 +26,7 @@ function MapBridge({ onReady, onBoundsChange }) {
 }
 
 export default function MapPanel({
-  items, highlightId, userPos, areaSync, seen,
+  items, highlightId, userPos, areaSync, seen, soldView,
   onToggleAreaSync, onFitAll, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
@@ -49,7 +49,7 @@ export default function MapPanel({
             <Marker
               key={l.id}
               position={[l.lat, l.lng]}
-              icon={pinIcon(l, l.id === highlightId, seen && seen.has(l.id))}
+              icon={pinIcon(l, l.id === highlightId, seen && seen.has(l.id), soldView)}
               eventHandlers={{ click: () => onMarkerClick(l.id) }}
             >
               <Popup>
@@ -66,7 +66,7 @@ export default function MapPanel({
                         🔗 {t('view_on', { host: hostOf(l.url) })} →
                       </a>
                     )}
-                    <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>
+                    {!soldView && <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>}
                   </div>
                 </div>
               </Popup>

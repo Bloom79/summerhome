@@ -182,3 +182,11 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .pricepin.seen:not(.hl){background:#e7ebed;border-color:#7d8a90;color:#4c585e}
 .pricepin.seen:not(.hl):after{border-top-color:#7d8a90}
 .ctitle .newb{display:inline-block;background:var(--accent);color:#fff;font-size:.64rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:6px;margin-right:7px;vertical-align:2px}
+/* ---- Sold / removed archive ---- */
+.card.sold{cursor:default}
+.card.sold .cimg img{filter:grayscale(.75)}
+.cimg .tag.st-sold{background:#c0392b}
+.cimg .tag.st-sale_agreed{background:#d68910}
+.cimg .tag.st-removed{background:#5b6770}
+.pricepin.sold{background:#7c2b2b;border-color:#7c2b2b;color:#fff}
+.pricepin.sold:after{border-top-color:#7c2b2b}

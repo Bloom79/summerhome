@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { LISTINGS, LAST_UPDATED } from './data.js'
+import { LISTINGS, SOLD, LAST_UPDATED } from './data.js'
 import { dist } from './utils.js'
 import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
@@ -40,6 +40,7 @@ export default function App() {
   const [favOnly, setFavOnly] = useState(false)
   const [seaOnly, setSeaOnly] = useState(false)
   const [gardenOnly, setGardenOnly] = useState(false)
+  const [soldView, setSoldView] = useState(false)
   const [favs, setFavs] = useState(() => loadIdSet('ct_favs'))
   const [seen, setSeen] = useState(() => loadIdSet('ct_seen'))
   const [userPos, setUserPos] = useState(null)
@@ -94,8 +95,10 @@ export default function App() {
     })
   }, [])
 
-  // Opening a listing's detail marks it as seen.
+  // Opening a listing's detail marks it as seen. Sold-archive entries have
+  // pseudo-ids and no detail modal.
   const openDetail = useCallback((id) => {
+    if (typeof id !== 'number') return
     markSeen(id)
     setSelectedId(id)
   }, [markSeen])
@@ -120,7 +123,14 @@ export default function App() {
     return true
   }), [filters, favOnly, seaOnly, gardenOnly, favs])
 
-  useEffect(() => { criteriaRef.current = criteriaItems }, [criteriaItems])
+  // Sold/removed archive view: entries verified gone on the source portal.
+  // Only the zone filter applies; each gets a stable pseudo-id for map keys.
+  const soldItems = useMemo(() =>
+    SOLD.map((s, i) => ({ ...s, id: 'sold-' + i }))
+      .filter((s) => !filters.zone || s.zone === filters.zone),
+    [filters.zone])
+
+  useEffect(() => { criteriaRef.current = soldView ? soldItems : criteriaItems }, [criteriaItems, soldItems, soldView])
 
   const items = useMemo(() => {
     let out = criteriaItems
@@ -160,7 +170,7 @@ export default function App() {
     if (!map) { needsFitRef.current = true; return }
     fitToCriteria(map, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, seaOnly, gardenOnly, favOnly])
+  }, [filters, seaOnly, gardenOnly, favOnly, soldView])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
@@ -232,10 +242,11 @@ export default function App() {
   }, [])
 
   const onFitAll = useCallback(() => {
-    if (!mapRef.current || !items.length) return
-    const b = L.latLngBounds(items.map((l) => [l.lat, l.lng])).pad(0.15)
+    const src = soldView ? soldItems : items
+    if (!mapRef.current || !src.length) return
+    const b = L.latLngBounds(src.map((l) => [l.lat, l.lng])).pad(0.15)
     mapRef.current.flyToBounds(b, { duration: 1 })
-  }, [items])
+  }, [items, soldItems, soldView])
 
   const onSortChange = useCallback((v) => {
     if (v === 'dist' && !userPos) toast(t('t_dist_hint'))
@@ -244,6 +255,7 @@ export default function App() {
 
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
+  const displayItems = soldView ? soldItems : items
 
   return (
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '')}>
@@ -253,11 +265,13 @@ export default function App() {
 
       <div id="main">
         <ListPanel
-          items={items}
+          items={displayItems}
           filters={filters}
           favOnly={favOnly}
           seaOnly={seaOnly}
           gardenOnly={gardenOnly}
+          soldView={soldView}
+          soldCount={SOLD.length}
           favs={favs}
           seen={seen}
           userPos={userPos}
@@ -268,6 +282,7 @@ export default function App() {
           onToggleFavOnly={() => setFavOnly((v) => !v)}
           onToggleSea={() => setSeaOnly((v) => !v)}
           onToggleGarden={() => setGardenOnly((v) => !v)}
+          onToggleSold={() => setSoldView((v) => !v)}
           onSortChange={onSortChange}
           onOpen={openDetail}
           onToggleFav={toggleFav}
@@ -277,11 +292,12 @@ export default function App() {
         />
 
         <MapPanel
-          items={items}
+          items={displayItems}
           highlightId={highlightId}
           userPos={userPos}
           areaSync={areaSync}
           seen={seen}
+          soldView={soldView}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
           onMarkerClick={onMarkerClick}
