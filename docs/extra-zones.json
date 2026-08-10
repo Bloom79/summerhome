@@ -14,5 +14,21 @@
       "east": -2.61955,
       "west": -2.87773
     }
+  },
+  {
+    "zone": "Leuchars (Scozia)",
+    "country": "UK",
+    "portal": "rightmove",
+    "searchKeys": [
+      "14948"
+    ],
+    "filter": "Leuchars",
+    "cap": 20,
+    "bounds": {
+      "north": 56.40204,
+      "south": 56.29512,
+      "east": -2.78806,
+      "west": -2.91714
+    }
   }
 ]
