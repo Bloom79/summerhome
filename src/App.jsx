@@ -5,8 +5,9 @@ import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
+import AlertsPanel from './components/AlertsPanel.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
-import { CERCA_QUI_ENDPOINT } from './config.js'
+import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
 const initialFilters = {
   zone: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
@@ -21,6 +22,28 @@ const inPriceBands = (price, ids) => {
     const r = PRICE_RANGES.find((x) => x.id === id)
     return r && (r.min == null || price >= r.min) && (r.max == null || price < r.max)
   })
+}
+
+// ---- Saved alerts (zone + filters + event types) ----
+// Matching mirrors the worker's — keep the two in sync.
+const matchAlert = (l, a) =>
+  (!a.zone || l.zone === a.zone) &&
+  (a.priceMax == null || l.price <= a.priceMax) &&
+  (a.priceMin == null || l.price >= a.priceMin) &&
+  (!a.rooms || (l.rooms || 0) >= a.rooms) &&
+  (!a.seaView || !!l.seaView) &&
+  (!a.garden || (l.feats || []).includes('Giardino'))
+
+const EV_KEY = { nuova: 'nuove', ribasso: 'ribassi', venduta: 'vendute' }
+
+const loadJSON = (key, fallback) => {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
+}
+const saveJSON = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)) } catch { /* full */ } }
+
+const b64ToU8 = (s) => {
+  const raw = atob((s + '='.repeat((4 - (s.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'))
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0))
 }
 
 // Load a Set of listing ids from localStorage once.
@@ -63,6 +86,11 @@ export default function App({ initialDb }) {
   const [agentStatus, setAgentStatus] = useState(null)
   const watchRef = useRef(null)
   const [, setStatusTick] = useState(0)
+  // Saved alerts + their recent matches ("novità") + push subscription state.
+  const [alerts, setAlerts] = useState(() => loadJSON('ct_alerts', []))
+  const [news, setNews] = useState(() => loadJSON('ct_news', []))
+  const [alertsOpen, setAlertsOpen] = useState(false)
+  const [pushState, setPushState] = useState('off')
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -302,6 +330,103 @@ export default function App({ initialDb }) {
     setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url, req } : prev))
   }, [toast, t])
 
+  // ---- Alerts: push subscription, data diff, periodic refresh ----
+  // Register/refresh the push subscription for the saved alerts. Only asks
+  // for notification permission from a user gesture (saving an alert).
+  const syncPush = useCallback(async (alertList, askPermission) => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushState('denied'); return }
+    try {
+      const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+      if (!alertList.length) {
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) await fetch(`${CERCA_QUI_ENDPOINT}/unsubscribe`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        })
+        setPushState('off')
+        return
+      }
+      let perm = Notification.permission
+      if (perm === 'default' && askPermission) perm = await Notification.requestPermission()
+      if (perm !== 'granted') { setPushState(perm === 'denied' ? 'denied' : 'off'); return }
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(VAPID_PUBLIC_KEY) })
+      const r = await fetch(`${CERCA_QUI_ENDPOINT}/subscribe`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON(), alerts: alertList }),
+      })
+      setPushState(r.ok ? 'on' : 'off')
+    } catch { setPushState('off') }
+  }, [])
+
+  // Keep the remote subscription aligned on load (no permission prompt).
+  useEffect(() => { syncPush(alerts, false) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveAlert = useCallback((draft) => {
+    const a = {
+      id: Date.now().toString(36),
+      zone: draft.zone, priceMax: draft.priceMax ? +draft.priceMax : null, priceMin: null,
+      rooms: draft.rooms ? +draft.rooms : null, seaView: !!draft.seaView, garden: !!draft.garden,
+      ev: { ...draft.ev },
+    }
+    setAlerts((prev) => { const next = [...prev, a]; saveJSON('ct_alerts', next); syncPush(next, true); return next })
+    toast(t('t_al_saved'))
+  }, [syncPush, toast, t])
+
+  const deleteAlert = useCallback((id) => {
+    setAlerts((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON('ct_alerts', next); syncPush(next, false); return next })
+  }, [syncPush])
+
+  const markNewsRead = useCallback(() => {
+    setNews((prev) => { const next = prev.map((n) => ({ ...n, seen: true })); saveJSON('ct_news', next); return next })
+  }, [])
+
+  // Diff each data refresh against the last snapshot: matches for the saved
+  // alerts land in the in-app "novità" list (the push channel covers the
+  // portale-chiuso case server-side with the same logic).
+  useEffect(() => {
+    const cur = {}
+    for (const l of db.listings) cur[l.url] = { price: l.price, zone: l.zone, rooms: l.rooms, seaView: !!l.seaView, feats: l.feats || [], addr: l.addr, currency: l.currency }
+    const soldUrls = (db.sold || []).map((s) => s.url).filter(Boolean)
+    const snap = loadJSON('ct_snap', null)
+    saveJSON('ct_snap', { listings: cur, soldUrls })
+    if (!snap || !alerts.length) return
+    const events = []
+    for (const [url, l] of Object.entries(cur)) {
+      const old = snap.listings[url]
+      if (!old) events.push({ type: 'nuova', l: { ...l, url } })
+      else if (l.price < old.price) events.push({ type: 'ribasso', l: { ...l, url }, oldPrice: old.price })
+    }
+    const oldSold = new Set(snap.soldUrls || [])
+    for (const u of soldUrls)
+      if (!oldSold.has(u) && snap.listings[u]) events.push({ type: 'venduta', l: { ...snap.listings[u], url: u } })
+    const hits = events.filter((ev) => alerts.some((a) => a.ev?.[EV_KEY[ev.type]] && matchAlert(ev.l, a)))
+    if (!hits.length) return
+    setNews((prev) => {
+      const next = [
+        ...hits.map((h) => ({ type: h.type, addr: h.l.addr, price: h.l.price, oldPrice: h.oldPrice, currency: h.l.currency, url: h.l.url, ts: Date.now(), seen: false })),
+        ...prev,
+      ].slice(0, 50)
+      saveJSON('ct_news', next)
+      return next
+    })
+    toast(t('t_al_news', { n: hits.length }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db])
+
+  // While the portal stays open, refresh the data every 10 minutes so the
+  // diff above (and the map/list) pick up agent updates by themselves.
+  const dbTextRef = useRef(JSON.stringify(initialDb))
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      try {
+        const txt = await (await fetch(`${import.meta.env.BASE_URL}data.json?t=${Date.now()}`, { cache: 'no-store' })).text()
+        if (txt !== dbTextRef.current) { dbTextRef.current = txt; setDb(JSON.parse(txt)) }
+      } catch { /* offline: retry next tick */ }
+    }, 10 * 60000)
+    return () => clearInterval(iv)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Ticker so the elapsed time in the status widget re-renders each second.
   useEffect(() => {
     const active = agentStatus && (agentStatus.phase === 'working' || agentStatus.phase === 'publishing')
@@ -420,6 +545,9 @@ export default function App({ initialDb }) {
           onToggleSea={() => setSeaOnly((v) => !v)}
           onToggleGarden={() => setGardenOnly((v) => !v)}
           onToggleSold={() => setSoldView((v) => !v)}
+          onOpenAlerts={() => setAlertsOpen(true)}
+          alertsUnseen={news.filter((n) => !n.seen).length}
+          hasAlerts={alerts.length > 0}
           onSortChange={onSortChange}
           onOpen={openDetail}
           onToggleFav={toggleFav}
@@ -459,6 +587,19 @@ export default function App({ initialDb }) {
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}
           toast={toast}
+        />
+      )}
+
+      {alertsOpen && (
+        <AlertsPanel
+          zones={db.zones}
+          alerts={alerts}
+          news={news}
+          pushState={pushState}
+          onSave={saveAlert}
+          onDelete={deleteAlert}
+          onMarkRead={markNewsRead}
+          onClose={() => setAlertsOpen(false)}
         />
       )}
 

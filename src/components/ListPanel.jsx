@@ -6,6 +6,7 @@ import { useI18n } from '../i18n.jsx'
 export default function ListPanel({
   items, zones, features, updated, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
+  onOpenAlerts, alertsUnseen, hasAlerts,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -26,6 +27,9 @@ export default function ListPanel({
         soldView={soldView}
         soldCount={soldCount}
         onToggleSold={onToggleSold}
+        onOpenAlerts={onOpenAlerts}
+        alertsUnseen={alertsUnseen}
+        hasAlerts={hasAlerts}
       />
 
       <div id="resmeta">

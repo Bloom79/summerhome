@@ -115,6 +115,22 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 #agentdone .reload{border:0;background:var(--accent);color:#fff;border-radius:9px;padding:8px 13px;font-weight:700;cursor:pointer;white-space:nowrap}
 #agentdone .reload:hover{filter:brightness(1.08)}
 #agentdone .dismiss{border:0;background:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:2px}
+.alertsbox{max-width:480px;max-height:86vh;overflow-y:auto}
+.alhead{font-weight:700;font-size:.86rem;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.alnews{display:flex;flex-direction:column;gap:6px;background:var(--brand-light);border-radius:10px;padding:10px 12px}
+.alnew{font-size:.83rem;color:var(--ink);text-decoration:none;line-height:1.35}
+.alnew:hover{text-decoration:underline}
+.alnew.seen{color:var(--muted)}
+.allist{display:flex;flex-direction:column;gap:6px}
+.alrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.83rem;color:var(--ink);background:#f6f9f9;border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+.alrow button{border:0;background:none;cursor:pointer;font-size:.95rem}
+.alform{display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--line);padding-top:11px}
+.alfields{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.alfields select{border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:.83rem;background:#fff;color:var(--ink)}
+.alfields select:first-child{grid-column:1/-1}
+.alchecks{display:flex;flex-wrap:wrap;gap:5px 16px;font-size:.83rem;color:var(--ink)}
+.alchecks label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.alev{background:#f6f9f9;border-radius:9px;padding:8px 11px}
 .agentcancel{background:none;border:0;color:var(--muted);font-size:.85rem;cursor:pointer;padding:4px}
 .agentcancel:hover{color:var(--ink)}
 .pricepin{display:inline-block;width:max-content;background:#fff;border:2px solid var(--brand);border-radius:999px;padding:3px 9px;font-size:.74rem;font-weight:800;color:var(--brand-dark);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);transform:translate(-50%,-100%);position:relative}

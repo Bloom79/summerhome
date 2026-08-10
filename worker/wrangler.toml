@@ -2,6 +2,17 @@ name = "casatrova-cerca-qui"
 main = "worker.js"
 compatibility_date = "2026-01-01"
 
-# Secret (set once, never committed):
-#   npx wrangler secret put GITHUB_TOKEN
-# Fine-grained PAT, only repo Bloom79/summerhome, permission Issues: Read and write.
+# Secrets (set once, never committed):
+#   npx wrangler secret put GITHUB_TOKEN        # fine-grained PAT, Issues r/w on Bloom79/summerhome
+#   npx wrangler secret put VAPID_PRIVATE_KEY   # web-push VAPID private key
+
+[vars]
+VAPID_PUBLIC_KEY = "BE5pp58OcGziWFz7UywR5__wvDSiP2i-BvveEQ-g2fSL6U9FgUP3crvCm7ZlB3J95GlKVC9htwL0i2nhefRS8pM"
+
+[[kv_namespaces]]
+binding = "ALERTS"
+id = "83073ba8f70e4369a5a37b8e63db16a9"
+
+# Safety-net notification check; workflows also POST /check after each data push.
+[triggers]
+crons = ["*/30 * * * *"]

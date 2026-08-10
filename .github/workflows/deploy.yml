@@ -66,3 +66,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Wake the alert notifier: it diffs data.json and pushes to subscribers.
+      - name: Notify alert subscribers
+        run: curl -sf -X POST https://casatrova-cerca-qui.casatrova.workers.dev/check || true

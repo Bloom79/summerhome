@@ -102,6 +102,11 @@ jobs:
         if: steps.proc.outputs.status == 'ok'
         uses: actions/deploy-pages@v4
 
+      # Wake the alert notifier: it diffs data.json and pushes to subscribers.
+      - name: Notify alert subscribers
+        if: steps.proc.outputs.status == 'ok'
+        run: curl -sf -X POST https://casatrova-cerca-qui.casatrova.workers.dev/check || true
+
       - name: Close issue — nothing for sale
         if: steps.proc.outputs.status == 'none'
         env:
