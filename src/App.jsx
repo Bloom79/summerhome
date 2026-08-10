@@ -7,6 +7,7 @@ import ListPanel from './components/ListPanel.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
+import { CERCA_QUI_ENDPOINT } from './config.js'
 
 const initialFilters = {
   zone: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
@@ -290,8 +291,29 @@ export default function App() {
     ].join('\n')
     const url = `https://github.com/bloom79/summerhome/issues/new?labels=cerca-qui&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`
     // Keep null if the user closed the panel while the geocode was running.
-    setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url } : prev))
+    setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url, req } : prev))
   }, [toast, t])
+
+  // Direct one-tap send through the Cloudflare Worker (docs/cerca-qui-worker.md).
+  // On failure the panel keeps the prefilled GitHub issue as a fallback link.
+  const sendAgentReq = useCallback(async () => {
+    const cur = agentReq
+    if (!cur || cur.loading || cur.sending) return
+    setAgentReq({ ...cur, sending: true, failed: false })
+    try {
+      const r = await fetch(CERCA_QUI_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cur.req),
+      })
+      const j = await r.json().catch(() => null)
+      if (!r.ok || !j || !j.ok) throw new Error('send failed')
+      setAgentReq(null)
+      toast(t(j.duplicate ? 't_agent_dup' : 't_agent_ok'))
+    } catch {
+      setAgentReq({ ...cur, sending: false, failed: true })
+    }
+  }, [agentReq, toast, t])
 
   const onFitAll = useCallback(() => {
     const src = soldView ? soldItems : items
@@ -387,14 +409,29 @@ export default function App() {
               <>
                 <div className="agentzone">📍 {agentReq.place || agentReq.coords}</div>
                 <p className="agentexpl">{t('agent_explain')}</p>
-                <p className="agentexpl">{t('agent_howto')}</p>
-                <a
-                  className="agentsend"
-                  href={agentReq.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => { setAgentReq(null); toast(t('t_agent_sent')) }}
-                >{t('agent_send')}</a>
+                <p className="agentexpl">{t(CERCA_QUI_ENDPOINT ? 'agent_howto_direct' : 'agent_howto')}</p>
+                {CERCA_QUI_ENDPOINT ? (
+                  <button className="agentsend" disabled={agentReq.sending} onClick={sendAgentReq}>
+                    {agentReq.sending ? t('agent_sending') : t('agent_send')}
+                  </button>
+                ) : (
+                  <a
+                    className="agentsend"
+                    href={agentReq.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => { setAgentReq(null); toast(t('t_agent_sent')) }}
+                  >{t('agent_send')}</a>
+                )}
+                {agentReq.failed && (
+                  <a
+                    className="agentfallback"
+                    href={agentReq.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => { setAgentReq(null); toast(t('t_agent_sent')) }}
+                  >{t('agent_fallback')}</a>
+                )}
                 <button className="agentcancel" onClick={() => setAgentReq(null)}>{t('agent_cancel')}</button>
               </>
             )}

@@ -1,0 +1,7 @@
+name = "casatrova-cerca-qui"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Secret (set once, never committed):
+#   npx wrangler secret put GITHUB_TOKEN
+# Fine-grained PAT, only repo Bloom79/summerhome, permission Issues: Read and write.

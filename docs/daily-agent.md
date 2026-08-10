@@ -30,10 +30,12 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 
 ## Cerca qui (user-requested areas)
 
-Pan/zoom the map to any area and press **🤖 Trova nuove case qui**. The portal
-opens a prefilled GitHub issue on this repo (title `Cerca qui: <place>`, label
-`cerca-qui`) containing a JSON block with the map centre, zoom and bounds —
-confirming the issue on GitHub queues the request. On its next run the agent:
+Pan/zoom the map to any area and press **🤖 Trova nuove case qui**. The
+request is a GitHub issue on this repo (title `Cerca qui: <place>`, label
+`cerca-qui`) containing a JSON block with the map centre, zoom and bounds.
+With the [Cloudflare Worker](cerca-qui-worker.md) configured the issue is
+filed with one tap from the portal; otherwise the portal opens the prefilled
+issue on GitHub to confirm by hand. On its next run the agent:
 
 1. Reads every open `Cerca qui:` issue.
 2. Scrapes real listings for that area from the right portal for the country
