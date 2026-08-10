@@ -1,0 +1,18 @@
+[
+  {
+    "zone": "St Andrews (Scozia)",
+    "country": "UK",
+    "portal": "rightmove",
+    "searchKeys": [
+      "1245"
+    ],
+    "filter": "St ?Andrews|KY16",
+    "cap": 20,
+    "bounds": {
+      "north": 56.42643,
+      "south": 56.21243,
+      "east": -2.61955,
+      "west": -2.87773
+    }
+  }
+]
