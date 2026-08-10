@@ -52,6 +52,8 @@ export default function App() {
   const [mobileView, setMobileView] = useState('list')
   const [toastMsg, setToastMsg] = useState('')
   const [toastOn, setToastOn] = useState(false)
+  // "Trova nuove case qui" panel: null | {loading} | {place, coords, url}
+  const [agentReq, setAgentReq] = useState(null)
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -241,23 +243,25 @@ export default function App() {
     mapRef.current?.flyTo([l.lat, l.lng], 16, { duration: 1.2 })
   }, [])
 
-  // "Trova nuove case qui": file a request for the area the user is looking
-  // at. The portal is static, so the queue is a prefilled GitHub issue that
-  // the daily agent reads on its next run (see docs/daily-agent.md). The tab
-  // opens synchronously (popup blockers) and navigates after a best-effort
-  // reverse geocode of the map centre names the place.
+  // "Trova nuove case qui": ask the daily agent for NEW listings in the area
+  // the user is looking at (different from areaSync, which only filters the
+  // houses already on the portal). Opens an in-app panel right away — spinner
+  // while the map centre is reverse-geocoded, then the detected place and an
+  // explicit send link. The queue is a prefilled GitHub issue that the daily
+  // agent reads on its next run (see docs/daily-agent.md); the send is a real
+  // <a> click, so no popup blocker is involved.
   const onAgentSearchHere = useCallback(async () => {
     const map = mapRef.current
     if (!map) return
     const z = map.getZoom()
     if (z < 9) { toast(t('t_agent_zoom')); return }
-    const w = window.open('about:blank', '_blank')
     const c = map.getCenter()
     const b = map.getBounds()
+    setAgentReq({ loading: true })
     let place = ''
     try {
       const ctl = new AbortController()
-      const kill = setTimeout(() => ctl.abort(), 2500)
+      const kill = setTimeout(() => ctl.abort(), 4000)
       const r = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${c.lat}&lon=${c.lng}&zoom=12&accept-language=it,en`,
         { signal: ctl.signal }
@@ -285,8 +289,8 @@ export default function App() {
       '_Gestita dall\'agente giornaliero: definisce la zona, cerca gli annunci sui portali del paese giusto, li aggiunge al portale e chiude questa issue._',
     ].join('\n')
     const url = `https://github.com/bloom79/summerhome/issues/new?labels=cerca-qui&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`
-    if (w) { w.location = url; toast(t('t_agent_sent')) }
-    else toast(t('t_agent_popup'))
+    // Keep null if the user closed the panel while the geocode was running.
+    setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url } : prev))
   }, [toast, t])
 
   const onFitAll = useCallback(() => {
@@ -371,6 +375,31 @@ export default function App() {
           onShowOnMap={onShowOnMap}
           toast={toast}
         />
+      )}
+
+      {agentReq && (
+        <div id="agentmodal" onClick={() => setAgentReq(null)}>
+          <div className="agentbox" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('agent_title')}</h3>
+            {agentReq.loading ? (
+              <div className="agentload"><span className="spin" />{t('agent_locating')}</div>
+            ) : (
+              <>
+                <div className="agentzone">📍 {agentReq.place || agentReq.coords}</div>
+                <p className="agentexpl">{t('agent_explain')}</p>
+                <p className="agentexpl">{t('agent_howto')}</p>
+                <a
+                  className="agentsend"
+                  href={agentReq.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { setAgentReq(null); toast(t('t_agent_sent')) }}
+                >{t('agent_send')}</a>
+                <button className="agentcancel" onClick={() => setAgentReq(null)}>{t('agent_cancel')}</button>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       <div id="toast" className={toastOn ? 'show' : ''}>{toastMsg}</div>
