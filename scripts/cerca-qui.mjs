@@ -58,13 +58,56 @@ const inBox = (la, ln) => la >= box.s && la <= box.n && ln >= box.w && ln <= box
   && la >= 49.5 && la <= 61.2 && ln >= -11.5 && ln <= 1.9
 
 // ---- Country + town via Nominatim ----
-let geo = null
-try {
-  geo = JSON.parse(await get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`))
-} catch { /* fall back to the coarse box below */ }
-const addr = geo?.address || {}
-const cc = addr.country_code || (lng < -6.0 && lat < 55.4 ? 'ie' : 'gb')
-const town = (place || addr.town || addr.village || addr.city || addr.county || '').trim()
+// The map centre can sit over water (coastal areas!), where a reverse
+// geocode only says "Ireland": probe the centre first, then the bounds
+// corners, until a real locality and county show up. A generic place name
+// from the request ("Irlanda", "Scotland"...) is ignored.
+const GENERIC = /^(irlanda|ireland|éire|eire|scozia|scotland|alba|uk|united kingdom|regno unito|great britain|gb)$/i
+const revgeo = async (la, ln, zoom) => {
+  try { return JSON.parse(await get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${la}&lon=${ln}&zoom=${zoom}&accept-language=en`)) } catch { return null }
+}
+const probes = [
+  [lat, lng, 12], [lat, lng, 10],
+  [bounds.north, bounds.west, 10], [bounds.north, bounds.east, 10],
+  [bounds.south, bounds.west, 10], [bounds.south, bounds.east, 10],
+]
+let addr = {}, geoTown = '', county = '', cc = ''
+const nearTowns = new Set()
+for (const [la, ln, z] of probes) {
+  const g = await revgeo(la, ln, z)
+  const a = g?.address
+  if (!a) continue
+  cc = cc || a.country_code || ''
+  for (const k of ['town', 'village', 'city', 'hamlet']) if (a[k] && !/^county /i.test(a[k])) nearTowns.add(a[k])
+  const gt = a.town || a.village || a.city || a.hamlet || ''
+  geoTown = geoTown || (/^county /i.test(gt) ? '' : gt)
+  county = county || a.county || ''
+  if (!addr.state) addr = a
+}
+// Localities actually inside the (padded) area, via Overpass: reverse
+// geocoding misses them when probe points land on water or open country.
+// NB: Overpass answers 406 to browser user agents — plain curl UA here.
+let nearestTown = ''
+const q = `[out:json][timeout:10];node["place"~"town|village|hamlet"](${box.s},${box.w},${box.n},${box.e});out 30;`
+for (const ep of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+  try {
+    const ov = await new Promise((resolve, reject) =>
+      execFile('curl', ['-sf', '--max-time', '20', '-A', 'casatrova-agent/1.0', ep, '--data-urlencode', `data=${q}`], { maxBuffer: 16e6 },
+        (e, so) => (e ? reject(e) : resolve(JSON.parse(so.toString())))))
+    let best = Infinity
+    for (const el of ov.elements || []) {
+      const nm = el.tags?.['name:en'] || el.tags?.name
+      if (!nm) continue
+      nearTowns.add(nm)
+      const d = (el.lat - lat) ** 2 + (el.lon - lng) ** 2
+      if (d < best) { best = d; nearestTown = nm }
+    }
+    break
+  } catch { /* try next mirror */ }
+}
+cc = cc || (lng < -6.0 && lat < 55.4 ? 'ie' : 'gb')
+const reqPlace = typeof place === 'string' && place.trim() && !GENERIC.test(place.trim()) ? place.trim() : ''
+const town = (reqPlace || geoTown || nearestTown || county || '').replace(/^County /i, '').trim()
 if (!town) finish('error', 'località non identificata')
 const scotland = addr.state === 'Scotland' || (cc === 'gb' && lat > 54.6)
 const zoneName = `${town} (${cc === 'ie' ? 'Irlanda' : scotland ? 'Scozia' : 'UK'})`
@@ -99,24 +142,36 @@ const listings = []
 let searchKeys = []
 
 if (cc === 'ie') {
-  // ---- MyHome.ie ----
+  // ---- MyHome.ie: county-wide search, the bounds filter picks the area ----
   const slug = (s) => s.toLowerCase().replace(/[^a-z ]/g, '').trim().replace(/ +/g, '-')
-  const county = slug((addr.county || '').replace(/^County /i, ''))
-  if (!county) finish('error', 'contea irlandese non identificata')
-  searchKeys = [`${county}/${slug(town)}`]
-  let html
-  try { html = await get(`https://www.myhome.ie/residential/${county}/house-for-sale-in-${slug(town)}`) }
-  catch { finish('error', `ricerca MyHome fallita per ${town}`) }
+  const countySlug = slug((county || '').replace(/^County /i, ''))
+  if (!countySlug) finish('error', 'contea irlandese non identificata')
+  // County pages as backstop + a targeted search for every locality found
+  // in or around the requested area (the county page alone shows only 20
+  // county-wide results per page).
+  const townSlugs = [...new Set([...nearTowns].map(slug).filter(Boolean))].slice(0, 8)
+  searchKeys = [countySlug, ...townSlugs]
+  // Town searches FIRST: their brochures are the in-area ones, and the
+  // candidate cap below must never crowd them out with county-wide results.
+  const urls = [
+    ...townSlugs.map((ts) => `https://www.myhome.ie/residential/${countySlug}/house-for-sale-in-${ts}`),
+    ...[1, 2, 3, 4, 5].map((pg) => `https://www.myhome.ie/residential/${countySlug}/house-for-sale${pg > 1 ? `?page=${pg}` : ''}`),
+  ]
+  const pages = await pmap(urls, async (u2) => { try { return await get(u2) } catch { return '' } }, 4)
   const brochures = new Set()
-  for (const s of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
-    try {
-      const j = JSON.parse(s[1])
-      const items = j['@type'] === 'ItemList' ? j.itemListElement || [] : []
-      for (const it of items) { const u = it.url || it.item?.url; if (u) brochures.add(u) }
-    } catch { /* other ld+json blocks */ }
+  for (const html of pages) {
+    for (const s of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      try {
+        const j = JSON.parse(s[1])
+        const items = j['@type'] === 'ItemList' ? j.itemListElement || [] : []
+        for (const it of items) { const u2 = it.url || it.item?.url; if (u2) brochures.add(u2) }
+      } catch { /* other ld+json blocks */ }
+    }
+    for (const mm of html.matchAll(/(?:https:\/\/www\.myhome\.ie)?\/residential\/brochure\/[^"'\\\s<>]+/g))
+      brochures.add('https://www.myhome.ie' + mm[0].replace('https://www.myhome.ie', '').replace(/[?#].*$/, ''))
   }
   stats.candidates = brochures.size
-  const candidates = [...brochures].filter((u) => existingUrls.has(u) ? (stats.dropDup++, false) : true).slice(0, CAP * 2)
+  const candidates = [...brochures].filter((u) => existingUrls.has(u) ? (stats.dropDup++, false) : true).slice(0, 80)
   const parsed = await pmap(candidates, async (u) => {
     let page
     try { page = await get(u) } catch { return null }
@@ -130,7 +185,9 @@ if (cc === 'ie') {
     const beds = +(/"NumberOfBeds":(\d+)/.exec(page)?.[1] || 0) || null
     const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
     const text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
-    const addrTxt = title.split(/ [-–] /)[0].replace(/€.*$/, '').trim() || town
+    // Title is "€price | address - agency - id - MyHome.ie"; the h1 is cleaner.
+    const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
+    const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
     return {
       id: 0, title: addrTxt, type: 'Casa indipendente', contract: 'sale', price, currency: 'EUR',
       size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
@@ -202,7 +259,11 @@ if (cc === 'ie') {
   listings.push(...enriched)
 }
 
-if (!listings.length) finish('none', `nessun annuncio in vendita trovato nell'area di ${town}`, zoneName)
+const alreadyInArea = db.listings.filter((l) => inBox(l.lat, l.lng)).length
+if (!listings.length)
+  finish('none', alreadyInArea
+    ? `nessun annuncio NUOVO nell'area di ${town}: le ${alreadyInArea} case in vendita lì sono già nel portale`
+    : `nessun annuncio in vendita trovato nell'area di ${town}`, zoneName)
 
 // ---- Write public/data.json ----
 const maxId = Math.max(0, ...db.listings.map((l) => l.id))
@@ -224,4 +285,4 @@ if (!ez.some((z) => z.zone === zoneName)) {
 
 const sv = listings.filter((l) => l.seaView).length
 const ft = listings.filter((l) => l.feats.length).length
-finish('ok', `${stats.candidates} annunci esaminati → ${listings.length} pubblicati (${stats.dropBounds} fuori area, ${stats.dropDup} già noti, ${stats.dropQuality} scartati per dati incompleti) · vista mare: ${sv} · con caratteristiche: ${ft}`, zoneName, listings.length)
+finish('ok', `${stats.candidates} annunci esaminati → ${listings.length} pubblicati (${stats.dropBounds} fuori area, ${stats.dropDup} già noti, ${stats.dropQuality} scartati per dati incompleti)${alreadyInArea ? ` · nell'area c'erano già ${alreadyInArea} case del portale` : ''} · vista mare: ${sv} · con caratteristiche: ${ft}`, zoneName, listings.length)

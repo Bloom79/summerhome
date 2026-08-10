@@ -30,5 +30,21 @@
       "east": -2.78806,
       "west": -2.91714
     }
+  },
+  {
+    "zone": "Donegal (Irlanda)",
+    "country": "IE",
+    "portal": "myhome",
+    "searchKeys": [
+      "donegal"
+    ],
+    "filter": "Donegal",
+    "cap": 20,
+    "bounds": {
+      "north": 55.06758,
+      "south": 54.95694,
+      "east": -8.36071,
+      "west": -8.4898
+    }
   }
 ]
