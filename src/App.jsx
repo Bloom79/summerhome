@@ -55,6 +55,9 @@ export default function App() {
   const [toastOn, setToastOn] = useState(false)
   // "Trova nuove case qui" panel: null | {loading} | {place, coords, url}
   const [agentReq, setAgentReq] = useState(null)
+  // Outcome banner once a sent request is processed: null | {ok: bool}
+  const [agentDone, setAgentDone] = useState(null)
+  const watchRef = useRef(null)
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -294,6 +297,31 @@ export default function App() {
     setAgentReq((prev) => (prev ? { place: place || null, coords: `${req.lat}, ${req.lng}`, url, req } : prev))
   }, [toast, t])
 
+  // After a send, watch the request's GitHub issue (public API, anonymous):
+  // the instant workflow closes it when done, and we surface that in-page so
+  // the user doesn't have to guess whether anything happened.
+  const watchAgentIssue = useCallback((issueUrl) => {
+    const m = /github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)/.exec(issueUrl || '')
+    if (!m) return
+    const api = `https://api.github.com/repos/${m[1]}/issues/${m[2]}`
+    clearInterval(watchRef.current)
+    const t0 = Date.now()
+    watchRef.current = setInterval(async () => {
+      if (Date.now() - t0 > 12 * 60000) { clearInterval(watchRef.current); return }
+      try {
+        const issue = await (await fetch(api, { headers: { Accept: 'application/vnd.github+json' } })).json()
+        if (issue.state !== 'closed') return
+        clearInterval(watchRef.current)
+        let ok = true
+        try {
+          const cs = await (await fetch(`${api}/comments`)).json()
+          ok = !/Nessuna zona aggiunta/i.test(cs[cs.length - 1]?.body || '')
+        } catch { /* assume success */ }
+        setAgentDone({ ok })
+      } catch { /* transient; keep polling */ }
+    }, 20000)
+  }, [])
+
   // Direct one-tap send through the Cloudflare Worker (docs/cerca-qui-worker.md).
   // On failure the panel keeps the prefilled GitHub issue as a fallback link.
   const sendAgentReq = useCallback(async () => {
@@ -309,11 +337,13 @@ export default function App() {
       const j = await r.json().catch(() => null)
       if (!r.ok || !j || !j.ok) throw new Error('send failed')
       setAgentReq(null)
+      setAgentDone(null)
       toast(t(j.duplicate ? 't_agent_dup' : 't_agent_ok'))
+      watchAgentIssue(j.issueUrl)
     } catch {
       setAgentReq({ ...cur, sending: false, failed: true })
     }
-  }, [agentReq, toast, t])
+  }, [agentReq, toast, t, watchAgentIssue])
 
   const onFitAll = useCallback(() => {
     const src = soldView ? soldItems : items
@@ -436,6 +466,16 @@ export default function App() {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {agentDone && (
+        <div id="agentdone">
+          <span>{t(agentDone.ok ? 'agent_done_ok' : 'agent_done_none')}</span>
+          {agentDone.ok && (
+            <button className="reload" onClick={() => window.location.reload()}>{t('agent_reload')}</button>
+          )}
+          <button className="dismiss" onClick={() => setAgentDone(null)}>✕</button>
         </div>
       )}
 
