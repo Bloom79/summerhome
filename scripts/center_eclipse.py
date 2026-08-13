@@ -41,23 +41,43 @@ EXIF_DATETIME_ORIGINAL = 36867
 
 
 def find_sun(im, threshold_frac):
-    """Return (cx, cy, diameter) of the bright region, or None if not found."""
-    gray = im.convert("L")
+    """Return (cx, cy, diameter) of the bright region, or None if not found.
+
+    Tries progressively higher brightness cutoffs, starting from
+    threshold_frac of the frame's peak, until the bright region is plausibly
+    the solar disk rather than the surrounding glow: hazy frames shot low on
+    the horizon can have a halo bright enough to pass a low threshold, which
+    would inflate the detected size several-fold.
+    """
+    # Box-average downscale before thresholding: isolated noisy pixels in the
+    # glow would otherwise survive the cutoff and stretch the bounding box.
+    factor = max(1, min(im.width, im.height) // 1000)
+    gray = im.convert("L").reduce(factor)
     peak = gray.getextrema()[1]
     if peak < 40:  # frame is essentially black
         return None
-    cutoff = max(20, int(peak * threshold_frac))
-    mask = gray.point(lambda p: 255 if p >= cutoff else 0)
-    bbox = mask.getbbox()
-    if bbox is None:
-        return None
-    left, top, right, bottom = bbox
-    w, h = right - left, bottom - top
-    if w < 8 or h < 8:  # too small to be the sun (hot pixels, noise)
-        return None
-    # The bounding-box center keeps a crescent visually centered, unlike the
-    # brightness centroid which drifts toward the lit limb.
-    return (left + w / 2, top + h / 2, max(w, h))
+    # Try high cutoffs first: the disk is near the frame's peak brightness,
+    # while the surrounding glow — often asymmetric in hazy shots — would
+    # pull the box off-center at lower cutoffs. Lower fractions are only a
+    # fallback for dim frames, and threshold_frac is the floor.
+    max_extent = 0.4 * min(gray.width, gray.height)
+    for frac in (0.85, 0.92, 0.7, 0.55, threshold_frac):
+        cutoff = max(20, int(peak * frac))
+        mask = gray.point(lambda p: 255 if p >= cutoff else 0)
+        bbox = mask.getbbox()
+        if bbox is None:
+            continue
+        left, top, right, bottom = bbox
+        w, h = right - left, bottom - top
+        if w * factor < 32 or h * factor < 32:  # too small to be the sun
+            continue
+        if max(w, h) > max_extent:  # still mostly glow, tighten further
+            continue
+        # The bounding-box center keeps a crescent visually centered, unlike
+        # the brightness centroid which drifts toward the lit limb.
+        return ((left + w / 2) * factor, (top + h / 2) * factor,
+                max(w, h) * factor)
+    return None
 
 
 def capture_time(im, path):
