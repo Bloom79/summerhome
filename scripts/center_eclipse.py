@@ -40,44 +40,97 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp"}
 EXIF_DATETIME_ORIGINAL = 36867
 
 
-def find_sun(im, threshold_frac):
-    """Return (cx, cy, diameter) of the bright region, or None if not found.
+def _components(gray, cutoff):
+    """8-connected bright blobs as (box, pixel_count, peak) tuples."""
+    w, h = gray.size
+    data = gray.load()
+    bright = {(x, y) for y in range(h) for x in range(w)
+              if data[x, y] >= cutoff}
+    comps = []
+    seen = set()
+    for start in bright:
+        if start in seen:
+            continue
+        seen.add(start)
+        stack, comp = [start], []
+        while stack:
+            x, y = stack.pop()
+            comp.append((x, y))
+            for nx in (x - 1, x, x + 1):
+                for ny in (y - 1, y, y + 1):
+                    if (nx, ny) in bright and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        stack.append((nx, ny))
+        xs = [p[0] for p in comp]
+        ys = [p[1] for p in comp]
+        comps.append(((min(xs), min(ys), max(xs), max(ys)), len(comp),
+                      max(data[p[0], p[1]] for p in comp)))
+    return comps
 
-    Tries progressively higher brightness cutoffs, starting from
-    threshold_frac of the frame's peak, until the bright region is plausibly
-    the solar disk rather than the surrounding glow: hazy frames shot low on
-    the horizon can have a halo bright enough to pass a low threshold, which
-    would inflate the detected size several-fold.
+
+def _dim(box):
+    return max(box[2] - box[0], box[3] - box[1]) + 1
+
+
+def _center(box):
+    return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
+
+
+def find_sun(im, threshold_frac):
+    """Return (cx, cy, diameter) of the sun, or None if not found.
+
+    Works on a box-averaged downscale (kills sensor/JPEG noise). At each
+    brightness cutoff, sun-sized blobs seed a candidate; nearby fragments
+    are merged into it, because a deeply-eclipsed ring low on the horizon
+    breaks into separate arcs. Small clipped highlights (boat lights,
+    glitter on water) can never seed a candidate, and the merge radius
+    keeps them out of clusters unless they sit right next to the sun.
+
+    Among candidates, ones that reach the frame's peak brightness win at
+    the tightest cutoff that produced them: the true sun is clipped bright
+    in most exposures, while glow, twilight sky and sunset clouds are not.
+    With no clipped candidate (e.g. a dim ring behind haze), the largest
+    compact cluster — the fullest reconstruction of the ring — wins.
     """
-    # Box-average downscale before thresholding: isolated noisy pixels in the
-    # glow would otherwise survive the cutoff and stretch the bounding box.
-    factor = max(1, min(im.width, im.height) // 1000)
+    factor = max(1, min(im.width, im.height) // 320)
     gray = im.convert("L").reduce(factor)
     peak = gray.getextrema()[1]
     if peak < 40:  # frame is essentially black
         return None
-    # Try high cutoffs first: the disk is near the frame's peak brightness,
-    # while the surrounding glow — often asymmetric in hazy shots — would
-    # pull the box off-center at lower cutoffs. Lower fractions are only a
-    # fallback for dim frames, and threshold_frac is the floor.
     max_extent = 0.4 * min(gray.width, gray.height)
-    for frac in (0.85, 0.92, 0.7, 0.55, threshold_frac):
+    min_dim = max(32, min(im.width, im.height) * 0.02) / factor
+    candidates = []  # (cutoff_frac, cluster_dim, seed_peak, cx, cy)
+    for frac in (0.92, 0.85, 0.75, 0.65, 0.55, threshold_frac):
         cutoff = max(20, int(peak * frac))
-        mask = gray.point(lambda p: 255 if p >= cutoff else 0)
-        bbox = mask.getbbox()
-        if bbox is None:
-            continue
-        left, top, right, bottom = bbox
-        w, h = right - left, bottom - top
-        if w * factor < 32 or h * factor < 32:  # too small to be the sun
-            continue
-        if max(w, h) > max_extent:  # still mostly glow, tighten further
-            continue
-        # The bounding-box center keeps a crescent visually centered, unlike
-        # the brightness centroid which drifts toward the lit limb.
-        return ((left + w / 2) * factor, (top + h / 2) * factor,
-                max(w, h) * factor)
-    return None
+        comps = _components(gray, cutoff)
+        boxes = set()
+        for box, npx, comp_peak in comps:
+            if not min_dim <= _dim(box) <= max_extent:
+                continue
+            # Merge radius scales with the seed: ring arcs sit within a
+            # couple of seed-widths of each other, while glow patches and
+            # other scene lights are farther out.
+            radius = min(2.5 * _dim(box), max_extent / 2)
+            sx, sy = _center(box)
+            cluster = [b for b, _, _ in comps
+                       if abs(_center(b)[0] - sx) <= radius
+                       and abs(_center(b)[1] - sy) <= radius]
+            union = (min(b[0] for b in cluster), min(b[1] for b in cluster),
+                     max(b[2] for b in cluster), max(b[3] for b in cluster))
+            if _dim(union) > max_extent or union in boxes:
+                continue
+            boxes.add(union)
+            cx, cy = _center(union)
+            candidates.append((frac, _dim(union), comp_peak, cx, cy))
+    if not candidates:
+        return None
+    # A genuinely clipped sun seeds a candidate at high cutoffs already; a
+    # blob that is only sun-sized once the cutoff drops far is a small
+    # highlight bloomed by the low threshold, so it doesn't count as sun.
+    clipped = [c for c in candidates if c[2] >= 0.97 * peak and c[0] >= 0.55]
+    # tightest cutoff = the sun without its glow
+    frac, dim, _, cx, cy = max(clipped or candidates)
+    return ((cx + 0.5) * factor, (cy + 0.5) * factor, dim * factor)
 
 
 def capture_time(im, path):
@@ -92,9 +145,25 @@ def capture_time(im, path):
 
 
 def crop_centered(im, cx, cy, size):
-    """Crop a size x size window centered on (cx, cy), padding with black."""
+    """Crop a size x size window centered on (cx, cy).
+
+    If the window runs past the frame, dark-sky shots get black padding
+    (indistinguishable from the sky), while daylight/sunset shots have the
+    window shifted back inside the frame instead — a black bar against a
+    bright sky would be worse than a slightly off-center sun.
+    """
     left = int(round(cx - size / 2))
     top = int(round(cy - size / 2))
+    hist = im.convert("L").reduce(8).histogram()
+    pixels = sum(hist)
+    darker_half = 0
+    for level, count in enumerate(hist):
+        darker_half += count
+        if darker_half >= pixels / 2:
+            break
+    if level >= 20:  # bright scene: clamp the window inside the frame
+        left = max(0, min(left, im.width - size))
+        top = max(0, min(top, im.height - size))
     canvas = Image.new(im.mode, (size, size), 0)
     src = im.crop((max(0, left), max(0, top),
                    min(im.width, left + size), min(im.height, top + size)))
