@@ -6,7 +6,8 @@ const emptyDraft = { zone: '', priceMax: '', rooms: '', seaView: false, garden: 
 
 // Create/manage saved alerts (zone + filters + event types) and show the
 // recent matches ("novità") computed against them.
-export default function AlertsPanel({ zones, alerts, news, pushState, onSave, onDelete, onMarkRead, onClose }) {
+export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, onSave, onDelete, onMarkRead, onEnablePush, onTestPush, onClose }) {
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
   const { t } = useI18n()
   const [draft, setDraft] = useState(emptyDraft)
   const setD = (k, v) => setDraft((d) => ({ ...d, [k]: v }))
@@ -86,9 +87,22 @@ export default function AlertsPanel({ zones, alerts, news, pushState, onSave, on
           >{t('al_save')}</button>
         </div>
 
-        <p className="agentexpl">
-          {pushState === 'on' ? t('al_push_on') : pushState === 'denied' ? t('al_push_denied') : t('al_push_off')}
-        </p>
+        <div className="alform">
+          <div className="alhead">{t('al_push_title')}</div>
+          <p className="agentexpl">
+            {pushState === 'on' && t('al_push_on')}
+            {pushState === 'denied' && t('al_push_denied')}
+            {pushState === 'error' && t('al_push_err', { e: pushErr || '?' })}
+            {pushState === 'unsupported' && (isIOS ? t('al_push_ios') : t('al_push_unsupported'))}
+            {pushState === 'off' && t('al_push_off')}
+          </p>
+          {alerts.length > 0 && (pushState === 'off' || pushState === 'error') && (
+            <button className="agentsend" onClick={onEnablePush}>{t('al_push_btn')}</button>
+          )}
+          {pushState === 'on' && (
+            <button className="agentsend" onClick={onTestPush}>{t('al_push_test')}</button>
+          )}
+        </div>
         <button className="agentcancel" onClick={onClose}>{t('agent_cancel')}</button>
       </div>
     </div>

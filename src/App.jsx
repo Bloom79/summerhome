@@ -62,11 +62,13 @@ export default function App({ initialDb }) {
   // 'Cerca qui' request refreshes it in place, no page reload.
   const [db, setDb] = useState(initialDb)
   const { listings: LISTINGS, sold: SOLD, updated: LAST_UPDATED } = db
-  const [filters, setFilters] = useState(initialFilters)
-  const [sort, setSort] = useState('rel')
-  const [favOnly, setFavOnly] = useState(false)
-  const [seaOnly, setSeaOnly] = useState(false)
-  const [gardenOnly, setGardenOnly] = useState(false)
+  // Filters and toggles survive a page refresh.
+  const [ui] = useState(() => loadJSON('ct_ui', null))
+  const [filters, setFilters] = useState(() => (ui?.filters ? { ...initialFilters, ...ui.filters } : initialFilters))
+  const [sort, setSort] = useState(ui?.sort || 'rel')
+  const [favOnly, setFavOnly] = useState(!!ui?.favOnly)
+  const [seaOnly, setSeaOnly] = useState(!!ui?.seaOnly)
+  const [gardenOnly, setGardenOnly] = useState(!!ui?.gardenOnly)
   const [soldView, setSoldView] = useState(false)
   const [favs, setFavs] = useState(() => loadIdSet('ct_favs'))
   const [seen, setSeen] = useState(() => loadIdSet('ct_seen'))
@@ -91,6 +93,12 @@ export default function App({ initialDb }) {
   const [news, setNews] = useState(() => loadJSON('ct_news', []))
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
+  const [pushErr, setPushErr] = useState('')
+
+  // Persist filters/toggles so a refresh keeps the search as it was.
+  useEffect(() => {
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly])
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -334,9 +342,12 @@ export default function App({ initialDb }) {
   // Register/refresh the push subscription for the saved alerts. Only asks
   // for notification permission from a user gesture (saving an alert).
   const syncPush = useCallback(async (alertList, askPermission) => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushState('denied'); return }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushState('unsupported'); return }
     try {
-      const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+      await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+      // Wait for an ACTIVE worker: subscribing against one that is still
+      // installing rejects — this is why first-visit activations failed.
+      const reg = await navigator.serviceWorker.ready
       if (!alertList.length) {
         const sub = await reg.pushManager.getSubscription()
         if (sub) await fetch(`${CERCA_QUI_ENDPOINT}/unsubscribe`, {
@@ -354,9 +365,30 @@ export default function App({ initialDb }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: sub.toJSON(), alerts: alertList }),
       })
-      setPushState(r.ok ? 'on' : 'off')
-    } catch { setPushState('off') }
+      if (!r.ok) throw new Error('server ' + r.status)
+      setPushState('on')
+      setPushErr('')
+    } catch (e) {
+      setPushState('error')
+      setPushErr(String((e && e.message) || e))
+    }
   }, [])
+
+  // Verify delivery end-to-end: the worker pushes a test notification back
+  // to this device's subscription.
+  const testPush = useCallback(async () => {
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (!sub) { toast(t('t_push_nosub')); return }
+      const r = await fetch(`${CERCA_QUI_ENDPOINT}/test-push`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: sub.endpoint }),
+      })
+      const j = await r.json().catch(() => null)
+      toast(j?.ok ? t('t_push_sent') : t('t_push_fail'))
+    } catch { toast(t('t_push_fail')) }
+  }, [toast, t])
 
   // Keep the remote subscription aligned on load (no permission prompt).
   useEffect(() => { syncPush(alerts, false) }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -596,9 +628,12 @@ export default function App({ initialDb }) {
           alerts={alerts}
           news={news}
           pushState={pushState}
+          pushErr={pushErr}
           onSave={saveAlert}
           onDelete={deleteAlert}
           onMarkRead={markNewsRead}
+          onEnablePush={() => syncPush(alerts, true)}
+          onTestPush={testPush}
           onClose={() => setAlertsOpen(false)}
         />
       )}

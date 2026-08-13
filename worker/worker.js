@@ -176,6 +176,29 @@ export default {
       return json({ ok: true, alerts: alerts.length }, 200, cors)
     }
 
+    // POST /test-push — {endpoint}: send a test notification to that
+    // subscription so the user can verify delivery. Endpoints are
+    // unguessable, so knowing one is proof of ownership.
+    if (u.pathname === '/test-push') {
+      let body
+      try { body = await request.json() } catch { return json({ error: 'invalid JSON' }, 400, cors) }
+      if (!body?.endpoint) return json({ error: 'endpoint required' }, 400, cors)
+      const rec = JSON.parse((await env.ALERTS.get('sub:' + (await sha256hex(body.endpoint)))) || 'null')
+      if (!rec?.subscription) return json({ error: 'not subscribed' }, 404, cors)
+      const vapid = { subject: 'mailto:dedalus79@gmail.com', publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }
+      const msg = {
+        data: JSON.stringify({ title: 'CasaTrova 🔔', body: 'Notifica di prova: gli avvisi funzionano ✅', url: PORTAL }),
+        options: { ttl: 600 },
+      }
+      try {
+        const payload = await buildPushPayload(msg, rec.subscription, vapid)
+        const res = await fetch(rec.subscription.endpoint, payload)
+        return json({ ok: res.status < 300, status: res.status }, 200, cors)
+      } catch (e) {
+        return json({ ok: false, error: String(e && e.message || e) }, 200, cors)
+      }
+    }
+
     // POST /unsubscribe — {endpoint}.
     if (u.pathname === '/unsubscribe') {
       let body
