@@ -813,18 +813,20 @@ export default function App({ initialDb }) {
     return () => clearInterval(iv)
   }, [syncDownload])
 
-  // Shareable deep link: ?casa=<id> opens the listing's detail directly.
+  // Shareable deep link: ?casa=<id> opens the listing's detail once, then
+  // the param is stripped from the address bar — otherwise a restored tab
+  // or a home-screen icon saved with that URL reopens the same house on
+  // every launch. The Share button builds its own URL, so nothing else
+  // needs ?casa to persist.
   useEffect(() => {
-    const id = +new URLSearchParams(window.location.search).get('casa')
+    const u = new URL(window.location.href)
+    if (!u.searchParams.has('casa')) return
+    const id = +u.searchParams.get('casa')
+    u.searchParams.delete('casa')
+    window.history.replaceState(null, '', u)
     if (id && LISTINGS.some((l) => l.id === id)) openDetail(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  useEffect(() => {
-    const u = new URL(window.location.href)
-    if (selectedId != null) u.searchParams.set('casa', selectedId)
-    else u.searchParams.delete('casa')
-    window.history.replaceState(null, '', u)
-  }, [selectedId])
 
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
