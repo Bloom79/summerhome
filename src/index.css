@@ -414,3 +414,6 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mtax{background:#fbf7ee;border:1px solid #eadfc6;border-radius:12px;padding:9px 12px;margin:10px 0;font-size:.86rem}
 .mtax-head b{font-size:.95rem}
 .mtax small{color:var(--muted)}
+
+.fsheetnote{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 16px 8px;padding:9px 12px;background:var(--brand-light);border:1px solid var(--line);border-radius:10px;font-size:.79rem;color:var(--ink)}
+.fsheetnote button{flex:none;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:8px;padding:6px 10px;font-size:.78rem;font-weight:700;cursor:pointer}

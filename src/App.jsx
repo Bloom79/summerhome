@@ -298,15 +298,17 @@ export default function App({ initialDb }) {
   useEffect(() => { criteriaRef.current = soldView ? soldItems : criteriaItems }, [criteriaItems, soldItems, soldView])
 
   // Criteria + viewport, before the seen-triage split. With the map hidden
-  // (desktop list-only view) the viewport filter is meaningless — and the
-  // 0-size map reports degenerate bounds — so it is skipped there.
+  // — desktop list-only view, or the phone's Lista tab — the viewport filter
+  // is meaningless (and confusing: the list would stay clipped to wherever
+  // the map was last panned), so it is skipped there.
   const viewItems = useMemo(() => {
+    const phoneList = mobileView === 'list' && typeof window !== 'undefined' && window.matchMedia('(max-width:840px)').matches
     let out = criteriaItems
-    if (deskView !== 'list' && areaSync && bounds && mapZoom > 6) {
+    if (deskView !== 'list' && !phoneList && areaSync && bounds && mapZoom > 6) {
       out = out.filter((l) => bounds.contains([l.lat, l.lng]))
     }
     return out
-  }, [criteriaItems, areaSync, bounds, mapZoom, deskView])
+  }, [criteriaItems, areaSync, bounds, mapZoom, deskView, mobileView])
 
   // How many of the current results are still to review vs already seen.
   const seenCounts = useMemo(() => {
@@ -978,6 +980,12 @@ export default function App({ initialDb }) {
               alertsUnseen={news.filter((n) => !n.seen).length}
               hasAlerts={alerts.length > 0}
             />
+            {!soldView && criteriaItems.length > displayItems.length && (
+              <div className="fsheetnote">
+                <span>🔗 {t('sheet_area_note', { n: displayItems.length, tot: criteriaItems.length })}</span>
+                <button onClick={onFitAll}>{t('map_see_all')}</button>
+              </div>
+            )}
             <div id="fsheetfoot">
               <button className="btn ghost" onClick={clearAllFilters}>{t('af_clear_all')}</button>
               <button className="btn primary" onClick={() => setSheetOpen(false)}>{t('show_n', { n: displayItems.length })}</button>
