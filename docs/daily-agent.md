@@ -13,7 +13,8 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 
 1. Searches current for-sale / to-let property listings in the monitored areas
    (built-in + user-requested), using public sources (**MyHome.ie** for
-   Ireland; **Rightmove** for Scotland/UK).
+   Ireland; **Rightmove** and **s1homes** — the Scottish solicitors' portal,
+   whose listings are often absent from Rightmove — for Scotland/UK).
 2. Extracts structured data for each property: title, type, contract
    (`sale`/`rent`), `price`, `currency` (`EUR` for Ireland, `GBP` for Scotland),
    `size` (m² when available), rooms, baths, `zone`, `town`, address,

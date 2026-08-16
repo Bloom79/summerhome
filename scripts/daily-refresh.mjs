@@ -59,13 +59,13 @@ const featsOf = (text) => {
 
 // ---- Zone configurations ----
 const RM_ZONES = [
-  { zone: 'North Berwick (Scozia)', town: 'North Berwick', codes: ['1008'], pages: [0, 24], filter: /North Berwick|Gullane|Dirleton|Aberlady|EH39|EH31/i, cap: 24 },
-  { zone: 'East Neuk (Fife, Scozia)', town: 'Anstruther', codes: ['97068'], pages: [0, 24], filter: /Anstruther|Crail|Pittenweem|St Monans|Elie|Cellardyke|KY10|KY9/i, cap: 24 },
-  { zone: 'Rosemarkie (Scozia)', town: 'Rosemarkie', codes: ['94460'], pages: [0, 24], filter: /Rosemarkie|Fortrose|Avoch|IV10/i, cap: 12 },
-  { zone: 'Loch Tay (Scozia)', town: 'Kenmore', codes: ['6', '13772', '738'], pages: [0, 24], filter: /Kenmore|Aberfeldy|Killin|Acharn|Fearnan|Lawers|Fortingall|Weem|Dull|Loch Tay|PH15/i, cap: 18 },
+  { zone: 'North Berwick (Scozia)', town: 'North Berwick', codes: ['1008'], pages: [0, 24], filter: /North Berwick|Gullane|Dirleton|Aberlady|EH39|EH31/i, cap: 30 },
+  { zone: 'East Neuk (Fife, Scozia)', town: 'Anstruther', codes: ['97068'], pages: [0, 24], filter: /Anstruther|Crail|Pittenweem|St Monans|Elie|Cellardyke|KY10|KY9/i, cap: 30 },
+  { zone: 'Rosemarkie (Scozia)', town: 'Rosemarkie', codes: ['94460'], pages: [0, 24], filter: /Rosemarkie|Fortrose|Avoch|IV10/i, cap: 16 },
+  { zone: 'Loch Tay (Scozia)', town: 'Kenmore', codes: ['6', '13772', '738'], pages: [0, 24], filter: /Kenmore|Aberfeldy|Killin|Acharn|Fearnan|Lawers|Fortingall|Weem|Dull|Loch Tay|PH15/i, cap: 22 },
 ]
 const COSTA = {
-  zone: 'Costa Scozia (≤4h da Edimburgo)', cap: 36, perTown: 3,
+  zone: 'Costa Scozia (≤4h da Edimburgo)', cap: 48, perTown: 4,
   towns: [
     ['449', 'Dunbar', /Dunbar/i], ['1245', 'St Andrews', /St ?Andrews/i], ['1022', 'Oban', /Oban/i],
     ['774', 'Largs', /Largs/i], ['74', 'Ayr', /Ayr|Troon|Prestwick/i], ['1274', 'Stonehaven', /Stonehaven/i],
@@ -78,7 +78,7 @@ const COSTA = {
   ],
 }
 const MH_BURTONPORT = {
-  zone: 'Burtonport (Donegal, IE)', county: 'donegal', cap: 24,
+  zone: 'Burtonport (Donegal, IE)', county: 'donegal', cap: 30,
   towns: ['burtonport', 'dungloe', 'kincasslagh', 'annagry', 'gweedore', 'falcarragh'],
 }
 
@@ -164,15 +164,21 @@ const extra = existsSync(ROOT + 'docs/extra-zones.json') ? JSON.parse(readFileSy
 
 // ---- Scrape all zones into `scraped` (url → candidate), capped per zone ----
 const scraped = new Map()
+// Cross-source dedupe: the same house listed on two portals shares its
+// address+price, or sits at the same spot with the same price.
+const dedupKeys = new Set()
+const keysOf = (l) => [
+  l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 40) + '|' + l.price,
+  `${l.price}|${l.lat.toFixed(3)}|${l.lng.toFixed(3)}`,
+]
 const addCapped = (items, cap) => {
   let n = 0
-  const keys = new Set()
   for (const l of items) {
     if (!l || n >= cap) continue
     if (scraped.has(l.url)) continue
-    const key = l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 40) + '|' + l.price
-    if (keys.has(key)) continue
-    keys.add(key)
+    const ks = keysOf(l)
+    if (ks.some((k) => dedupKeys.has(k))) continue
+    ks.forEach((k) => dedupKeys.add(k))
     scraped.set(l.url, l)
     n++
   }
@@ -203,6 +209,67 @@ for (const z of RM_ZONES) {
   addCapped(parsed, MH_BURTONPORT.cap)
   console.log(`${MH_BURTONPORT.zone}: ${parsed.length} candidati`)
 }
+// ---- s1homes: Scottish solicitors' portal — listings often absent from
+// Rightmove. Search pages embed the FULL listing JSON (address, coords,
+// price, own-CDN photos, complete description), so no per-listing fetch.
+const S1_PATHS = [
+  'East-Lothian/North-Berwick', 'East-Lothian/Gullane', 'East-Lothian/Dunbar',
+  'Fife/Anstruther', 'Fife/Crail', 'Fife/Pittenweem', 'Fife/Elie', 'Fife/St-Monans', 'Fife/Cellardyke',
+  'Fife/St-Andrews', 'Fife/Leuchars',
+  'Highland/Fortrose', 'Highland/Rosemarkie', 'Highland/Avoch', 'Highland/Nairn',
+  'Perthshire/Aberfeldy', 'Stirlingshire/Killin',
+  'Ayrshire/Largs', 'Ayrshire/Ayr', 'Ayrshire/Girvan',
+  'Argyll/Oban', 'Argyll/Dunoon', 'Argyll/Tarbert',
+  'Aberdeenshire/Stonehaven', 'Moray/Lossiemouth',
+  'Dumfries-and-Galloway/Kirkcudbright', 'Dumfries-and-Galloway/Portpatrick',
+  'Scottish-Borders/Eyemouth', 'Angus/Arbroath', 'Angus/Montrose', 'Angus/Carnoustie',
+  'Dunbartonshire/Helensburgh',
+]
+const zoneOf = (txt) => {
+  for (const z of RM_ZONES) if (z.filter.test(txt)) return { zone: z.zone, town: z.town }
+  for (const [, town, filter] of COSTA.towns) if (filter.test(txt)) return { zone: COSTA.zone, town }
+  for (const z of extra) { try { if (new RegExp(z.filter, 'i').test(txt)) return { zone: z.zone, town: z.zone.replace(/ \(.*/, '') } } catch { /* bad regex */ } }
+  return null
+}
+const s1Parse = (html) => {
+  const k = html.indexOf('window.__ssr_init_data__')
+  if (k < 0) return []
+  let i = html.indexOf('{', k), d = 0, j = i
+  for (; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (!d) break } }
+  try { return JSON.parse(html.slice(i, j + 1)).propertyAdvancedSearch?.data || [] } catch { return [] }
+}
+const s1Candidate = (o) => {
+  if (o.channel && o.channel.key !== 'sales') return null
+  const la = parseFloat(o.latitude), ln = parseFloat(o.longitude)
+  if (!o.price || !validCoords(la, ln)) return null
+  const ptype = (o.propertyType?.name || '').toLowerCase()
+  if (/land|plot|site|garage|parking/.test(ptype)) return null
+  const addr = [o.houseNameNumber, o.address2, o.address3, o.town, o.postcode].filter(Boolean).join(', ')
+  const zt = zoneOf(addr)
+  if (!zt) return null
+  const featStr = (o.features || []).join(' ')
+  const text = `${o.summary || ''} ${o.description || ''}`.replace(/<[^>]+>/g, ' ')
+  return {
+    id: 0, title: addr, contract: 'sale',
+    type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
+    price: o.price, currency: 'GBP',
+    size: null, rooms: +(/([0-9]+)\s*bedroom/.exec(featStr)?.[1] || 0) || null,
+    baths: +(/([0-9]+)\s*bathroom/.exec(featStr)?.[1] || 0) || null,
+    floor: null, year: null, energy: null,
+    zone: zt.zone, town: zt.town, addr, lat: la, lng: ln,
+    imgs: (o.media || []).slice(0, 6).map((m) => m.metadata?.src?.url).filter((u) => u && u.startsWith('https://cdn.s1homes.com/')),
+    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY,
+    url: `https://www.s1homes.com/property/${o.propertyId}`,
+  }
+}
+{
+  const pages = await pmap(S1_PATHS, (path) => get(`https://www.s1homes.com/property-for-sale/${path}/`).catch(() => ''), 6)
+  const cands = pages.flatMap((h) => s1Parse(h)).map(s1Candidate).filter(Boolean)
+  const byZone = {}
+  for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`s1homes → ${z}: ${arr.length} candidati`) }
+}
+
 // Extra zones (user-requested)
 for (const z of extra) {
   const pad = { latPad: (z.bounds.north - z.bounds.south) * 0.3, lngPad: (z.bounds.east - z.bounds.west) * 0.3 }
@@ -260,6 +327,10 @@ await pmap(missing, async (l) => {
     if (/^Sold/i.test(title.trim())) soldNew.push({ ...toSold(l), status: 'sold' })
     else if (/^Sale Agreed/i.test(title.trim())) soldNew.push({ ...toSold(l), status: 'sale_agreed' })
     else if (!/€\s?[\d,]+/.test(title)) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
+  } else if (/s1homes\.com/.test(l.url)) {
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else {
     let page = ''

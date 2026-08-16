@@ -30,8 +30,8 @@ if (!Array.isArray(db.listings) || db.listings.length < 50)
 
 // ---- Per-listing invariants ----
 const ids = new Set(), urls = new Set(), addrPrice = new Set()
-const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/)/
-const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/)/
+const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/|https:\/\/www\.s1homes\.com\/)/
+const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/|https:\/\/cdn\.s1homes\.com\/)/
 const TYPES = new Set(['Casa indipendente', 'Cottage', 'Villa', 'Appartamento', 'Bungalow'])
 const zoneCounts = {}
 for (const l of db.listings || []) {
