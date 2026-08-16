@@ -99,12 +99,12 @@ export default function MapPanel({
                     <div className="pt">{l.title}</div>
                     <div className="pa">📍 {l.addr}</div>
                     <div className="pp">{fmtP(l)}</div>
-                    {l.url && (
-                      <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer" onClick={() => onSeen && onSeen(l.id)}>
+                    {!soldView && <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>}
+                    {soldView && l.url && (
+                      <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer">
                         🔗 {t('view_on', { host: hostOf(l.url) })} →
                       </a>
                     )}
-                    {!soldView && <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>}
                   </div>
                 </div>
               </Popup>
