@@ -15,7 +15,7 @@ const GATES = [
 const travelCache = (() => { try { return JSON.parse(localStorage.getItem('ct_travel')) || {} } catch { return {} } })()
 const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`)
 
-export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
   const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
@@ -154,6 +154,23 @@ export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose,
               <a onClick={() => { onClose(); onShowOnMap(l.id) }}>{t('loc_show_map')}</a>
             </div>
           </div>
+
+          {similar.length > 0 && (
+            <div className="simbox">
+              <h4>{t('sim_title')}</h4>
+              <div className="simrow">
+                {similar.map((s) => (
+                  <div key={s.id} className="simcard" onClick={() => onOpenListing(s.id)}>
+                    {s.imgs?.length
+                      ? <img src={imgUrl(s.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+                      : <div className="simph">🏠</div>}
+                    <div className="simp">{fmtP(s)}</div>
+                    <div className="sima">{(s.addr || '').split(',')[0]}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="notesbox">
             <h4>{t('notes_label')}</h4>

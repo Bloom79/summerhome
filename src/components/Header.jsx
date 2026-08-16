@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { geocode, zoomForType } from '../utils.js'
+import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Header({ onFlyTo, onNearMe, toast }) {
+export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, toast }) {
   const { t, lang, setLang } = useI18n()
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
+  const [local, setLocal] = useState([])
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
   const debRef = useRef(null)
@@ -19,23 +20,32 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
     return () => document.removeEventListener('click', onDocClick)
   }, [])
 
+  // Instant matches among the portal's own listings (address/town/zone).
+  const matchListings = (q) => {
+    const s = q.toLowerCase()
+    return listings
+      .filter((l) => `${l.addr} ${l.town} ${l.zone}`.toLowerCase().includes(s))
+      .slice(0, 5)
+  }
+
   const onInput = (e) => {
     const v = e.target.value
     setValue(v)
     clearTimeout(debRef.current)
     if (v.trim().length < 3) {
-      setSuggestions([])
-      setOpen(false)
+      setSuggestions([]); setLocal([]); setOpen(false)
       return
     }
+    const loc = matchListings(v.trim())
+    setLocal(loc)
+    setOpen(loc.length > 0)
     debRef.current = setTimeout(async () => {
       try {
         const res = await geocode(v.trim())
         setSuggestions(res)
-        setOpen(res.length > 0)
+        setOpen(loc.length > 0 || res.length > 0)
       } catch {
         setSuggestions([])
-        setOpen(false)
       }
     }, 350)
   }
@@ -46,10 +56,18 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
     setOpen(false)
   }
 
+  const pickListing = (l) => {
+    setOpen(false)
+    setValue('')
+    onOpenListing(l.id)
+  }
+
   const doSearch = async () => {
     const v = value.trim()
     if (!v) return
     setOpen(false)
+    const loc = matchListings(v)
+    if (loc.length === 1) { pickListing(loc[0]); return }
     try {
       const res = await geocode(v, 1)
       if (res.length) onFlyTo(+res[0].lat, +res[0].lon, zoomForType(res[0].addresstype || res[0].type))
@@ -76,6 +94,11 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
         </div>
         {open && (
           <div className="suggestions">
+            {local.map((l) => (
+              <div key={'l' + l.id} onClick={() => pickListing(l)}>
+                🏠 {(l.addr || '').split(',').slice(0, 2).join(',')} — <b>{fmtP(l)}</b>
+              </div>
+            ))}
             {suggestions.map((r, i) => (
               <div key={i} onClick={() => pick(r)}>📍 {r.display_name}</div>
             ))}
@@ -83,6 +106,7 @@ export default function Header({ onFlyTo, onNearMe, toast }) {
         )}
       </div>
       <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
+      <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
       <div className="langtog">
         <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
         <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>

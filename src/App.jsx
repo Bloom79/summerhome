@@ -7,6 +7,7 @@ import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
+import StatsModal from './components/StatsModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
@@ -116,6 +117,7 @@ export default function App({ initialDb }) {
   const [news, setNews] = useState(() => loadJSON('ct_news', []))
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
   const [pushErr, setPushErr] = useState('')
 
@@ -626,11 +628,28 @@ export default function App({ initialDb }) {
 
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
+
+  // Same-zone alternatives within ±30% of the open listing's price.
+  const similar = useMemo(() => {
+    if (!selected) return []
+    return LISTINGS
+      .filter((l) => l.id !== selected.id && l.zone === selected.zone &&
+        l.price >= selected.price * 0.7 && l.price <= selected.price * 1.3)
+      .sort((a, b) => Math.abs(a.price - selected.price) - Math.abs(b.price - selected.price))
+      .slice(0, 3)
+  }, [selected, LISTINGS])
   const displayItems = soldView ? soldItems : items
 
   return (
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '')}>
-      <Header onFlyTo={flyTo} onNearMe={onNearMe} toast={toast} />
+      <Header
+        listings={LISTINGS}
+        onOpenListing={openDetail}
+        onFlyTo={flyTo}
+        onNearMe={onNearMe}
+        onOpenStats={() => setStatsOpen(true)}
+        toast={toast}
+      />
 
       <div id="demobanner">{t('banner', { date: LAST_UPDATED })}</div>
 
@@ -706,6 +725,8 @@ export default function App({ initialDb }) {
         <DetailModal
           l={selected}
           fav={favs.has(selected.id)}
+          similar={similar}
+          onOpenListing={openDetail}
           gbpEur={db.gbpEur}
           note={notes[selected.url] || ''}
           onSaveNote={saveNote}
@@ -713,6 +734,16 @@ export default function App({ initialDb }) {
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}
           toast={toast}
+        />
+      )}
+
+      {statsOpen && (
+        <StatsModal
+          zones={db.zones}
+          listings={LISTINGS}
+          sold={SOLD}
+          onPickZone={(z) => setFilters((f) => ({ ...f, zone: z }))}
+          onClose={() => setStatsOpen(false)}
         />
       )}
 
