@@ -449,9 +449,11 @@ const tspcEnrich = async (l) => {
 // date has passed. Coordinates come from the postcode (postcodes.io).
 const MONTHS = { january: '01', february: '02', march: '03', april: '04', may: '05', june: '06', july: '07', august: '08', september: '09', october: '10', november: '11', december: '12' }
 const isoDate = (txt) => {
-  const m = /(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]+)\s+(20\d\d)/.exec(txt || '')
-  if (!m || !MONTHS[m[2].toLowerCase()]) return null
-  return `${m[3]}-${MONTHS[m[2].toLowerCase()]}-${String(+m[1]).padStart(2, '0')}`
+  // Month may be abbreviated ("27 Aug 2026") — match by 3-letter prefix.
+  const m = /(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]{2,8})\s+(20\d\d)/.exec(txt || '')
+  const mk = m && Object.keys(MONTHS).find((k) => k.startsWith(m[2].toLowerCase().slice(0, 3)))
+  if (!mk) return null
+  return `${m[3]}-${MONTHS[mk]}-${String(+m[1]).padStart(2, '0')}`
 }
 const pcGeo = async (pc) => {
   try {
@@ -461,35 +463,64 @@ const pcGeo = async (pc) => {
 }
 const POUND = '(?:£|�|&pound;)'
 const typeOfTitle = (t) => /bungalow/i.test(t) ? 'Bungalow' : /flat|apartment|maisonette/i.test(t) ? 'Appartamento' : /cottage/i.test(t) ? 'Cottage' : 'Casa indipendente'
+// Auction feeds span ALL of Scotland, so the loose town regexes misfire:
+// "24 Montrose Place" in Selkirk, "East Dunbartonshire" ⊃ Dunbar,
+// "Ayrshire" ⊃ Ayr. Match only the address tail (street segment stripped)
+// and require a word boundary after every town alternative. Lots that are
+// not single homes (portfolios, tenanted investments) are skipped.
+const AUC_SKIP = /land|site|garage|plot|commercial|shop|office|portfolio|tenanted|investment/i
+const zoneOfAuction = (addr) => {
+  const tail = addr.includes(',') ? addr.split(',').slice(1).join(',') : addr
+  const rb = (re) => new RegExp('(?:' + re.source.split('|').map((s) => s + '\\b').join('|') + ')', 'i')
+  for (const z of RM_ZONES) if (rb(z.filter).test(tail)) return { zone: z.zone, town: z.town }
+  for (const [, town, filter] of COSTA.towns) if (rb(filter).test(tail)) return { zone: COSTA.zone, town }
+  return null
+}
+const aucAll = []
 {
   const aucCands = []
-  // Future Property Auctions — one server-rendered catalogue page.
+  // Future Property Auctions — the catalogue is PAGINATED (~500 lots in
+  // pages of 39, offset=0,39,78,…): walk every page or Fife lots on page 5
+  // never surface. Cards carry the full address in `listing-address` (the
+  // <h4> title is just "4 Bedroom House") and exact coordinates in their
+  // Google Maps link, so no geocoding round-trip is needed.
   try {
-    const html = await get('https://www.futurepropertyauctions.co.uk/catalogue_viewall.asp')
-    for (const c of html.split('class="listing-badges"').slice(1)) {
-      const chunk = c.slice(0, 3500)
-      const title = (/<h4><a[^>]*>([^<]+)/.exec(chunk) || [])[1]
-      if (!title || /land|site|garage|plot|commercial|shop|office/i.test(title)) continue
-      const zt = zoneOf(title)
-      if (!zt) continue
-      const bid = +((new RegExp(POUND + '\\s?([\\d,]+)').exec(chunk) || [])[1] || '').replace(/,/g, '')
-      const did = (/property_details\.asp\?id=(\d+)/.exec(chunk) || [])[1]
-      if (!bid || bid < 10000 || !did) continue
-      let page = ''
-      try { page = await get(`https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`) } catch { continue }
-      const pc = (/[A-Z]{1,2}\d{1,2}[A-Z]? \d[A-Z]{2}/.exec(page) || [])[0]
-      const geo = pc ? await pcGeo(pc) : null
-      if (!geo) continue
-      const beds = +((/(\d+)\s*Bed/i.exec(page) || [])[1] || 0) || null
-      const auction = isoDate(page)
-      const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 15)
-      aucCands.push({
-        id: 0, title: title.trim(), contract: 'sale', type: typeOfTitle(title),
-        price: bid, currency: 'GBP', size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
-        zone: zt.zone, town: zt.town, addr: title.trim(), lat: geo[0], lng: geo[1], imgs,
-        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
-        url: `https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`,
-      })
+    for (let off = 0; off < 1600; off += 39) {
+      const html = await get(`https://www.futurepropertyauctions.co.uk/catalogue_viewall.asp${off ? `?offset=${off}` : ''}`)
+      const cards = html.split('class="listing-badges"').slice(1)
+      if (!cards.length) break
+      for (const c of cards) {
+        const chunk = c.slice(0, 6000)
+        const title = (/<h4><a[^>]*>([^<]+)/.exec(chunk) || [])[1]
+        if (!title) continue
+        const addr = ((/listing-address[^>]*>[\s\S]*?<\/i>\s*([^<]+)/.exec(chunk) || [])[1] || '')
+          .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+        if (AUC_SKIP.test(title + ' ' + addr)) continue
+        const zt = zoneOfAuction(addr)
+        if (!zt) continue
+        const bid = +((new RegExp(POUND + '\\s?([\\d,]+)').exec(chunk) || [])[1] || '').replace(/,/g, '')
+        const did = (/property_details\.asp\?id=(\d+)/.exec(chunk) || [])[1]
+        if (!bid || bid < 10000 || !did) continue
+        const gm = /maps\?[^"]*q=(-?\d+\.\d+),(-?\d+\.\d+)/.exec(chunk)
+        let geo = gm && validCoords(+gm[1], +gm[2]) ? [+gm[1], +gm[2]] : null
+        let page = ''
+        try { page = await get(`https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`) } catch { /* card data may suffice */ }
+        if (!geo) {
+          const pc = (/[A-Z]{1,2}\d{1,2}[A-Z]? \d[A-Z]{2}/.exec(addr + ' ' + page) || [])[0]
+          geo = pc ? await pcGeo(pc) : null
+        }
+        if (!geo) continue
+        const beds = +((/(\d+)\s*Bed/i.exec(title + ' ' + page) || [])[1] || 0) || null
+        const auction = isoDate(chunk.replace(/&nbsp;/g, ' ')) || isoDate(page)
+        const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 15)
+        aucCands.push({
+          id: 0, title: addr || title.trim(), contract: 'sale', type: typeOfTitle(title),
+          price: bid, currency: 'GBP', size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
+          zone: zt.zone, town: zt.town, addr: addr || title.trim(), lat: geo[0], lng: geo[1], imgs,
+          feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
+          url: `https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`,
+        })
+      }
     }
   } catch { /* auction source is best-effort */ }
   // Auction House Scotland — network listing page.
@@ -498,8 +529,8 @@ const typeOfTitle = (t) => /bungalow/i.test(t) ? 'Bungalow' : /flat|apartment|ma
     const rx = /href="(\/scotland\/auction\/lot\/\d+)"[\s\S]{0,3500}?image-sticker[^>]*>\s*Lot\s*\d+[\s\S]{0,800}?Guide \| (?:£|�|&pound;)([\d,]+)[\s\S]{0,500}?blue-text">([^<]+)<\/p>\s*<p[^>]*grid-address">([^<]+)</g
     for (const m of html.matchAll(rx)) {
       const [, path, guide, bedsType, addr] = m
-      if (/land|site|garage|plot|commercial/i.test(bedsType + addr)) continue
-      const zt = zoneOf(addr)
+      if (AUC_SKIP.test(bedsType + ' ' + addr)) continue
+      const zt = zoneOfAuction(addr)
       if (!zt) continue
       const bid = +guide.replace(/,/g, '')
       if (!bid || bid < 10000) continue
@@ -526,6 +557,7 @@ const typeOfTitle = (t) => /bungalow/i.test(t) ? 'Bungalow' : /flat|apartment|ma
   const byZone = {}
   for (const l of aucCands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 8); console.log(`aste → ${z}: ${arr.length} lotti`) }
+  aucAll.push(...aucCands)
 }
 
 // Extra zones (user-requested)
@@ -677,6 +709,16 @@ if (!changed) {
 // ---- Assemble and write ----
 let maxId = Math.max(0, ...db.listings.map((l) => l.id))
 for (const l of nextListings) if (!l.id) l.id = ++maxId
+// Auction houses often relist their lots on the portals (FPA → OnTheMarket):
+// the portal copy wins the dedupe, so carry the auction nature over to it —
+// same guide price at the same address means it IS the auction lot.
+for (const l of nextListings) {
+  if (l.feats.includes('Asta')) continue
+  const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
+  const hit = aucAll.find((a) => normAddr(a.addr).slice(0, 40) + '|' + a.price === k ||
+    nearPt({ price: l.price, lat: l.lat, lng: l.lng }, a))
+  if (hit) { l.feats.push('Asta'); if (hit.auction) l.auction = hit.auction }
+}
 const zoneSet = new Set([...db.zones])
 for (const l of nextListings) if (!zoneSet.has(l.zone)) { db.zones.push(l.zone); zoneSet.add(l.zone) }
 if (!db.features.includes('Asta')) db.features.push('Asta')
