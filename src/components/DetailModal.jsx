@@ -24,7 +24,7 @@ const hav = (a, b, c, d) => {
 }
 const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
 
-export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
   const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
@@ -232,14 +232,26 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
             </div>
           )}
 
+          <div className="votebox">
+            <span className="voteq">{t('vote_q')}</span>
+            <button className={'btn ghost vsel' + (vote[profile] === 1 ? ' yes' : '')} onClick={() => onVote(l.url, 1)}>👍 {t('vote_like')}</button>
+            <button className={'btn ghost vsel' + (vote[profile] === -1 ? ' no' : '')} onClick={() => onVote(l.url, -1)}>👎 {t('vote_no')}</button>
+            {Object.entries(vote).filter(([n]) => n !== profile).map(([n, v]) => (
+              <span key={n} className={'voteb ' + (v === 1 ? 'yes' : 'no')}>{v === 1 ? '👍' : '👎'} {n}</span>
+            ))}
+          </div>
+
           <div className="notesbox">
             <h4>{t('notes_label')}</h4>
             <textarea
-              value={note || ''}
+              value={noteData[myKey] ?? noteData._me ?? ''}
               placeholder={t('notes_ph')}
               onChange={(e) => onSaveNote(l.url, e.target.value)}
               rows={3}
             />
+            {Object.entries(noteData).filter(([n]) => n !== myKey && n !== '_me').map(([n, txt]) => (
+              <div className="partnernote" key={n}><b>{t('notes_of', { n })}:</b> {txt}</div>
+            ))}
           </div>
 
           <div className="mcta">

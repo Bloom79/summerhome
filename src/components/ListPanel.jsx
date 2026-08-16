@@ -4,7 +4,7 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, reducedOnly, onToggleReduced, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
@@ -27,6 +27,8 @@ export default function ListPanel({
         onToggleGarden={onToggleGarden}
         reducedOnly={reducedOnly}
         onToggleReduced={onToggleReduced}
+        bothOnly={bothOnly}
+        onToggleBoth={onToggleBoth}
         soldView={soldView}
         soldCount={soldCount}
         onToggleSold={onToggleSold}
@@ -74,6 +76,9 @@ export default function ListPanel({
                 updated={updated}
                 gbpEur={gbpEur}
                 hasNote={!!(notes && notes[l.url])}
+                vote={(votes && votes[l.url]) || {}}
+                profile={profile}
+                onVote={onVote}
                 fav={favs.has(l.id)}
                 seen={seen.has(l.id)}
                 highlighted={highlightId === l.id}

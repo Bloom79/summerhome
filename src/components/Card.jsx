@@ -1,7 +1,7 @@
 import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Card({ l, updated, gbpEur, hasNote, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
+export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
@@ -22,6 +22,10 @@ export default function Card({ l, updated, gbpEur, hasNote, fav, seen, highlight
         <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
         {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>
+        <div className="votebtns">
+          <button className={'vbtn' + (vote[profile] === 1 ? ' yes' : '')} onClick={(e) => { e.stopPropagation(); onVote(l.url, 1) }}>👍</button>
+          <button className={'vbtn' + (vote[profile] === -1 ? ' no' : '')} onClick={(e) => { e.stopPropagation(); onVote(l.url, -1) }}>👎</button>
+        </div>
         <span className="price" title={eur || undefined}>{fmtP(l)}</span>
         {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
       </div>
@@ -30,6 +34,9 @@ export default function Card({ l, updated, gbpEur, hasNote, fav, seen, highlight
           {isNew && <span className="newb">✨ {t('new_badge')}</span>}
           {reduced && <span className="newb redb">📉 {t('reduced_badge')}</span>}
           {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}
+          {Object.entries(vote).filter(([n]) => n !== profile).map(([n, v]) => (
+            <span key={n} className={'voteb ' + (v === 1 ? 'yes' : 'no')}>{v === 1 ? '👍' : '👎'} {n}</span>
+          ))}
           {l.title}
         </div>
         <div className="caddr">📍 {l.addr}</div>

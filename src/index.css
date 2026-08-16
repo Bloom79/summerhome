@@ -124,6 +124,18 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .simp{font-weight:800;font-size:.82rem;color:var(--brand-dark);padding:5px 8px 0}
 .sima{font-size:.74rem;color:var(--muted);padding:0 8px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .travel.poi{font-weight:500}
+.votebtns{position:absolute;top:48px;right:10px;display:flex;flex-direction:column;gap:5px}
+.vbtn{border:0;background:rgba(255,255,255,.92);border-radius:9px;padding:4px 7px;cursor:pointer;font-size:.9rem;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.vbtn.yes{background:#2e7d32}
+.vbtn.no{background:#c0392b}
+.voteb{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:700;color:#fff;margin-right:6px;vertical-align:2px}
+.voteb.yes{background:#2e7d32}
+.voteb.no{background:#c0392b}
+.votebox{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:14px 0;background:#f6f9f9;border-radius:10px;padding:10px 12px}
+.voteq{font-size:.86rem;font-weight:700;color:var(--ink)}
+.vsel.yes{background:#2e7d32;color:#fff;border-color:#2e7d32}
+.vsel.no{background:#c0392b;color:#fff;border-color:#c0392b}
+.partnernote{margin-top:8px;background:#f6f9f9;border-radius:9px;padding:8px 11px;font-size:.83rem;color:var(--ink)}
 .synccode{font-size:1.6rem;font-weight:800;letter-spacing:.35em;text-align:center;background:var(--brand-light);border-radius:10px;padding:10px;color:var(--brand-dark)}
 .syncrow{display:flex;gap:8px}
 .syncrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:1rem;letter-spacing:.25em;text-transform:uppercase;font-weight:700}

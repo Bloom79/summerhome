@@ -9,6 +9,7 @@ import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
 import StatsModal from './components/StatsModal.jsx'
 import SyncModal from './components/SyncModal.jsx'
+import ProfileModal from './components/ProfileModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
@@ -92,8 +93,15 @@ export default function App({ initialDb }) {
   const [seaOnly, setSeaOnly] = useState(!!ui?.seaOnly)
   const [gardenOnly, setGardenOnly] = useState(!!ui?.gardenOnly)
   const [reducedOnly, setReducedOnly] = useState(!!ui?.reducedOnly)
-  // Personal notes per listing (keyed by source url, local only).
+  const [bothOnly, setBothOnly] = useState(!!ui?.bothOnly)
+  // Notes per listing, per person: { url: { name: text } } (legacy: plain string).
   const [notes, setNotes] = useState(() => loadJSON('ct_notes', {}))
+  // Couple mode: who is using this device, and everyone's 👍/👎 per listing.
+  const [profile, setProfileState] = useState(() => { try { return localStorage.getItem('ct_profile') || '' } catch { return '' } })
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [votes, setVotes] = useState(() => loadJSON('ct_votes', {}))
+  const pendingVote = useRef(null)
+  const myKey = profile || '_me'
   const [soldView, setSoldView] = useState(false)
   const [favs, setFavs] = useState(() => loadIdSet('ct_favs'))
   const [seen, setSeen] = useState(() => loadIdSet('ct_seen'))
@@ -125,18 +133,59 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly })
-  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly])
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly])
 
   const saveNote = useCallback((url, text) => {
     setNotes((prev) => {
+      const cur = typeof prev[url] === 'string' ? { _me: prev[url] } : { ...(prev[url] || {}) }
+      if (myKey !== '_me' && cur._me != null) { if (cur[myKey] == null) cur[myKey] = cur._me; delete cur._me }
+      if (text && text.trim()) cur[myKey] = text
+      else delete cur[myKey]
       const next = { ...prev }
-      if (text && text.trim()) next[url] = text
-      else delete next[url]
+      if (Object.keys(cur).length) next[url] = cur; else delete next[url]
       saveJSON('ct_notes', next)
       return next
     })
+  }, [myKey])
+
+  // Everyone's notes for a listing, normalised to the object shape.
+  const notesFor = useCallback((url) => {
+    const v = notes[url]
+    return typeof v === 'string' ? { _me: v } : (v || {})
+  }, [notes])
+  const noteText = useCallback((url) => {
+    return Object.entries(notesFor(url))
+      .map(([n, t2]) => `${n === myKey || n === '_me' ? t('you') : n}: ${t2}`).join(' · ')
+  }, [notesFor, myKey, t])
+
+  const setProfile = useCallback((name) => {
+    const n = (name || '').trim().slice(0, 12)
+    if (!n) return
+    try { localStorage.setItem('ct_profile', n) } catch { /* ignore */ }
+    setProfileState(n)
+    setProfileOpen(false)
+    if (pendingVote.current) { const f = pendingVote.current; pendingVote.current = null; f(n) }
   }, [])
+
+  // 👍/👎 per listing, keyed by person: first vote asks who you are.
+  const castVote = useCallback((url, v) => {
+    const apply = (name) => setVotes((prev) => {
+      const cur = { ...(prev[url] || {}) }
+      if (cur[name] === v) delete cur[name]
+      else cur[name] = v
+      const next = { ...prev }
+      if (Object.keys(cur).length) next[url] = cur; else delete next[url]
+      saveJSON('ct_votes', next)
+      return next
+    })
+    if (!profile) { pendingVote.current = apply; setProfileOpen(true); return }
+    apply(profile)
+  }, [profile])
+
+  // A listing "both like": at least two people voted 👍.
+  const bothLike = useCallback((l) =>
+    Object.values(votes[l.url] || {}).filter((x) => x === 1).length >= 2, [votes])
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -197,6 +246,7 @@ export default function App({ initialDb }) {
     if (seaOnly && !l.seaView) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
     if (reducedOnly && !isReduced(l)) return false
+    if (bothOnly && !bothLike(l)) return false
     if (filters.freshness) {
       // 'visit' with no previous visit falls back to today's additions.
       const cutoff = filters.freshness === 'visit' ? (lastVisit || LAST_UPDATED) : daysAgo(+filters.freshness)
@@ -212,7 +262,7 @@ export default function App({ initialDb }) {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, reducedOnly, favs])
+  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, bothLike, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
@@ -607,28 +657,47 @@ export default function App({ initialDb }) {
   if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
   if (reducedOnly) af(t('reduced'), () => setReducedOnly(false))
+  if (bothOnly) af(t('both_chip'), () => setBothOnly(false))
   if (favOnly) af(t('favourites'), () => setFavOnly(false))
   const advCount = (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) + (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
   if (advCount) af(`${t('adv_filters')} (${advCount})`, () => setFilters((f) => ({ ...f, smin: null, smax: null, rooms: '', baths: '', feats: [] })))
   const clearAllFilters = () => {
     setFilters(initialFilters)
-    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false)
+    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false); setBothOnly(false)
   }
 
-  // Device sync: favourites/notes/alerts snapshot up and down via the worker.
-  const syncUpload = useCallback(async (code) => {
+  // Device sync via the worker. With the same code saved on both devices it
+  // runs by itself: merge-download on load and every 5 minutes, debounced
+  // upload after every change. Per-person keys (votes, notes) merge with
+  // "their entries win, mine stay mine".
+  const syncUpload = useCallback(async (code, silent) => {
     try {
       const r = await fetch(`${CERCA_QUI_ENDPOINT}/sync`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, data: { favs: [...favs], notes, alerts } }),
+        body: JSON.stringify({ code, data: { favs: [...favs], notes, votes, alerts } }),
       })
       if (!r.ok) throw new Error()
-      toast(t('t_sync_sent'))
+      if (!silent) toast(t('t_sync_sent'))
       return true
-    } catch { toast(t('t_sync_fail')); return false }
-  }, [favs, notes, alerts, toast, t])
+    } catch { if (!silent) toast(t('t_sync_fail')); return false }
+  }, [favs, notes, votes, alerts, toast, t])
 
-  const syncDownload = useCallback(async (code) => {
+  const mergePersonMap = useCallback((local, incoming) => {
+    const next = { ...local }
+    for (const [url, inObjRaw] of Object.entries(incoming || {})) {
+      const inObj = typeof inObjRaw === 'string' ? { _imported: inObjRaw } : inObjRaw
+      const curRaw = next[url]
+      const cur = typeof curRaw === 'string' ? { _me: curRaw } : { ...(curRaw || {}) }
+      for (const [n, v] of Object.entries(inObj)) {
+        if (n === myKey || n === '_me') { if (cur[myKey] == null && cur._me == null) cur[myKey === '_me' ? '_me' : myKey] = v }
+        else cur[n] = v
+      }
+      next[url] = cur
+    }
+    return next
+  }, [myKey])
+
+  const syncDownload = useCallback(async (code, silent) => {
     try {
       const r = await fetch(`${CERCA_QUI_ENDPOINT}/sync?code=${encodeURIComponent(code)}`)
       const j = await r.json()
@@ -639,17 +708,44 @@ export default function App({ initialDb }) {
         saveJSON('ct_favs', [...next]); return next
       })
       if (d.notes && typeof d.notes === 'object') setNotes((prev) => {
-        const next = { ...prev, ...d.notes }; saveJSON('ct_notes', next); return next
+        const next = mergePersonMap(prev, d.notes); saveJSON('ct_notes', next); return next
+      })
+      if (d.votes && typeof d.votes === 'object') setVotes((prev) => {
+        const next = mergePersonMap(prev, d.votes); saveJSON('ct_votes', next); return next
       })
       if (Array.isArray(d.alerts) && d.alerts.length) setAlerts((prev) => {
         const seenIds = new Set(prev.map((a) => a.id))
         const next = [...prev, ...d.alerts.filter((a) => a?.id && !seenIds.has(a.id))]
         saveJSON('ct_alerts', next); syncPush(next, false); return next
       })
-      toast(t('t_sync_got'))
+      if (!silent) toast(t('t_sync_got'))
       return true
-    } catch { toast(t('t_sync_fail')); return false }
-  }, [toast, t, syncPush])
+    } catch { if (!silent) toast(t('t_sync_fail')); return false }
+  }, [toast, t, syncPush, mergePersonMap])
+
+  const savedSyncCode = () => { try { return localStorage.getItem('ct_synccode') || '' } catch { return '' } }
+  // On load: pull the partner's latest, then push the merged state back.
+  useEffect(() => {
+    const c = savedSyncCode()
+    if (c) syncDownload(c, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // After any change: debounced silent upload.
+  const syncTimerRef = useRef(null)
+  const firstSyncRef = useRef(true)
+  useEffect(() => {
+    if (firstSyncRef.current) { firstSyncRef.current = false; return }
+    const c = savedSyncCode()
+    if (!c) return
+    clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = setTimeout(() => syncUpload(c, true), 4000)
+    return () => clearTimeout(syncTimerRef.current)
+  }, [favs, notes, votes, alerts, syncUpload])
+  // Periodic pull while the portal stays open.
+  useEffect(() => {
+    const iv = setInterval(() => { const c = savedSyncCode(); if (c) syncDownload(c, true) }, 5 * 60000)
+    return () => clearInterval(iv)
+  }, [syncDownload])
 
   // Shareable deep link: ?casa=<id> opens the listing's detail directly.
   useEffect(() => {
@@ -703,8 +799,13 @@ export default function App({ initialDb }) {
           updated={LAST_UPDATED}
           gbpEur={db.gbpEur}
           notes={notes}
+          votes={votes}
+          profile={profile}
+          onVote={castVote}
           reducedOnly={reducedOnly}
           onToggleReduced={() => setReducedOnly((v) => !v)}
+          bothOnly={bothOnly}
+          onToggleBoth={() => setBothOnly((v) => !v)}
           filters={filters}
           favOnly={favOnly}
           seaOnly={seaOnly}
@@ -767,13 +868,21 @@ export default function App({ initialDb }) {
           similar={similar}
           onOpenListing={openDetail}
           gbpEur={db.gbpEur}
-          note={notes[selected.url] || ''}
+          noteData={notesFor(selected.url)}
+          myKey={myKey}
+          vote={votes[selected.url] || {}}
+          profile={profile}
+          onVote={castVote}
           onSaveNote={saveNote}
           onClose={() => setSelectedId(null)}
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}
           toast={toast}
         />
+      )}
+
+      {profileOpen && (
+        <ProfileModal onSave={setProfile} onClose={() => { pendingVote.current = null; setProfileOpen(false) }} />
       )}
 
       {syncOpen && (
@@ -794,7 +903,8 @@ export default function App({ initialDb }) {
         <CompareModal
           items={LISTINGS.filter((l) => favs.has(l.id))}
           gbpEur={db.gbpEur}
-          notes={notes}
+          noteText={noteText}
+          votes={votes}
           onOpen={openDetail}
           onToggleFav={toggleFav}
           onClose={() => setCompareOpen(false)}

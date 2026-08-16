@@ -2,7 +2,7 @@ import { fmtP, imgUrl, handleImgError, hostOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 // Side-by-side comparison of the favourite listings.
-export default function CompareModal({ items, gbpEur, notes, onOpen, onToggleFav, onClose }) {
+export default function CompareModal({ items, gbpEur, noteText, votes = {}, onOpen, onToggleFav, onClose }) {
   const { t, typeLabel } = useI18n()
   const eur = (l) => (l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null)
   const lastDrop = (l) => {
@@ -20,7 +20,12 @@ export default function CompareModal({ items, gbpEur, notes, onOpen, onToggleFav
     [t('sea_view').replace('🌊 ', ''), (l) => (l.seaView ? '🌊 ✓' : '—')],
     [t('garden').replace('🌳 ', ''), (l) => (l.feats.includes('Giardino') ? '🌳 ✓' : '—')],
     [t('st_added'), (l) => `${l.date.slice(8, 10)}/${l.date.slice(5, 7)}`],
-    [t('cmp_note'), (l) => (notes[l.url] ? `📝 ${notes[l.url].slice(0, 60)}${notes[l.url].length > 60 ? '…' : ''}` : '—')],
+    [t('cmp_votes'), (l) => {
+      const v = votes[l.url] || {}
+      const s = Object.entries(v).map(([n, x]) => `${x === 1 ? '👍' : '👎'} ${n}`).join(' · ')
+      return s || '—'
+    }],
+    [t('cmp_note'), (l) => { const s = noteText(l.url); return s ? `📝 ${s.slice(0, 70)}${s.length > 70 ? '…' : ''}` : '—' }],
   ]
 
   return (
