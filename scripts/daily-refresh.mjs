@@ -329,8 +329,12 @@ await pmap(missing, async (l) => {
     else if (!/€\s?[\d,]+/.test(title)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else if (/s1homes\.com/.test(l.url)) {
-    const code = await getStatus(l.url)
-    if (code === 404 || code === 410) soldNew.push({ ...toSold(l), status: 'removed' })
+    // s1homes soft-404s (/property/<bad-id> still answers 200): the /view/
+    // page is server-rendered and puts the ADDRESS in og:title for live
+    // listings, a generic "s1homes | Property" for dead ones.
+    let page = ''
+    try { page = await get(`https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`) } catch { nextListings.push(l); return }
+    if (/property="og:title" content="s1homes \|/.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else {
     let page = ''
