@@ -838,7 +838,10 @@ export default function App({ initialDb }) {
         toast={toast}
       />
 
-      <div id="demobanner">{t('banner', { date: LAST_UPDATED })}</div>
+      <div id="demobanner">
+        <span className="bfull">{t('banner', { date: LAST_UPDATED })}</span>
+        <span className="bshort">{t('banner_short', { n: LISTINGS.length, date: `${LAST_UPDATED.slice(8, 10)}/${LAST_UPDATED.slice(5, 7)}` })}</span>
+      </div>
 
       <div id="main">
         <ListPanel

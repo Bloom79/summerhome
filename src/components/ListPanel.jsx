@@ -42,29 +42,28 @@ export default function ListPanel({
         hasAlerts={hasAlerts}
       />
 
-      {!soldView && (
-        <div id="seentabs">
-          <button className={seenFilter === '' ? 'on' : ''} onClick={() => onSeenFilter('')}>
-            {t('seen_all')} <b>{seenCounts.all}</b>
-          </button>
-          <button className={seenFilter === 'unseen' ? 'on' : ''} onClick={() => onSeenFilter('unseen')}>
-            👁 {t('seen_unseen')} <b>{seenCounts.unseen}</b>
-          </button>
-          <button className={seenFilter === 'seen' ? 'on' : ''} onClick={() => onSeenFilter('seen')}>
-            ✓ {t('seen_seen')} <b>{seenCounts.seen}</b>
-          </button>
-          {seenFilter === 'unseen' && seenCounts.unseen > 0 && (
-            <button className="markall" onClick={onMarkAllSeen}>{t('mark_all_seen')}</button>
-          )}
-        </div>
-      )}
-
+      {/* One compact row: triage tabs (they already show the count) + sort.
+          The old separate "N immobili trovati" line said what "Tutte N"
+          already says and cost a full row on phones. */}
       <div id="resmeta">
-        <div id="count" dangerouslySetInnerHTML={{
-          __html: soldView
-            ? t('sold_found', { n: `<b>${items.length}</b>` })
-            : t(items.length === 1 ? 'found_one' : 'found_many', { n: `<b>${items.length}</b>` }),
-        }} />
+        {!soldView ? (
+          <div id="seentabs">
+            <button className={seenFilter === '' ? 'on' : ''} onClick={() => onSeenFilter('')}>
+              {t('seen_all')} <b>{seenCounts.all}</b>
+            </button>
+            <button className={seenFilter === 'unseen' ? 'on' : ''} onClick={() => onSeenFilter('unseen')}>
+              👁 {t('seen_unseen')} <b>{seenCounts.unseen}</b>
+            </button>
+            <button className={seenFilter === 'seen' ? 'on' : ''} onClick={() => onSeenFilter('seen')}>
+              ✓ {t('seen_seen')} <b>{seenCounts.seen}</b>
+            </button>
+            {seenFilter === 'unseen' && seenCounts.unseen > 0 && (
+              <button className="markall" onClick={onMarkAllSeen}>{t('mark_all_seen')}</button>
+            )}
+          </div>
+        ) : (
+          <div id="count" dangerouslySetInnerHTML={{ __html: t('sold_found', { n: `<b>${items.length}</b>` }) }} />
+        )}
         {!soldView && <select id="sort" value={sort} onChange={(e) => onSortChange(e.target.value)}>
           <option value="rel">{t('sort_rel')}</option>
           <option value="pasc">{t('sort_pasc')}</option>

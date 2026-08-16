@@ -64,7 +64,7 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .btn.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--line)}
 
 /* ---------- Results ---------- */
-#resmeta{padding:10px 16px 4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#resmeta{padding:9px 16px 2px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 #count{font-size:.86rem;color:var(--muted)}
 #count b{color:var(--ink)}
 #sort{border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font-size:.83rem;background:#fff;color:var(--ink);outline:none}
@@ -139,7 +139,9 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .vsel.yes{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .vsel.no{background:#c0392b;color:#fff;border-color:#c0392b}
 .partnernote{margin-top:8px;background:#f6f9f9;border-radius:9px;padding:8px 11px;font-size:.83rem;color:var(--ink)}
-#seentabs{display:flex;align-items:center;gap:6px;padding:9px 16px 0;flex-wrap:wrap}
+#seentabs{display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+#seentabs::-webkit-scrollbar{display:none}
+#seentabs button{white-space:nowrap;flex:none}
 #seentabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:.8rem;font-weight:600;color:var(--ink);cursor:pointer}
 #seentabs button b{font-weight:800}
 #seentabs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -360,3 +362,18 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
    scrolls sideways, so each row keeps its zone visible. */
 .cmp-table td:first-child,.cmp-table th:first-child{position:sticky;left:0;background:#fff;z-index:2}
 .stats-table td:first-child,.stats-table th:first-child{max-width:132px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:6px 0 8px -6px rgba(16,42,45,.18)}
+
+/* ---- Compact top area on phones ---- */
+#demobanner .bshort{display:none}
+@media(max-width:840px){
+  #demobanner{padding:5px 10px;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #demobanner .bfull{display:none}
+  #demobanner .bshort{display:inline}
+  header{padding:8px 10px;gap:8px}
+  .searchbox input{padding:9px 14px;font-size:.9rem}
+  .hbtn{padding:7px 11px;font-size:.78rem}
+  .langtog button{padding:6px 10px;font-size:.75rem}
+  #resmeta{padding:7px 12px 2px}
+  #seentabs button{padding:5px 11px;font-size:.78rem}
+  #sort{padding:6px 8px;font-size:.78rem}
+}
