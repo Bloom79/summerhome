@@ -135,6 +135,9 @@ const rmEnrich = async (l) => {
     const text = (kf >= 0 ? page.slice(kf, kf + 6000) : page.slice(0, 60000)).replace(/<[^>]+>/g, ' ')
     l.seaView = SEA.some((r) => r.test(text))
     l.feats = featsOf(text)
+    // The search JSON stops at 6 photos; the detail page carries them all.
+    const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
+    if (gal.length >= l.imgs.length) l.imgs = gal
   } catch { /* enrich is best-effort */ }
   return l
 }
@@ -167,7 +170,7 @@ const mhParse = async (u, zone, town) => {
   const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
   const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
   const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
-  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
+  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 15)
   const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
   const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
   return {
@@ -346,7 +349,7 @@ const otmEnrich = async (l) => {
     const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
     if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
     if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
-    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 6).map((im) => im.largeUrl)
+    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 15).map((im) => im.largeUrl)
     if (big.length) l.imgs = big
   } catch { /* enrich is best-effort */ }
   return l
@@ -403,7 +406,7 @@ const tspcCandidate = (o) => {
 const tspcEnrich = async (l) => {
   try {
     const page = await get(l.url)
-    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 6)
+    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 15)
     if (gal.length) l.imgs = gal
     const desc = (/property="og:description" content="([\s\S]*?)"/.exec(page)?.[1] || '') + ' ' + l.title
     if (desc.trim()) { l.seaView = SEA.some((r) => r.test(desc)); l.feats = featsOf(desc) }

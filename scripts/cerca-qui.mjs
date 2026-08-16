@@ -208,7 +208,7 @@ if (cc === 'ie') {
     const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
     const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
     const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
-    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
+    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 15)
     // Title is "€price | address - agency - id - MyHome.ie"; the h1 is cleaner.
     const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
     const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
@@ -265,10 +265,12 @@ if (cc === 'ie') {
     const sub = (p.propertySubType || '').toLowerCase()
     const url = `https://www.rightmove.co.uk/properties/${p.id}`
     let text = ''
+    let gal = []
     try {
       const page = await get(url)
       const kf = page.indexOf('"keyFeatures"')
       text = (kf >= 0 ? page.slice(kf, kf + 6000) : page.slice(0, 60000)).replace(/<[^>]+>/g, ' ')
+      gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
     } catch { /* enrich is best-effort */ }
     return {
       id: 0, title: p.displayAddress, contract: 'sale',
@@ -276,7 +278,7 @@ if (cc === 'ie') {
       price: p.price.amount, currency: 'GBP',
       size: null, rooms: p.bedrooms ?? null, baths: p.bathrooms || null, floor: null, year: null, energy: null,
       zone: zoneName, town, addr: p.displayAddress, lat: p.location.latitude, lng: p.location.longitude,
-      imgs: (p.propertyImages?.images || []).slice(0, 6).map((im) => (im.srcUrl || '').replace('media.rightmove.co.uk:443', 'media.rightmove.co.uk')).filter(Boolean),
+      imgs: gal.length ? gal : (p.propertyImages?.images || []).slice(0, 6).map((im) => (im.srcUrl || '').replace('media.rightmove.co.uk:443', 'media.rightmove.co.uk')).filter(Boolean),
       feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url,
     }
   })
@@ -356,7 +358,7 @@ if (cc === 'ie') {
       const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
       if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
       if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
-      const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 6).map((im) => im.largeUrl)
+      const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 15).map((im) => im.largeUrl)
       if (big.length) l.imgs = big
     } catch { /* enrich is best-effort */ }
   }, 8)
