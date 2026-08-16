@@ -167,10 +167,17 @@ const scraped = new Map()
 // Cross-source dedupe: the same house listed on two portals shares its
 // address+price, or sits at the same spot with the same price.
 const dedupKeys = new Set()
-const keysOf = (l) => [
-  l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 40) + '|' + l.price,
-  `${l.price}|${l.lat.toFixed(3)}|${l.lng.toFixed(3)}`,
-]
+const keysOf = (l) => {
+  const norm = l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '')
+  return [
+    norm.slice(0, 40) + '|' + l.price,
+    `${l.price}|${l.lat.toFixed(3)}|${l.lng.toFixed(3)}`,
+    // Same house dual-listed by two agents at different asking prices: the
+    // address prefix (house number + street) plus coarse coords match even
+    // when the agents word the address and geocode it slightly differently.
+    `${norm.slice(0, 12)}|${l.lat.toFixed(2)}|${l.lng.toFixed(2)}`,
+  ]
+}
 const addCapped = (items, cap) => {
   let n = 0
   for (const l of items) {
@@ -270,6 +277,66 @@ const s1Candidate = (o) => {
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`s1homes → ${z}: ${arr.length} candidati`) }
 }
 
+// ---- OnTheMarket: agent-fed UK portal whose "Only With Us" exclusives are
+// absent from Rightmove. Search pages embed the full listing JSON (address,
+// exact coords, price, own-CDN photos) in __NEXT_DATA__, so no per-listing
+// fetch; detail pages are fetched only for genuinely new listings (otmEnrich).
+const OTM_TOWNS = [
+  'north-berwick', 'gullane', 'dunbar', 'aberlady',
+  'anstruther', 'crail', 'pittenweem', 'st-monans', 'cellardyke',
+  'st-andrews', 'leuchars',
+  'rosemarkie', 'fortrose', 'avoch', 'nairn',
+  'aberfeldy', 'killin', 'kenmore',
+  'oban', 'largs', 'ayr', 'stonehaven', 'kirkcudbright', 'portpatrick',
+  'lossiemouth', 'dunoon', 'rothesay', 'girvan', 'eyemouth',
+  'arbroath', 'montrose', 'helensburgh', 'millport', 'wemyss-bay', 'carnoustie', 'tarbert',
+]
+const otmNext = (html) => {
+  const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html || '')
+  if (!m) return null
+  try { return JSON.parse(m[1]).props?.initialReduxState || null } catch { return null }
+}
+const otmCandidate = (o) => {
+  const price = +String(o.price || '').replace(/[^0-9]/g, '')
+  const la = o.location?.lat, ln = o.location?.lon
+  if (!price || !validCoords(la, ln)) return null
+  const ptype = (o['humanised-property-type'] || '').toLowerCase()
+  if (/land|plot|site|garage|parking|mooring/.test(ptype)) return null
+  const addr = o.address || ''
+  const zt = zoneOf(addr)
+  if (!zt) return null
+  const text = `${o['property-title'] || ''} ${(o.features || []).join(' ')}`
+  return {
+    id: 0, title: addr, contract: 'sale',
+    type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
+    price, currency: 'GBP',
+    size: null, rooms: o.bedrooms ?? null, baths: o.bathrooms || null, floor: null, year: null, energy: null,
+    zone: zt.zone, town: zt.town, addr, lat: la, lng: ln,
+    imgs: (o.images || []).slice(0, 6).map((im) => im.default).filter((u) => u && u.startsWith('https://media.onthemarket.com/')),
+    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY,
+    url: `https://www.onthemarket.com/details/${o.id}/`,
+  }
+}
+const otmEnrich = async (l) => {
+  try {
+    const p = otmNext(await get(l.url))?.property
+    if (!p) return l
+    const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
+    if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
+    if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
+    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 6).map((im) => im.largeUrl)
+    if (big.length) l.imgs = big
+  } catch { /* enrich is best-effort */ }
+  return l
+}
+{
+  const pages = await pmap(OTM_TOWNS, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 6)
+  const cands = pages.flatMap((h) => otmNext(h)?.results?.list || []).map(otmCandidate).filter(Boolean)
+  const byZone = {}
+  for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`onthemarket → ${z}: ${arr.length} candidati`) }
+}
+
 // Extra zones (user-requested)
 for (const z of extra) {
   const pad = { latPad: (z.bounds.north - z.bounds.south) * 0.3, lngPad: (z.bounds.east - z.bounds.west) * 0.3 }
@@ -310,9 +377,11 @@ for (const [url, cand] of scraped) {
   else if (cand.price > old.price) events.rialzi.push({ ...merged, oldPrice: old.price })
   nextListings.push(merged)
 }
-// Enrich only genuinely new listings with their detail page (Rightmove;
-// MyHome candidates already carry full-text enrichment from mhParse).
-await pmap(enrichQueue.filter((l) => l.currency === 'GBP'), rmEnrich, 8)
+// Enrich only genuinely new listings with their detail page, per source
+// (MyHome and s1homes candidates already carry full-text enrichment from
+// their search/brochure parse).
+await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), rmEnrich, 8)
+await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), otmEnrich, 8)
 
 // Missing urls: verify on the source before archiving; live ones carry over.
 const missing = db.listings.filter((l) => !scraped.has(l.url))
@@ -335,6 +404,16 @@ await pmap(missing, async (l) => {
     let page = ''
     try { page = await get(`https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`) } catch { nextListings.push(l); return }
     if (/property="og:title" content="s1homes \|/.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
+  } else if (/onthemarket\.com/.test(l.url)) {
+    // OnTheMarket hard-404s dead listings; live pages carry priceRaw in
+    // their __NEXT_DATA__ blob.
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
+    let page = ''
+    try { page = await get(l.url) } catch { nextListings.push(l); return }
+    if (/no longer (available|on the market)|has been removed/i.test(page) || !page.includes('"priceRaw"'))
+      soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else {
     let page = ''
