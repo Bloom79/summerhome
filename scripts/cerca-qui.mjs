@@ -266,17 +266,20 @@ if (cc === 'ie') {
     const url = `https://www.rightmove.co.uk/properties/${p.id}`
     let text = ''
     let gal = []
+    let sz = null
     try {
       const page = await get(url)
       const kf = page.indexOf('"keyFeatures"')
       text = (kf >= 0 ? page.slice(kf, kf + 6000) : page.slice(0, 60000)).replace(/<[^>]+>/g, ' ')
       gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
+      const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
+      if (sqm > 15 && sqm < 2000) sz = sqm
     } catch { /* enrich is best-effort */ }
     return {
       id: 0, title: p.displayAddress, contract: 'sale',
       type: /bungalow/.test(sub) ? 'Bungalow' : /flat|apartment/.test(sub) ? 'Appartamento' : /cottage/.test(sub) ? 'Cottage' : 'Casa indipendente',
       price: p.price.amount, currency: 'GBP',
-      size: null, rooms: p.bedrooms ?? null, baths: p.bathrooms || null, floor: null, year: null, energy: null,
+      size: sz, rooms: p.bedrooms ?? null, baths: p.bathrooms || null, floor: null, year: null, energy: null,
       zone: zoneName, town, addr: p.displayAddress, lat: p.location.latitude, lng: p.location.longitude,
       imgs: gal.length ? gal : (p.propertyImages?.images || []).slice(0, 6).map((im) => (im.srcUrl || '').replace('media.rightmove.co.uk:443', 'media.rightmove.co.uk')).filter(Boolean),
       feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url,

@@ -138,6 +138,8 @@ const rmEnrich = async (l) => {
     // The search JSON stops at 6 photos; the detail page carries them all.
     const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
     if (gal.length >= l.imgs.length) l.imgs = gal
+    const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
+    if (sqm > 15 && sqm < 2000) l.size = sqm
   } catch { /* enrich is best-effort */ }
   return l
 }
