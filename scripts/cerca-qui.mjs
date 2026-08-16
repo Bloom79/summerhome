@@ -208,7 +208,7 @@ if (cc === 'ie') {
     const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
     const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
     const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
-    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 15)
+    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 24)
     // Title is "€price | address - agency - id - MyHome.ie"; the h1 is cleaner.
     const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
     const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
@@ -271,7 +271,7 @@ if (cc === 'ie') {
       const page = await get(url)
       const kf = page.indexOf('"keyFeatures"')
       text = (kf >= 0 ? page.slice(kf, kf + 6000) : page.slice(0, 60000)).replace(/<[^>]+>/g, ' ')
-      gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
+      gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 24)
       const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
       if (sqm > 15 && sqm < 2000) sz = sqm
     } catch { /* enrich is best-effort */ }
@@ -361,7 +361,7 @@ if (cc === 'ie') {
       const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
       if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
       if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
-      const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 15).map((im) => im.largeUrl)
+      const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 24).map((im) => im.largeUrl)
       if (big.length) l.imgs = big
     } catch { /* enrich is best-effort */ }
   }, 8)

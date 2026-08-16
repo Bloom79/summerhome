@@ -178,38 +178,6 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             <div className="mprice">{fmtP(l)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
-          {(() => {
-            const an = analyzeListing(l, allListings, gbpEur, dealPages, updated)
-            if (!an) return null
-            return (
-              <div className={'dealbox' + (an.isDeal ? '' : ' neutral')}>
-                <div className="dhead">
-                  <span className={'dscore' + (an.tier === 'top' ? ' top' : '') + (an.isDeal ? '' : ' none')}>{an.isDeal ? (an.tier === 'top' ? '🔥' : '💎') : '🔍'} {an.score}/100</span>
-                  <b>{t('deal_analysis')}</b>
-                </div>
-                <div className="dbar"><i style={{ width: an.score + '%' }} /></div>
-                <DealChecks deal={an} />
-              </div>
-            )
-          })()}
-          {(() => {
-            const tx = buyTax(l)
-            if (!tx) return null
-            const f = (n) => tx.sym + n.toLocaleString('it-IT')
-            return (
-              <div className="mtax">
-                🏛 {t('tax_title')}: <b>{f(tx.total)}</b>{' '}
-                <small>{tx.ads ? t('tax_scot', { lbtt: f(tx.lbtt), ads: f(tx.ads) }) : t('tax_ie')}</small>
-              </div>
-            )
-          })()}
-          {l.url && (
-            <div className="msource">
-              {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}
-              🔗 {t('src_label')}:{' '}
-              <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
-            </div>
-          )}
 
           <div className="mstats">
             {l.date ? <div className="stat"><b>{l.date.slice(8, 10)}/{l.date.slice(5, 7)}</b><span>{t('st_added')}</span></div> : null}
@@ -220,6 +188,45 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             {l.year ? <div className="stat"><b>{l.year}</b><span>{t('st_year')}</span></div> : null}
             {l.energy ? <div className="stat"><b>{l.energy}</b><span>{t('st_epc')}</span></div> : null}
           </div>
+
+          {(() => {
+            const an = analyzeListing(l, allListings, gbpEur, dealPages, updated)
+            if (!an) return null
+            return (
+              <div className={'dealbox' + (an.isDeal ? '' : ' neutral')}>
+                <div className="dhead">
+                  {an.isDeal
+                    ? <span className={'dscore' + (an.tier === 'top' ? ' top' : '')}>{an.tier === 'top' ? '🔥' : '💎'} {an.score}/100</span>
+                    : an.score > 0
+                      ? <span className="dscore none">🔍 {an.score}/100</span>
+                      : <span className="dscore none">🔍</span>}
+                  <b>{an.isDeal ? t('deal_analysis') : t('market_analysis')}</b>
+                </div>
+                <div className="dbar"><i style={{ width: Math.max(an.score, 2) + '%' }} /></div>
+                <DealChecks deal={an} />
+              </div>
+            )
+          })()}
+
+          {(() => {
+            const tx = buyTax(l)
+            if (!tx) return null
+            const f = (n) => tx.sym + n.toLocaleString('it-IT')
+            return (
+              <div className="mtax">
+                <div className="mtax-head">🏛 {t('tax_title')} <b>{f(tx.total)}</b></div>
+                <small>{tx.ads ? t('tax_scot', { lbtt: f(tx.lbtt), ads: f(tx.ads) }) : t('tax_ie')}</small>
+              </div>
+            )
+          })()}
+
+          {l.url && (
+            <div className="msource">
+              {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}
+              🔗 {t('src_label')}:{' '}
+              <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
+            </div>
+          )}
 
           {Array.isArray(l.hist) && l.hist.length > 1 && (
             <div className="mhist">

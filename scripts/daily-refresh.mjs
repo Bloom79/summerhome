@@ -138,7 +138,7 @@ const rmEnrich = async (l) => {
     l.seaView = SEA.some((r) => r.test(text))
     l.feats = featsOf(text)
     // The search JSON stops at 6 photos; the detail page carries them all.
-    const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 15)
+    const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 24)
     if (gal.length >= l.imgs.length) l.imgs = gal
     const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
     if (sqm > 15 && sqm < 2000) l.size = sqm
@@ -174,7 +174,7 @@ const mhParse = async (u, zone, town) => {
   const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
   const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
   const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
-  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 15)
+  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 24)
   const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
   const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
   return {
@@ -353,7 +353,7 @@ const otmEnrich = async (l) => {
     const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
     if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
     if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
-    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 15).map((im) => im.largeUrl)
+    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 24).map((im) => im.largeUrl)
     if (big.length) l.imgs = big
   } catch { /* enrich is best-effort */ }
   return l
@@ -410,7 +410,7 @@ const tspcCandidate = (o) => {
 const tspcEnrich = async (l) => {
   try {
     const page = await get(l.url)
-    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 15)
+    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 24)
     if (gal.length) l.imgs = gal
     const desc = (/property="og:description" content="([\s\S]*?)"/.exec(page)?.[1] || '') + ' ' + l.title
     if (desc.trim()) { l.seaView = SEA.some((r) => r.test(desc)); l.feats = featsOf(desc) }

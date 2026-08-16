@@ -410,3 +410,7 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .dfav{margin-left:auto;border:0;background:transparent;font-size:1rem;cursor:pointer}
 .dstats{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.85rem;font-weight:700;color:var(--ink);margin:2px 0 6px}
 .dstats select{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.78rem;background:#fff;color:var(--ink)}
+
+.mtax{background:#fbf7ee;border:1px solid #eadfc6;border-radius:12px;padding:9px 12px;margin:10px 0;font-size:.86rem}
+.mtax-head b{font-size:.95rem}
+.mtax small{color:var(--muted)}
