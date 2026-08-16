@@ -123,6 +123,17 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .simph{height:70px;display:flex;align-items:center;justify-content:center;background:var(--brand-light);font-size:1.4rem}
 .simp{font-weight:800;font-size:.82rem;color:var(--brand-dark);padding:5px 8px 0}
 .sima{font-size:.74rem;color:var(--muted);padding:0 8px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.travel.poi{font-weight:500}
+.synccode{font-size:1.6rem;font-weight:800;letter-spacing:.35em;text-align:center;background:var(--brand-light);border-radius:10px;padding:10px;color:var(--brand-dark)}
+.syncrow{display:flex;gap:8px}
+.syncrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:1rem;letter-spacing:.25em;text-transform:uppercase;font-weight:700}
+.syncrow .agentsend{width:auto;flex:none}
+@media print{
+  .app>*:not(#agentmodal){display:none!important}
+  #agentmodal{position:static;background:none;padding:0}
+  .agentbox{box-shadow:none;max-width:100%;max-height:none;overflow:visible}
+  .agentcancel,.cmp-x,.noprint,#toast,#agentdone{display:none!important}
+}
 .stats-row{cursor:pointer}
 .stats-row:hover td{background:var(--brand-light)}
 @media (max-width:840px){

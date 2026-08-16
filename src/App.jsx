@@ -8,6 +8,7 @@ import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
 import StatsModal from './components/StatsModal.jsx'
+import SyncModal from './components/SyncModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
@@ -118,6 +119,7 @@ export default function App({ initialDb }) {
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const [syncOpen, setSyncOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
   const [pushErr, setPushErr] = useState('')
 
@@ -613,6 +615,42 @@ export default function App({ initialDb }) {
     setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false)
   }
 
+  // Device sync: favourites/notes/alerts snapshot up and down via the worker.
+  const syncUpload = useCallback(async (code) => {
+    try {
+      const r = await fetch(`${CERCA_QUI_ENDPOINT}/sync`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, data: { favs: [...favs], notes, alerts } }),
+      })
+      if (!r.ok) throw new Error()
+      toast(t('t_sync_sent'))
+      return true
+    } catch { toast(t('t_sync_fail')); return false }
+  }, [favs, notes, alerts, toast, t])
+
+  const syncDownload = useCallback(async (code) => {
+    try {
+      const r = await fetch(`${CERCA_QUI_ENDPOINT}/sync?code=${encodeURIComponent(code)}`)
+      const j = await r.json()
+      if (!r.ok || !j?.ok) throw new Error()
+      const d = j.data || {}
+      if (Array.isArray(d.favs)) setFavs((prev) => {
+        const next = new Set([...prev, ...d.favs.filter((x) => typeof x === 'number')])
+        saveJSON('ct_favs', [...next]); return next
+      })
+      if (d.notes && typeof d.notes === 'object') setNotes((prev) => {
+        const next = { ...prev, ...d.notes }; saveJSON('ct_notes', next); return next
+      })
+      if (Array.isArray(d.alerts) && d.alerts.length) setAlerts((prev) => {
+        const seenIds = new Set(prev.map((a) => a.id))
+        const next = [...prev, ...d.alerts.filter((a) => a?.id && !seenIds.has(a.id))]
+        saveJSON('ct_alerts', next); syncPush(next, false); return next
+      })
+      toast(t('t_sync_got'))
+      return true
+    } catch { toast(t('t_sync_fail')); return false }
+  }, [toast, t, syncPush])
+
   // Shareable deep link: ?casa=<id> opens the listing's detail directly.
   useEffect(() => {
     const id = +new URLSearchParams(window.location.search).get('casa')
@@ -648,6 +686,7 @@ export default function App({ initialDb }) {
         onFlyTo={flyTo}
         onNearMe={onNearMe}
         onOpenStats={() => setStatsOpen(true)}
+        onOpenSync={() => setSyncOpen(true)}
         toast={toast}
       />
 
@@ -735,6 +774,10 @@ export default function App({ initialDb }) {
           onShowOnMap={onShowOnMap}
           toast={toast}
         />
+      )}
+
+      {syncOpen && (
+        <SyncModal onUpload={syncUpload} onDownload={syncDownload} onClose={() => setSyncOpen(false)} />
       )}
 
       {statsOpen && (

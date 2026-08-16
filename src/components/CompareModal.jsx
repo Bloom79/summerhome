@@ -61,6 +61,7 @@ export default function CompareModal({ items, gbpEur, notes, onOpen, onToggleFav
             </tbody>
           </table>
         </div>
+        <button className="agentsend noprint" onClick={() => window.print()}>🖨 {t('cmp_print')}</button>
         <button className="agentcancel" onClick={onClose}>{t('agent_cancel')}</button>
       </div>
     </div>

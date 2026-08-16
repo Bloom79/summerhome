@@ -15,6 +15,15 @@ const GATES = [
 const travelCache = (() => { try { return JSON.parse(localStorage.getItem('ct_travel')) || {} } catch { return {} } })()
 const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`)
 
+// Nearby essentials (beach / pub / shop) via Overpass, cached per listing.
+const poiCache = (() => { try { return JSON.parse(localStorage.getItem('ct_poi')) || {} } catch { return {} } })()
+const hav = (a, b, c, d) => {
+  const r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r
+  const s = Math.sin(x / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(y / 2) ** 2
+  return 12742000 * Math.asin(Math.sqrt(s))
+}
+const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
+
 export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
@@ -76,6 +85,39 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
       .catch(() => { /* offline or OSRM busy: just hide the line */ })
     return () => { alive = false }
   }, [l.url, l.lat, l.lng])
+
+  // Nearest beach, pub and food shop within walking/short-drive range.
+  const [poi, setPoi] = useState(null)
+  useEffect(() => {
+    setPoi(poiCache[l.url] || null)
+    if (poiCache[l.url]) return
+    let alive = true
+    const q = `[out:json][timeout:10];(node(around:3000,${l.lat},${l.lng})["natural"="beach"];way(around:3000,${l.lat},${l.lng})["natural"="beach"];node(around:2500,${l.lat},${l.lng})["amenity"~"^(pub|bar|restaurant)$"];node(around:3000,${l.lat},${l.lng})["shop"~"^(supermarket|convenience|general)$"];);out center 60;`
+    fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: new URLSearchParams({ data: q }) })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive) return
+        const best = {}
+        for (const el of j.elements || []) {
+          const la = el.lat ?? el.center?.lat, ln = el.lon ?? el.center?.lon
+          if (la == null) continue
+          const cat = el.tags?.natural === 'beach' ? 'beach' : el.tags?.shop ? 'shop' : 'pub'
+          const d = hav(l.lat, l.lng, la, ln)
+          if (!best[cat] || d < best[cat]) best[cat] = d
+        }
+        const rec = { b: best.beach ? Math.round(best.beach) : null, p: best.pub ? Math.round(best.pub) : null, s: best.shop ? Math.round(best.shop) : null }
+        poiCache[l.url] = rec
+        try { localStorage.setItem('ct_poi', JSON.stringify(poiCache)) } catch { /* full */ }
+        setPoi(rec)
+      })
+      .catch(() => { /* Overpass busy: hide the line */ })
+    return () => { alive = false }
+  }, [l.url, l.lat, l.lng])
+  const poiLine = poi && [
+    poi.b != null && `🏖 ${t('poi_beach')} ~${fmtM(poi.b)}`,
+    poi.p != null && `🍺 ${t('poi_pub')} ~${fmtM(poi.p)}`,
+    poi.s != null && `🛒 ${t('poi_shop')} ~${fmtM(poi.s)}`,
+  ].filter(Boolean).join(' · ')
 
   // Keyboard: Esc closes, arrows navigate the gallery.
   useEffect(() => {
@@ -164,6 +206,7 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
             <h4>{t('loc_title')}</h4>
             <div className="coords">{l.lat.toFixed(6)}, {l.lng.toFixed(6)}</div>
             {travel && <div className="travel">🚗 {t('travel_from', { t: fmtDur(travel.min), g: travel.g })}</div>}
+            {poiLine && <div className="travel poi">{poiLine}</div>}
             <div className="loclinks">
               <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_gmaps')}</a>
               <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} onClick={openStreetView} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>

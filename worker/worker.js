@@ -130,6 +130,27 @@ export default {
         },
       })
 
+    // GET /sync?code=X — download a device-sync snapshot.
+    if (request.method === 'GET' && u.pathname === '/sync') {
+      const code = (u.searchParams.get('code') || '').toUpperCase()
+      if (!/^[A-Z0-9]{6,12}$/.test(code)) return json({ error: 'invalid code' }, 400, cors)
+      const rec = await env.ALERTS.get('sync:' + code)
+      if (!rec) return json({ error: 'not found' }, 404, cors)
+      return json({ ok: true, data: JSON.parse(rec) }, 200, { ...cors, 'Cache-Control': 'no-store' })
+    }
+
+    // POST /sync — upload {code, data} (favourites/notes/alerts snapshot).
+    if (request.method === 'POST' && u.pathname === '/sync') {
+      let body
+      try { body = await request.json() } catch { return json({ error: 'invalid JSON' }, 400, cors) }
+      const code = (body?.code || '').toUpperCase()
+      if (!/^[A-Z0-9]{6,12}$/.test(code)) return json({ error: 'invalid code' }, 400, cors)
+      const data = JSON.stringify(body.data || {})
+      if (data.length > 64e3) return json({ error: 'too large' }, 413, cors)
+      await env.ALERTS.put('sync:' + code, data, { expirationTtl: 90 * 86400 })
+      return json({ ok: true }, 200, cors)
+    }
+
     // GET /status?issue=N — live progress for the portal's status widget.
     if (request.method === 'GET') {
       if (u.pathname !== '/status') return json({ error: 'not found' }, 404, cors)
