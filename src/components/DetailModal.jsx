@@ -20,6 +20,22 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
 
   const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
 
+  // Street View often has no imagery at the exact property point in rural
+  // areas: snap to the nearest road first (OSRM), where coverage lives.
+  const openStreetView = async (e) => {
+    e.preventDefault()
+    const w = window.open('about:blank', '_blank')
+    let la = l.lat, ln = l.lng
+    try {
+      const j = await (await fetch(`https://router.project-osrm.org/nearest/v1/driving/${l.lng},${l.lat}`)).json()
+      const loc = j?.waypoints?.[0]?.location
+      if (loc) { ln = loc[0]; la = loc[1] }
+    } catch { /* fall back to the raw point */ }
+    const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${ln}`
+    if (w) w.location = url
+    else window.open(url, '_blank')
+  }
+
   const share = async () => {
     const url = `${window.location.origin}${window.location.pathname}?casa=${l.id}`
     if (navigator.share) {
@@ -150,7 +166,8 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
             {travel && <div className="travel">🚗 {t('travel_from', { t: fmtDur(travel.min), g: travel.g })}</div>}
             <div className="loclinks">
               <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_gmaps')}</a>
-              <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>
+              <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} onClick={openStreetView} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>
+              <a href={`https://www.google.com/maps/@${l.lat},${l.lng},400m/data=!3m1!1e3`} target="_blank" rel="noopener noreferrer">{t('loc_sat')}</a>
               <a onClick={() => { onClose(); onShowOnMap(l.id) }}>{t('loc_show_map')}</a>
             </div>
           </div>
