@@ -58,7 +58,7 @@ const validCoords = (la, ln) => typeof la === 'number' && typeof ln === 'number'
 
 // ---- Full-text enrichment (same rules as the instant handler) ----
 const SEA = [
-  /(sea|ocean|coastal|atlantic|estuary|harbour|water|loch|lough|firth|island)[^.]{0,40}views?/i,
+  /\b(sea|ocean|coastal|atlantic|estuary|harbour|water|loch|lough|firth|island)\b[^.]{0,40}\bviews?\b/i,
   /seafront|waterfront|shorefront|beachfront|water's edge|wild atlantic way/i,
   /overlooking the (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand)/i,
   /views? (over|of|across|to|towards|onto|out to)( the)? (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand|islands?)/i,
@@ -88,6 +88,10 @@ const featsOf = (text) => {
   if (BEACH.some((r) => r.test(text))) f.push('Spiaggia')
   if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
+  // Portal listings sold via auction (FPA relists on OnTheMarket, agents
+  // use "for sale by auction"): the guide price is a teaser, so the Asta
+  // tag matters for medians and deals, not just for the badge.
+  if (/\bby (?:public |online |timed )?auction\b|auction (?:date|closes|closing|bidding|guide)|\bgoing to auction\b/i.test(text)) f.push('Asta')
   return f
 }
 
@@ -515,11 +519,16 @@ const aucAll = []
         const beds = +((/(\d+)\s*Bed/i.exec(title + ' ' + page) || [])[1] || 0) || null
         const auction = isoDate(chunk.replace(/&nbsp;/g, ' ')) || isoDate(page)
         const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 15)
+        // The lot description carries the same garden/sea-view/renovation
+        // signals as any portal listing — feed it through the same rules.
+        const dtxt = (page.split('property-description')[1] || '')
+          .split(/Register to Bid|Arrange a Viewing|Similar Properties|Auction Finance|Request More/i)[0]
+          .slice(0, 9000).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
         aucCands.push({
           id: 0, title: addr || title.trim(), contract: 'sale', type: typeOfTitle(title),
           price: bid, currency: 'GBP', size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
           zone: zt.zone, town: zt.town, addr: addr || title.trim(), lat: geo[0], lng: geo[1], imgs,
-          feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
+          feats: [...new Set(['Asta', ...featsOf(dtxt)])], seaView: SEA.some((r) => r.test(dtxt)), desc: '', date: TODAY, auction,
           url: `https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`,
         })
       }
@@ -528,9 +537,16 @@ const aucAll = []
   // Auction House Scotland — network listing page.
   try {
     const html = await get('https://www.auctionhouse.co.uk/scotland')
-    const rx = /href="(\/scotland\/auction\/lot\/\d+)"[\s\S]{0,3500}?image-sticker[^>]*>\s*Lot\s*\d+[\s\S]{0,800}?Guide \| (?:£|�|&pound;)([\d,]+)[\s\S]{0,500}?blue-text">([^<]+)<\/p>\s*<p[^>]*grid-address">([^<]+)</g
-    for (const m of html.matchAll(rx)) {
-      const [, path, guide, bedsType, addr] = m
+    // One card = one href→sticker→Guide→address run. Parse PER SEGMENT
+    // (split on the lot href): a card without "Guide |" (Guide Coming
+    // Soon) must be skipped, not paired with the next card's data — that
+    // exact slide once attached an Aberdeen address to a Greenock lot.
+    for (const seg of html.split('href="/scotland/auction/lot/').slice(1)) {
+      const lotId = (/^(\d+)"/.exec(seg) || [])[1]
+      const m = /image-sticker[^>]*>\s*Lot\s*\d+[\s\S]{0,800}?Guide \| (?:£|�|&pound;)([\d,]+)[\s\S]{0,500}?blue-text">([^<]+)<\/p>\s*<p[^>]*grid-address">([^<]+)/.exec(seg.slice(0, 3500))
+      if (!lotId || !m) continue
+      const path = `/scotland/auction/lot/${lotId}`
+      const [, guide, bedsType, addr] = m
       if (AUC_SKIP.test(bedsType + ' ' + addr)) continue
       const zt = zoneOfAuction(addr)
       if (!zt) continue
@@ -540,18 +556,19 @@ const aucAll = []
       const geo = pc ? await pcGeo(pc) : null
       if (!geo) continue
       const url2 = `https://www.auctionhouse.co.uk${path}`
-      let auction = null, imgs = []
+      let auction = null, imgs = [], dtxt = ''
       try {
         const det = await get(url2)
         auction = isoDate(det)
         imgs = [...new Set([...det.matchAll(/\/lot-image\/\d+/g)].map((x) => 'https://www.auctionhouse.co.uk' + x[0]))].slice(0, 15)
+        dtxt = det.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
       } catch { /* keep card data */ }
       aucCands.push({
         id: 0, title: addr.trim(), contract: 'sale', type: typeOfTitle(bedsType),
         price: bid, currency: 'GBP', size: null, rooms: +((/(\d+)\s*Bed/i.exec(bedsType) || [])[1] || 0) || null,
         baths: null, floor: null, year: null, energy: null,
         zone: zt.zone, town: zt.town, addr: addr.trim(), lat: geo[0], lng: geo[1], imgs,
-        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
+        feats: [...new Set(['Asta', ...featsOf(dtxt)])], seaView: SEA.some((r) => r.test(dtxt)), desc: '', date: TODAY, auction,
         url: url2,
       })
     }
@@ -581,6 +598,7 @@ const aucAll = []
         .filter((u) => !/logo|floorplan|scaled|Report/i.test(u))
       const hd = rawImgs.filter((u) => /-1024x/.test(u))
       const imgs = (hd.length ? hd : rawImgs).slice(0, 15)
+      const dtxt = page.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
       aucCands.push({
         id: 0, title: addr, contract: 'sale',
         type: /flat|apartment/i.test(page.slice(0, 40000)) && /propertyType:"flat"/.test(page) ? 'Appartamento' : typeOfTitle(slug.replace(/-/g, ' ')),
@@ -589,7 +607,7 @@ const aucAll = []
         baths: +((/numberOfBathroomsTotal:(\d+)/.exec(page) || [])[1] || 0) || null,
         floor: null, year: null, energy: null,
         zone: zt.zone, town: zt.town, addr, lat, lng, imgs,
-        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction: auctionCtx ? isoDate(auctionCtx) : null,
+        feats: [...new Set(['Asta', ...featsOf(dtxt)])], seaView: SEA.some((r) => r.test(dtxt)), desc: '', date: TODAY, auction: auctionCtx ? isoDate(auctionCtx) : null,
         url: `https://primepropertyauctions.co.uk/property/${slug}/`,
       })
     }

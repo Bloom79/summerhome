@@ -299,6 +299,15 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
 
           {(() => {
             const an = analyzeListing(l, allListings, gbpEur, dealPages, updated)
+            // Auction lots get no score (guide prices are teasers), but the
+            // live agent has auction-specific checks: keep the box for them.
+            if (!an && l.feats.includes('Asta') && l.contract !== 'rent') return (
+              <div className="dealbox neutral">
+                <div className="dhead"><span className="dscore none">🔨</span><b>{t('auction_analysis')}</b></div>
+                <div className="lrsm">{t('auction_note')}</div>
+                <LiveAnalysis l={l} toast={toast} />
+              </div>
+            )
             if (!an) return null
             return (
               <div className={'dealbox' + (an.isDeal ? '' : ' neutral')}>

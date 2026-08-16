@@ -122,7 +122,7 @@ const stats = { candidates: 0, kept: 0, dropQuality: 0, dropBounds: 0, dropDup: 
 
 // ---- Full-text enrichment rules (same as the daily agent) ----
 const SEA = [
-  /(sea|ocean|coastal|atlantic|estuary|harbour|water|loch|lough|firth|island)[^.]{0,40}views?/i,
+  /\b(sea|ocean|coastal|atlantic|estuary|harbour|water|loch|lough|firth|island)\b[^.]{0,40}\bviews?\b/i,
   /seafront|waterfront|shorefront|beachfront|water's edge|wild atlantic way/i,
   /overlooking the (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand)/i,
   /views? (over|of|across|to|towards|onto|out to)( the)? (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand|islands?)/i,
@@ -152,6 +152,7 @@ const featsOf = (text) => {
   if (BEACH.some((r) => r.test(text))) f.push('Spiaggia')
   if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
+  if (/\bby (?:public |online |timed )?auction\b|auction (?:date|closes|closing|bidding|guide)|\bgoing to auction\b/i.test(text)) f.push('Asta')
   return f
 }
 

@@ -86,7 +86,8 @@ if (!page) {
 }
 
 // ---- 2. Comparables in the portal (fresh today) ----
-const zoneComps = db.listings.filter((x) => x.zone === l.zone && x.contract !== 'rent' && x.url !== l.url)
+// Other auction lots are teaser-priced: never let them into the comps.
+const zoneComps = db.listings.filter((x) => x.zone === l.zone && x.contract !== 'rent' && x.url !== l.url && !x.feats.includes('Asta'))
 const sameRooms = zoneComps.filter((x) => x.rooms === l.rooms)
 lines.push(`### 🏘 Confronto zona (${l.zone.replace(/ \(.*/, '')}, dati di oggi)`)
 if (l.rooms && sameRooms.length >= 3) {
@@ -108,6 +109,83 @@ if (alternatives.length) {
   for (const a of alternatives) lines.push(`  - ${a.addr.split(',').slice(0, 2).join(',')} — ${fmtGBP(a.price, a.currency === 'EUR' ? '€' : '£')} → ${a.url}`)
 }
 lines.push('')
+
+// ---- 2b. Auction lots: three-stage pipeline ----
+// Stage 1 builds a machine-readable DOSSIER from the sources, stage 2
+// derives every indicator with plain functions (no LLM in the numbers),
+// stage 3 hands dossier+indicators to an LLM agent for the reasoned
+// verdict only. Numbers never come from the model.
+const isAuction = l.feats.includes('Asta') || /futurepropertyauctions|auctionhouse\.co\.uk|primepropertyauctions/.test(l.url)
+if (isAuction) {
+  // -- Stage 1: dossier (facts only) --
+  const flags = []
+  if (/without possession|no access|no viewings?/i.test(text)) flags.push('senza_possesso_no_visite')
+  if (/no home report/i.test(text)) flags.push('nessun_home_report')
+  if (/cash (buyers? )?only/i.test(text)) flags.push('solo_contanti')
+  if (/tenanted|sitting tenant/i.test(text)) flags.push('locata')
+  if (/structural|subsidence|damp\b/i.test(text)) flags.push('possibili_problemi_strutturali')
+  const rentHint = (/£\s?([\d,]+)\s*(?:per|a)\s*(?:month|pcm|night|week)/i.exec(text) || [])[0] || null
+  const giorni = l.auction ? Math.round((new Date(l.auction) - Date.now()) / 864e5) : null
+  const stima = l.rooms && sameRooms.length >= 4 ? Math.round(median(sameRooms.map(eur))) : null
+  const dossier = {
+    lotto: { indirizzo: l.addr, zona: l.zone, tipo: l.type, camere: l.rooms, guide_gbp: l.price, data_asta: l.auction, giorni_all_asta: giorni, caratteristiche: l.feats, vista_mare: l.seaView },
+    fonte_live: { bandiere_rosse: flags, indizio_reddito: rentHint },
+    mercato: { comparabili_stesse_camere: sameRooms.length, stima_valore_mercato_eur: stima, vendute_o_ritirate_entro_8km: (db.sold || []).filter((s) => s.lat && hav(l.lat, l.lng, s.lat, s.lng) < 8).length },
+  }
+
+  // -- Stage 2: indicators as plain functions --
+  const lbttOf = (p) => { const B = [[145000, 0], [250000, 0.02], [325000, 0.05], [750000, 0.10], [Infinity, 0.12]]; let t = 0, prev = 0; for (const [cap, r] of B) { const a = Math.min(p, cap) - prev; if (a > 0) t += a * r; prev = cap; if (p <= cap) break } return Math.round(t) }
+  const FEES = 3000 // stima prudente: buyer's premium + legali
+  const totale = (hammer) => hammer + lbttOf(hammer) + Math.round(hammer * 0.08) + FEES
+  const scenari = [1, 1.2, 1.35, 1.5].map((k) => { const h = Math.round(l.price * k); return { rilancio: `${Math.round((k - 1) * 100)}%`, aggiudicazione_gbp: h, costo_totale_gbp: totale(h), margine_eur: stima ? Math.round(stima - totale(h) * fx) : null } })
+  // max sensible bid: highest hammer whose ALL-IN cost stays ≤90% of value
+  let offertaMax = null
+  if (stima) { let h = l.price; while (totale(h + 1000) * fx <= stima * 0.9) h += 1000; offertaMax = totale(h) * fx <= stima * 0.9 ? h : null }
+  const rischio = flags.reduce((s, f) => s + ({ senza_possesso_no_visite: 3, solo_contanti: 2, locata: 2, possibili_problemi_strutturali: 2, nessun_home_report: 1 }[f] || 0), 0)
+  dossier.indicatori = {
+    sconto_guide_su_stima_pct: stima ? Math.round((1 - (l.price * fx) / stima) * 100) : null,
+    scenari, offerta_massima_consigliata_gbp: offertaMax,
+    deposito_10pct_gbp: Math.round(l.price * 0.1),
+    rischio_punti: rischio, rischio: rischio >= 4 ? 'alto' : rischio >= 2 ? 'medio' : 'basso',
+  }
+
+  // -- deterministic report from the indicators --
+  lines.push("### 🔨 Specifiche d'asta")
+  if (l.auction) lines.push(`- Asta il **${l.auction.slice(8, 10)}/${l.auction.slice(5, 7)}/${l.auction.slice(0, 4)}**` + (giorni >= 0 ? ` — tra **${giorni} giorni**: legal pack da leggere PRIMA di offrire` : ' — **già passata**: verifica se il lotto è ancora disponibile'))
+  else lines.push('- Vendita "offer now" senza data fissa: le offerte possono chiudersi in qualunque momento')
+  lines.push("- Il prezzo esposto è la **base d'asta**, non il valore: in Scozia il realizzo tipico la supera del 20–50%")
+  if (stima) {
+    lines.push(`- Valore di mercato stimato (${sameRooms.length} comparabili da ${l.rooms} camere in zona): **€${stima.toLocaleString('it-IT')}**`)
+    lines.push('- Scenari di aggiudicazione (tutto incluso: LBTT+ADS+~£3k spese):')
+    for (const s of scenari) lines.push(`  - base +${s.rilancio}: £${s.aggiudicazione_gbp.toLocaleString('en-GB')} → costo totale £${s.costo_totale_gbp.toLocaleString('en-GB')}${s.margine_eur != null ? ` · margine ${s.margine_eur >= 0 ? '+' : '−'}€${Math.abs(s.margine_eur).toLocaleString('it-IT')}` : ''}`)
+    if (offertaMax) lines.push(`- 🎯 **Offerta massima sensata: £${offertaMax.toLocaleString('en-GB')}** (oltre, il costo totale supera il 90% del valore stimato)`)
+    else lines.push('- ⚠️ Già alla base il costo totale è vicino al valore stimato: **poco o nessun margine**')
+  }
+  const FLAG_IT = { senza_possesso_no_visite: '**venduto senza possesso / nessuna visita** — stato non verificabile', nessun_home_report: '**nessun home report**', solo_contanti: '**solo contanti** — mutuo non praticabile', locata: '**locata** — verifica contratto in essere', possibili_problemi_strutturali: '**menzioni di problemi strutturali/umidità**' }
+  for (const f of flags) lines.push(`- 🚩 ${FLAG_IT[f]}`)
+  lines.push(`- Rischio complessivo: **${dossier.indicatori.rischio}** · deposito 10% all'aggiudicazione (£${dossier.indicatori.deposito_10pct_gbp.toLocaleString('en-GB')} alla base) · saldo in 28 giorni (mutuo difficile nei tempi)`)
+  lines.push('')
+
+  // -- Stage 3: the agent reasons ON the dossier (GitHub Models, free in Actions) --
+  try {
+    const body = JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: "Sei un analista immobiliare scozzese. Ricevi un dossier JSON su un lotto d'asta: TUTTI i numeri sono già calcolati, non inventarne. Rispondi in italiano, 120-180 parole, markdown con al massimo 4 bullet: 1) verdetto secco (occasione sì/no/dipende e perché), 2) strategia d'offerta concreta, 3) il rischio che pesa di più, 4) per chi ha senso questo lotto (es. investimento, casa vacanze, da evitare)." },
+        { role: 'user', content: JSON.stringify(dossier) },
+      ],
+    })
+    const resp = await new Promise((resolve, reject) => execFile('curl', ['-sf', '--max-time', '60', '-X', 'POST',
+      'https://models.github.ai/inference/chat/completions',
+      '-H', `Authorization: Bearer ${process.env.GITHUB_TOKEN || ''}`,
+      '-H', 'Content-Type: application/json', '-H', 'Accept: application/vnd.github+json',
+      '-d', body], { maxBuffer: 4e6 }, (e, so) => (e ? reject(e) : resolve(so.toString()))))
+    const verdict = JSON.parse(resp)?.choices?.[0]?.message?.content
+    if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
+  } catch { lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '') }
+  lines.push('<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '')
+}
 
 // ---- 3. Second opinion: live OnTheMarket search for the same town ----
 if (l.currency === 'GBP' && l.town) {
