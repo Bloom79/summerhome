@@ -47,9 +47,12 @@ filed with one tap from the portal; otherwise the portal opens the prefilled
 issue on GitHub to confirm by hand. On its next run the agent:
 
 1. Reads every open `Cerca qui:` issue.
-2. Scrapes real listings for that area from the right portal for the country
-   (MyHome.ie for the Republic of Ireland, Rightmove for the UK), keeping only
-   houses inside the requested map bounds.
+2. Scrapes real listings for that area from the right portals for the country
+   (MyHome.ie for the Republic of Ireland; Rightmove, OnTheMarket and s1homes
+   for the UK — the latter two tried dynamically on the locality names found
+   in the area, and the slugs that answer are recorded in the zone config so
+   the daily agent keeps querying every source), keeping only houses inside
+   the requested map bounds.
 3. Adds the area as a new zone in `src/data.js` and records its search config
    in [`extra-zones.json`](extra-zones.json), so every future daily run keeps
    refreshing it like the built-in zones.

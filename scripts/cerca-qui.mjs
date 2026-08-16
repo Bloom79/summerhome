@@ -128,10 +128,20 @@ const SEA = [
   /views? (over|of|across|to|towards|onto|out to)( the)? (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand|islands?)/i,
   /(panoramic|uninterrupted|stunning|elevated|magnificent|breathtaking|commanding) (sea|coastal|ocean|atlantic|water|loch|estuary|harbour) views?/i,
 ]
+// A bare "garden(s)" is not enough for the Giardino tag: area blurbs cite
+// castle gardens, botanic gardens and garden centres. Require the garden to
+// belong to the property — a qualifier, a position, or a key-features bullet.
+const GARDEN = [
+  /(private|rear|front|back|enclosed|walled|landscaped|mature|secluded|generous|large|sizeable|beautiful|lovely|sunny|substantial|good[- ]sized|wrap[- ]?around|low[- ]maintenance|well[- ](?:kept|maintained|tended|stocked)|(?:south|west|east|north)(?:[- ](?:east|west))?[- ]facing)\s+gardens?\b/i,
+  /gardens?\s+(?:to|at)\s+(?:the\s+)?(?:front|rear|side|back)|garden\s+grounds?\b/i,
+  /with\s+(?:a\s+|its\s+own\s+|extensive\s+)?gardens?\b|gardens?\s+(?:is|are)\s+(?:fully\s+)?(?:enclosed|landscaped|walled|laid|fenced)/i,
+  /"gardens?"/i, // a stand-alone key-features bullet
+  /gardens?\s+(?:and|&|with)\s+(?:garage|parking|driveway|patio|decking|greenhouse|shed)/i,
+]
 const featsOf = (text) => {
   const f = []
   if (/\bgarages?\b/i.test(text)) f.push('Garage')
-  if (/\bgardens?\b(?!\s*cent)/i.test(text)) f.push('Giardino')
+  if (GARDEN.some((r) => r.test(text))) f.push('Giardino')
   if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
   return f
@@ -140,6 +150,7 @@ const featsOf = (text) => {
 const CAP = 20
 const listings = []
 let searchKeys = []
+let otmSlugs = [], s1Towns = []
 
 if (cc === 'ie') {
   // ---- MyHome.ie: county-wide search, the bounds filter picks the area ----
@@ -257,6 +268,127 @@ if (cc === 'ie') {
     }
   })
   listings.push(...enriched)
+
+  // ---- OnTheMarket + s1homes: the other UK sources, tried dynamically on
+  // the same locality names. Unknown towns answer 404 (OTM) or an empty
+  // result set (s1homes) and are skipped silently; the slugs that answered
+  // are recorded in extra-zones.json so the daily agent keeps every source
+  // refreshing this zone. Cross-source duplicates (same house, another
+  // portal) are dropped by address+price / price+coords / address-prefix
+  // keys, seeded with everything the portal already carries.
+  const slugUk = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim().replace(/ +/g, '-')
+  const slugs = [...new Set([town, ...nearTowns].filter(Boolean).map(slugUk).filter(Boolean))].slice(0, 7)
+  const normAddr = (a) => a.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '')
+  // Same house on another portal: same price within ~150m. A real distance
+  // check, not a rounded-coords string key. Different prices at one address
+  // can be distinct units of the same building, so they all stay.
+  const nearPt = (p, l) => p.price === l.price &&
+    Math.abs(p.lat - l.lat) < 0.0015 && Math.abs(p.lng - l.lng) < 0.003
+  const dupKeys = new Set()
+  const placed = []
+  for (const l of [...listings, ...db.listings]) {
+    if (!l.addr) continue
+    dupKeys.add(normAddr(l.addr).slice(0, 40) + '|' + l.price)
+    placed.push({ price: l.price, lat: l.lat, lng: l.lng })
+  }
+  const pushCand = (l) => {
+    if (listings.length >= CAP) return
+    if (existingUrls.has(l.url)) { stats.dropDup++; return }
+    const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
+    if (dupKeys.has(k) || placed.some((p) => nearPt(p, l))) { stats.dropDup++; return }
+    dupKeys.add(k)
+    placed.push({ price: l.price, lat: l.lat, lng: l.lng })
+    listings.push(l)
+  }
+
+  const otmFound = []
+  await pmap(slugs, async (sl) => {
+    let html
+    try { html = await get(`https://www.onthemarket.com/for-sale/property/${sl}/`) } catch { return }
+    const mm = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)
+    if (!mm) return
+    let list
+    try { list = JSON.parse(mm[1]).props?.initialReduxState?.results?.list } catch { return }
+    if (!Array.isArray(list)) return
+    otmSlugs.push(sl)
+    otmFound.push(...list)
+  }, 4)
+  for (const o of otmFound) {
+    stats.candidates++
+    const price = +String(o.price || '').replace(/[^0-9]/g, '')
+    const pla = o.location?.lat, pln = o.location?.lon
+    if (!price || typeof pla !== 'number' || typeof pln !== 'number') { stats.dropQuality++; continue }
+    if (!inBox(pla, pln)) { stats.dropBounds++; continue }
+    const ptype = (o['humanised-property-type'] || '').toLowerCase()
+    if (/land|plot|site|garage|parking|mooring/.test(ptype)) { stats.dropQuality++; continue }
+    const text = `${o['property-title'] || ''} ${(o.features || []).join(' ')}`
+    pushCand({
+      id: 0, title: o.address || town, contract: 'sale',
+      type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
+      price, currency: 'GBP',
+      size: null, rooms: o.bedrooms ?? null, baths: o.bathrooms || null, floor: null, year: null, energy: null,
+      zone: zoneName, town, addr: o.address || town, lat: pla, lng: pln,
+      imgs: (o.images || []).slice(0, 6).map((im) => im.default).filter((u) => u && u.startsWith('https://media.onthemarket.com/')),
+      feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY,
+      url: `https://www.onthemarket.com/details/${o.id}/`,
+    })
+  }
+  // Detail pages of the OnTheMarket keeps: full description (seaView/feats),
+  // size in m², 1024px photos.
+  await pmap(listings.filter((l) => l.url.includes('onthemarket')), async (l) => {
+    try {
+      const page = await get(l.url)
+      const p = JSON.parse(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(page)[1]).props?.initialReduxState?.property
+      if (!p) return
+      const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
+      if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
+      if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
+      const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 6).map((im) => im.largeUrl)
+      if (big.length) l.imgs = big
+    } catch { /* enrich is best-effort */ }
+  }, 8)
+
+  // s1homes ignores the region segment of the search path, so a fixed
+  // placeholder works for any town. Its search pages embed the full listing
+  // JSON — no per-listing fetch needed.
+  const s1Found = []
+  await pmap(slugs.map((s) => s.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join('-')), async (ts) => {
+    let html
+    try { html = await get(`https://www.s1homes.com/property-for-sale/Scotland/${ts}/`) } catch { return }
+    const k2 = html.indexOf('window.__ssr_init_data__')
+    if (k2 < 0) return
+    let i2 = html.indexOf('{', k2), d2 = 0, j2 = i2
+    for (; j2 < html.length; j2++) { if (html[j2] === '{') d2++; else if (html[j2] === '}') { d2--; if (!d2) break } }
+    let data
+    try { data = JSON.parse(html.slice(i2, j2 + 1)).propertyAdvancedSearch?.data } catch { return }
+    if (!Array.isArray(data)) return
+    s1Towns.push(ts)
+    s1Found.push(...data)
+  }, 4)
+  for (const o of s1Found) {
+    stats.candidates++
+    if (o.channel && o.channel.key !== 'sales') { stats.dropQuality++; continue }
+    const pla = parseFloat(o.latitude), pln = parseFloat(o.longitude)
+    if (!o.price || !Number.isFinite(pla) || !Number.isFinite(pln)) { stats.dropQuality++; continue }
+    if (!inBox(pla, pln)) { stats.dropBounds++; continue }
+    const ptype = (o.propertyType?.name || '').toLowerCase()
+    if (/land|plot|site|garage|parking/.test(ptype)) { stats.dropQuality++; continue }
+    const addrTxt = [o.houseNameNumber, o.address2, o.address3, o.town, o.postcode].filter(Boolean).join(', ') || town
+    const featStr = (o.features || []).join(' ')
+    const text = `${o.summary || ''} ${o.description || ''}`.replace(/<[^>]+>/g, ' ')
+    pushCand({
+      id: 0, title: addrTxt, contract: 'sale',
+      type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
+      price: o.price, currency: 'GBP',
+      size: null, rooms: +(/([0-9]+)\s*bedroom/.exec(featStr)?.[1] || 0) || null,
+      baths: +(/([0-9]+)\s*bathroom/.exec(featStr)?.[1] || 0) || null,
+      floor: null, year: null, energy: null,
+      zone: zoneName, town, addr: addrTxt, lat: pla, lng: pln,
+      imgs: (o.media || []).slice(0, 6).map((mo) => mo.metadata?.src?.url).filter((u) => u && u.startsWith('https://cdn.s1homes.com/')),
+      feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY,
+      url: `https://www.s1homes.com/property/${o.propertyId}`,
+    })
+  }
 }
 
 const alreadyInArea = db.listings.filter((l) => inBox(l.lat, l.lng)).length
@@ -279,6 +411,8 @@ if (!ez.some((z) => z.zone === zoneName)) {
   ez.push({
     zone: zoneName, country: cc === 'ie' ? 'IE' : 'UK', portal: cc === 'ie' ? 'myhome' : 'rightmove',
     searchKeys, filter: town.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), cap: CAP, bounds,
+    ...(otmSlugs.length ? { otmSlugs: [...new Set(otmSlugs)] } : {}),
+    ...(s1Towns.length ? { s1Towns: [...new Set(s1Towns)] } : {}),
   })
   writeFileSync(ezPath, JSON.stringify(ez, null, 2) + '\n')
 }

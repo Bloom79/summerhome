@@ -48,10 +48,20 @@ const SEA = [
   /views? (over|of|across|to|towards|onto|out to)( the)? (sea|ocean|atlantic|firth|bay|coast|harbour|estuary|loch|lough|water|shore|strand|islands?)/i,
   /(panoramic|uninterrupted|stunning|elevated|magnificent|breathtaking|commanding) (sea|coastal|ocean|atlantic|water|loch|estuary|harbour) views?/i,
 ]
+// A bare "garden(s)" is not enough for the Giardino tag: area blurbs cite
+// castle gardens, botanic gardens and garden centres. Require the garden to
+// belong to the property — a qualifier, a position, or a key-features bullet.
+const GARDEN = [
+  /(private|rear|front|back|enclosed|walled|landscaped|mature|secluded|generous|large|sizeable|beautiful|lovely|sunny|substantial|good[- ]sized|wrap[- ]?around|low[- ]maintenance|well[- ](?:kept|maintained|tended|stocked)|(?:south|west|east|north)(?:[- ](?:east|west))?[- ]facing)\s+gardens?\b/i,
+  /gardens?\s+(?:to|at)\s+(?:the\s+)?(?:front|rear|side|back)|garden\s+grounds?\b/i,
+  /with\s+(?:a\s+|its\s+own\s+|extensive\s+)?gardens?\b|gardens?\s+(?:is|are)\s+(?:fully\s+)?(?:enclosed|landscaped|walled|laid|fenced)/i,
+  /"gardens?"/i, // a stand-alone key-features bullet
+  /gardens?\s+(?:and|&|with)\s+(?:garage|parking|driveway|patio|decking|greenhouse|shed)/i,
+]
 const featsOf = (text) => {
   const f = []
   if (/\bgarages?\b/i.test(text)) f.push('Garage')
-  if (/\bgardens?\b(?!\s*cent)/i.test(text)) f.push('Giardino')
+  if (GARDEN.some((r) => r.test(text))) f.push('Giardino')
   if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
   return f
@@ -166,26 +176,25 @@ const extra = existsSync(ROOT + 'docs/extra-zones.json') ? JSON.parse(readFileSy
 const scraped = new Map()
 // Cross-source dedupe: the same house listed on two portals shares its
 // address+price, or sits at the same spot with the same price.
+const normAddr = (a) => a.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '')
+// Same house cross-listed on another portal: same price within ~150m. A real
+// distance check — string keys on rounded coords miss pairs falling across a
+// rounding-cell boundary. Deliberately NOT matching different prices at the
+// same address: those can be distinct units of one building (e.g. three
+// separate flats at "8 Murray Park" at three prices), which must all stay.
+const nearPt = (p, l) => p.price === l.price &&
+  Math.abs(p.lat - l.lat) < 0.0015 && Math.abs(p.lng - l.lng) < 0.003
 const dedupKeys = new Set()
-const keysOf = (l) => {
-  const norm = l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '')
-  return [
-    norm.slice(0, 40) + '|' + l.price,
-    `${l.price}|${l.lat.toFixed(3)}|${l.lng.toFixed(3)}`,
-    // Same house dual-listed by two agents at different asking prices: the
-    // address prefix (house number + street) plus coarse coords match even
-    // when the agents word the address and geocode it slightly differently.
-    `${norm.slice(0, 12)}|${l.lat.toFixed(2)}|${l.lng.toFixed(2)}`,
-  ]
-}
+const placed = []
 const addCapped = (items, cap) => {
   let n = 0
   for (const l of items) {
     if (!l || n >= cap) continue
     if (scraped.has(l.url)) continue
-    const ks = keysOf(l)
-    if (ks.some((k) => dedupKeys.has(k))) continue
-    ks.forEach((k) => dedupKeys.add(k))
+    const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
+    if (dedupKeys.has(k) || placed.some((p) => nearPt(p, l))) continue
+    dedupKeys.add(k)
+    placed.push({ price: l.price, lat: l.lat, lng: l.lng })
     scraped.set(l.url, l)
     n++
   }
@@ -245,14 +254,14 @@ const s1Parse = (html) => {
   for (; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (!d) break } }
   try { return JSON.parse(html.slice(i, j + 1)).propertyAdvancedSearch?.data || [] } catch { return [] }
 }
-const s1Candidate = (o) => {
+const s1Candidate = (o, ztOverride) => {
   if (o.channel && o.channel.key !== 'sales') return null
   const la = parseFloat(o.latitude), ln = parseFloat(o.longitude)
   if (!o.price || !validCoords(la, ln)) return null
   const ptype = (o.propertyType?.name || '').toLowerCase()
   if (/land|plot|site|garage|parking/.test(ptype)) return null
   const addr = [o.houseNameNumber, o.address2, o.address3, o.town, o.postcode].filter(Boolean).join(', ')
-  const zt = zoneOf(addr)
+  const zt = ztOverride || zoneOf(addr)
   if (!zt) return null
   const featStr = (o.features || []).join(' ')
   const text = `${o.summary || ''} ${o.description || ''}`.replace(/<[^>]+>/g, ' ')
@@ -271,7 +280,7 @@ const s1Candidate = (o) => {
 }
 {
   const pages = await pmap(S1_PATHS, (path) => get(`https://www.s1homes.com/property-for-sale/${path}/`).catch(() => ''), 6)
-  const cands = pages.flatMap((h) => s1Parse(h)).map(s1Candidate).filter(Boolean)
+  const cands = pages.flatMap((h) => s1Parse(h)).map((o) => s1Candidate(o)).filter(Boolean)
   const byZone = {}
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`s1homes → ${z}: ${arr.length} candidati`) }
@@ -296,14 +305,14 @@ const otmNext = (html) => {
   if (!m) return null
   try { return JSON.parse(m[1]).props?.initialReduxState || null } catch { return null }
 }
-const otmCandidate = (o) => {
+const otmCandidate = (o, ztOverride) => {
   const price = +String(o.price || '').replace(/[^0-9]/g, '')
   const la = o.location?.lat, ln = o.location?.lon
   if (!price || !validCoords(la, ln)) return null
   const ptype = (o['humanised-property-type'] || '').toLowerCase()
   if (/land|plot|site|garage|parking|mooring/.test(ptype)) return null
   const addr = o.address || ''
-  const zt = zoneOf(addr)
+  const zt = ztOverride || zoneOf(addr)
   if (!zt) return null
   const text = `${o['property-title'] || ''} ${(o.features || []).join(' ')}`
   return {
@@ -331,7 +340,7 @@ const otmEnrich = async (l) => {
 }
 {
   const pages = await pmap(OTM_TOWNS, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 6)
-  const cands = pages.flatMap((h) => otmNext(h)?.results?.list || []).map(otmCandidate).filter(Boolean)
+  const cands = pages.flatMap((h) => otmNext(h)?.results?.list || []).map((o) => otmCandidate(o)).filter(Boolean)
   const byZone = {}
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`onthemarket → ${z}: ${arr.length} candidati`) }
@@ -347,6 +356,22 @@ for (const z of extra) {
     const cands = pages.flat().map((p) => rmCandidate(p, z.zone, townName)).filter((l) => l && inb(l.lat, l.lng))
     addCapped(cands, z.cap || 20)
     console.log(`${z.zone}: ${cands.length} candidati`)
+    // The instant handler records which OnTheMarket slugs / s1homes towns
+    // answered for this area, so every source keeps refreshing the zone.
+    if (z.otmSlugs?.length) {
+      const p2 = await pmap(z.otmSlugs, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 4)
+      const c2 = p2.flatMap((h) => otmNext(h)?.results?.list || []).map((o) => otmCandidate(o, { zone: z.zone, town: townName })).filter((l) => l && inb(l.lat, l.lng))
+      addCapped(c2, z.cap || 20)
+      console.log(`onthemarket → ${z.zone}: ${c2.length} candidati`)
+    }
+    if (z.s1Towns?.length) {
+      // s1homes ignores the region segment of the search path, so a fixed
+      // placeholder works for any town.
+      const p3 = await pmap(z.s1Towns, (t) => get(`https://www.s1homes.com/property-for-sale/Scotland/${t}/`).catch(() => ''), 4)
+      const c3 = p3.flatMap(s1Parse).map((o) => s1Candidate(o, { zone: z.zone, town: townName })).filter((l) => l && inb(l.lat, l.lng))
+      addCapped(c3, z.cap || 20)
+      console.log(`s1homes → ${z.zone}: ${c3.length} candidati`)
+    }
   } else {
     const county = z.searchKeys[0]
     const urls2 = [
@@ -433,10 +458,14 @@ function toSold(l) {
 events.vendute = soldNew
 
 // A relisting of a house we already carry (same address+price under a new
-// url) must not come back as 'new': prefer the carried listing.
-const keyOf = (l) => l.addr.toLowerCase().replace(/plot \d+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 40) + '|' + l.price
-const carriedKeys = new Set(nextListings.filter((l) => prevByUrl.has(l.url)).map(keyOf))
-const isRelist = (l) => !prevByUrl.has(l.url) && carriedKeys.has(keyOf(l))
+// url, or the same spot on another portal) must not come back as 'new':
+// prefer the carried listing.
+const keyOf = (l) => normAddr(l.addr).slice(0, 40) + '|' + l.price
+const carried = nextListings.filter((l) => prevByUrl.has(l.url))
+const carriedKeys = new Set(carried.map(keyOf))
+const carriedPts = carried.map((l) => ({ price: l.price, lat: l.lat, lng: l.lng }))
+const isRelist = (l) => !prevByUrl.has(l.url) &&
+  (carriedKeys.has(keyOf(l)) || carriedPts.some((p) => nearPt(p, l)))
 for (let i = nextListings.length - 1; i >= 0; i--) if (isRelist(nextListings[i])) nextListings.splice(i, 1)
 events.nuove = events.nuove.filter((l) => !isRelist(l))
 
