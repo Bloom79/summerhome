@@ -30,8 +30,8 @@ if (!Array.isArray(db.listings) || db.listings.length < 50)
 
 // ---- Per-listing invariants ----
 const ids = new Set(), urls = new Set(), addrPrice = new Set()
-const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/|https:\/\/www\.s1homes\.com\/|https:\/\/www\.onthemarket\.com\/)/
-const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/|https:\/\/cdn\.s1homes\.com\/|https:\/\/media\.onthemarket\.com\/)/
+const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/|https:\/\/www\.s1homes\.com\/|https:\/\/www\.onthemarket\.com\/|https:\/\/tspc\.co\.uk\/)/
+const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/|https:\/\/cdn\.s1homes\.com\/|https:\/\/media\.onthemarket\.com\/|https:\/\/docs\.tspc\.co\.uk\/)/
 const TYPES = new Set(['Casa indipendente', 'Cottage', 'Villa', 'Appartamento', 'Bungalow'])
 const zoneCounts = {}
 for (const l of db.listings || []) {
@@ -74,7 +74,7 @@ if (SPOT > 0 && !errors.length) {
     const page = await curl(l.url)
     if (page == null) { warn.push(`spot-check: pagina non raggiungibile ora (${l.url})`); continue }
     const gone = /removed|no longer (available|on the market)/i.test(page.slice(0, 4000)) ||
-      /^<title>\s*(Sold|Sale Agreed)/i.test(page)
+      /^<title>\s*(Sold|Sale Agreed|Property Unavailable)/i.test(page)
     if (gone) err(`spot-check: l'annuncio risulta rimosso/venduto sul portale: ${l.url}`)
     else if (!page.includes(String(l.price)) && !page.includes(l.price.toLocaleString('en-GB')))
       warn.push(`spot-check: prezzo ${l.price} non trovato nella pagina (${l.url})`)

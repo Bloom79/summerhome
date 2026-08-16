@@ -82,9 +82,9 @@ const COSTA = {
     ['965', 'Nairn', /Nairn/i], ['755', 'Kirkcudbright', /Kirkcudbright/i], ['20157', 'Portpatrick', /Portpatrick/i],
     ['1315', 'Tarbert', /Tarbert/i], ['869', 'Lossiemouth', /Lossiemouth|Hopeman|Burghead/i], ['4', 'Aberdeen', /Aberdeen/i],
     ['457', 'Dunoon', /Dunoon/i], ['21140', 'Rothesay', /Rothesay|Bute/i], ['549', 'Girvan', /Girvan/i],
-    ['497', 'Eyemouth', /Eyemouth|Coldingham/i], ['45', 'Arbroath', /Arbroath/i], ['952', 'Montrose', /Montrose/i],
+    ['497', 'Eyemouth', /Eyemouth|Coldingham/i], ['45', 'Arbroath', /Arbroath|Auchmithie|Inverkeilor/i], ['952', 'Montrose', /Montrose|St ?Cyrus|Johnshaven/i],
     ['621', 'Helensburgh', /Helensburgh/i], ['17291', 'Millport', /Millport|Cumbrae/i],
-    ['1421', 'Wemyss Bay', /Wemyss Bay|Skelmorlie/i], ['287', 'Carnoustie', /Carnoustie/i],
+    ['1421', 'Wemyss Bay', /Wemyss Bay|Skelmorlie/i], ['287', 'Carnoustie', /Carnoustie|Easthaven|East Haven/i],
   ],
 }
 const MH_BURTONPORT = {
@@ -346,6 +346,65 @@ const otmEnrich = async (l) => {
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`onthemarket → ${z}: ${arr.length} candidati`) }
 }
 
+// ---- TSPC: the Tayside solicitors' portal (Angus coast) — like s1homes,
+// its listings are often absent from Rightmove. Search cards are
+// server-rendered with inline coords; detail pages are fetched only for
+// genuinely new listings (tspcEnrich). Canonical host has NO www; the
+// under-offer filter is applied server-side.
+const TSPC_AREAS = ['6', '5', '10'] // Arbroath+coast · Carnoustie/Easthaven · Montrose/St Cyrus
+const tspcCards = (html) => {
+  const cards = []
+  for (const block of html.split('class="property-card').slice(1)) {
+    const chunk = block.slice(0, 5000)
+    cards.push({
+      id: /data-property-id="(\d+)"/.exec(chunk)?.[1],
+      la: parseFloat(/data-lat="(-?[\d.]+)"/.exec(chunk)?.[1]),
+      ln: parseFloat(/data-lng="(-?[\d.]+)"/.exec(chunk)?.[1]),
+      href: /href="(\/property\/[^"]+)"/.exec(chunk)?.[1],
+      img: /src="(https:\/\/docs\.tspc\.co\.uk\/photos\/[^"]+)"/.exec(chunk)?.[1],
+      addr: /<h2>([^<]+)<\/h2>/.exec(chunk)?.[1]?.trim(),
+      bt: /<h3>([^<]+)<\/h3>/.exec(chunk)?.[1] || '',
+      price: +((/price-type-value">\s*£([\d,]+)/.exec(chunk)?.[1] || '').replace(/,/g, '')),
+    })
+  }
+  return cards
+}
+const tspcCandidate = (o) => {
+  if (!o.id || !o.href || !o.addr || !o.price || !/For-Sale/i.test(o.href)) return null
+  if (!validCoords(o.la, o.ln)) return null
+  const bt = o.bt.toLowerCase()
+  if (/land|plot|site|garage|parking/.test(bt)) return null
+  const zt = zoneOf(o.addr)
+  if (!zt) return null
+  return {
+    id: 0, title: o.addr, contract: 'sale',
+    type: /bungalow/.test(bt) ? 'Bungalow' : /flat|apartment|maisonette/.test(bt) ? 'Appartamento' : /cottage/.test(bt) ? 'Cottage' : 'Casa indipendente',
+    price: o.price, currency: 'GBP',
+    size: null, rooms: +(/(\d+)\s*bed/i.exec(o.bt)?.[1] || 0) || null, baths: null, floor: null, year: null, energy: null,
+    zone: zt.zone, town: zt.town, addr: o.addr, lat: o.la, lng: o.ln,
+    imgs: o.img ? [o.img] : [],
+    feats: [], seaView: false, desc: '', date: TODAY,
+    url: `https://tspc.co.uk${o.href}${o.href.endsWith('/') ? '' : '/'}`,
+  }
+}
+const tspcEnrich = async (l) => {
+  try {
+    const page = await get(l.url)
+    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 6)
+    if (gal.length) l.imgs = gal
+    const desc = (/property="og:description" content="([\s\S]*?)"/.exec(page)?.[1] || '') + ' ' + l.title
+    if (desc.trim()) { l.seaView = SEA.some((r) => r.test(desc)); l.feats = featsOf(desc) }
+  } catch { /* enrich is best-effort */ }
+  return l
+}
+{
+  const pages = await pmap(TSPC_AREAS, (a) => get(`https://tspc.co.uk/properties/?area=${a}&exclude-under-offer=on`).catch(() => ''), 3)
+  const cands = pages.flatMap(tspcCards).map(tspcCandidate).filter(Boolean)
+  const byZone = {}
+  for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`tspc → ${z}: ${arr.length} candidati`) }
+}
+
 // Extra zones (user-requested)
 for (const z of extra) {
   const pad = { latPad: (z.bounds.north - z.bounds.south) * 0.3, lngPad: (z.bounds.east - z.bounds.west) * 0.3 }
@@ -407,6 +466,7 @@ for (const [url, cand] of scraped) {
 // their search/brochure parse).
 await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), rmEnrich, 8)
 await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), otmEnrich, 8)
+await pmap(enrichQueue.filter((l) => /tspc\.co\.uk/.test(l.url)), tspcEnrich, 8)
 
 // Missing urls: verify on the source before archiving; live ones carry over.
 const missing = db.listings.filter((l) => !scraped.has(l.url))
@@ -429,6 +489,12 @@ await pmap(missing, async (l) => {
     let page = ''
     try { page = await get(`https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`) } catch { nextListings.push(l); return }
     if (/property="og:title" content="s1homes \|/.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
+  } else if (/tspc\.co\.uk/.test(l.url)) {
+    // TSPC soft-404s dead listings with a "Property Unavailable" title.
+    let page = ''
+    try { page = await get(l.url) } catch { nextListings.push(l); return }
+    if (/<title>\s*Property Unavailable/i.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else if (/onthemarket\.com/.test(l.url)) {
     // OnTheMarket hard-404s dead listings; live pages carry priceRaw in

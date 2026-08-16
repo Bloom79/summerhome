@@ -13,9 +13,11 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 
 1. Searches current for-sale / to-let property listings in the monitored areas
    (built-in + user-requested), using public sources (**MyHome.ie** for
-   Ireland; **Rightmove**, **s1homes** — the Scottish solicitors' portal,
-   whose listings are often absent from Rightmove — and **OnTheMarket**,
-   whose "Only With Us" exclusives don't appear elsewhere, for Scotland/UK).
+   Ireland; **Rightmove**, **s1homes** and **TSPC** — the Scottish and
+   Tayside solicitors' portals, whose listings are often absent from
+   Rightmove — and **OnTheMarket**, whose "Only With Us" exclusives don't
+   appear elsewhere, for Scotland/UK; TSPC covers the Angus coast:
+   Arbroath, Carnoustie, Montrose and their coastal villages).
    The same house found on two portals is de-duplicated by address+price,
    price+coordinates, and address-prefix+coordinates (the last one catches a
    house dual-listed by two agents at different asking prices).
