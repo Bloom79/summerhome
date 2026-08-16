@@ -4,7 +4,7 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, zones, features, updated, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, zones, features, updated, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
   onOpenAlerts, alertsUnseen, hasAlerts,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
@@ -47,6 +47,18 @@ export default function ListPanel({
           <option value="dist">{t('sort_dist')}</option>
         </select>}
       </div>
+
+      {!soldView && activeFilters && activeFilters.length > 0 && (
+        <div id="afbar">
+          <span className="aflabel">{t('af_label')}</span>
+          {activeFilters.map((f, i) => (
+            <button key={i} className="afchip" onClick={f.clear} title={t('af_remove')}>{f.label} ✕</button>
+          ))}
+          {activeFilters.length > 1 && (
+            <button className="afclear" onClick={onClearFilters}>{t('af_clear_all')}</button>
+          )}
+        </div>
+      )}
 
       {items.length ? (
         <div id="list">

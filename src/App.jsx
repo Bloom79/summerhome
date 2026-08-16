@@ -71,7 +71,7 @@ function loadIdSet(key) {
 
 
 export default function App({ initialDb }) {
-  const { t } = useI18n()
+  const { t, typeLabel } = useI18n()
   // Portal data (listings/zones/sold/updated) — hot-swappable: a handled
   // 'Cerca qui' request refreshes it in place, no page reload.
   const [db, setDb] = useState(initialDb)
@@ -564,6 +564,25 @@ export default function App({ initialDb }) {
     setSort(v)
   }, [userPos, toast, t])
 
+  // Active-filter chips shown under the result count: with persistence, a
+  // filter left on days ago must be visible, not a silent mystery.
+  const activeFilters = []
+  const af = (label, clear) => activeFilters.push({ label, clear })
+  if (filters.zone) af(filters.zone, () => setFilters((f) => ({ ...f, zone: '' })))
+  if (filters.freshness) af(t('fresh_' + filters.freshness).replace(/^📅 /, ''), () => setFilters((f) => ({ ...f, freshness: '' })))
+  if (filters.priceRanges.length) af(`${t('price_label')} (${filters.priceRanges.length})`, () => setFilters((f) => ({ ...f, priceRanges: [] })))
+  if (filters.type) af(typeLabel(filters.type), () => setFilters((f) => ({ ...f, type: '' })))
+  if (filters.contract) af(t(filters.contract === 'sale' ? 'for_sale' : 'for_rent'), () => setFilters((f) => ({ ...f, contract: '' })))
+  if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
+  if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
+  if (favOnly) af(t('favourites'), () => setFavOnly(false))
+  const advCount = (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) + (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
+  if (advCount) af(`${t('adv_filters')} (${advCount})`, () => setFilters((f) => ({ ...f, smin: null, smax: null, rooms: '', baths: '', feats: [] })))
+  const clearAllFilters = () => {
+    setFilters(initialFilters)
+    setSeaOnly(false); setGardenOnly(false); setFavOnly(false)
+  }
+
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
   const displayItems = soldView ? soldItems : items
@@ -577,6 +596,8 @@ export default function App({ initialDb }) {
       <div id="main">
         <ListPanel
           items={displayItems}
+          activeFilters={activeFilters}
+          onClearFilters={clearAllFilters}
           zones={db.zones}
           features={db.features}
           updated={LAST_UPDATED}

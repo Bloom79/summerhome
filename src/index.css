@@ -98,6 +98,11 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mbtn:hover{background:var(--brand-light)}
 .mbtn.on{background:var(--brand);color:#fff}
 .cdate{color:var(--muted);white-space:nowrap}
+#afbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 16px 8px;background:#fff}
+.aflabel{font-size:.76rem;color:var(--muted);font-weight:600}
+.afchip{border:0;background:var(--brand);color:#fff;border-radius:999px;padding:4px 10px;font-size:.76rem;font-weight:600;cursor:pointer}
+.afchip:hover{background:var(--brand-dark)}
+.afclear{border:0;background:none;color:var(--accent);font-size:.76rem;font-weight:700;cursor:pointer;text-decoration:underline}
 .mbtn.agent{background:var(--accent);color:#fff}
 .mbtn.agent:hover{filter:brightness(1.08)}
 #agentmodal{position:fixed;inset:0;background:rgba(12,30,32,.6);z-index:2500;display:flex;align-items:center;justify-content:center;padding:18px}
