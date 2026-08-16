@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, ZoomControl, useMapEvents } from 'react-leaflet'
-import { fmtP, shortP, imgUrl, handleImgError, hostOf } from '../utils.js'
+import { fmtP, shortP, hostOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import Gallery from './Gallery.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
 const pinIcon = (l, hl, seen, sold) =>
@@ -93,7 +94,7 @@ export default function MapPanel({
               <Popup>
                 <div className="pop">
                   {l.imgs && l.imgs.length
-                    ? <img src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+                    ? <div className="popimg"><Gallery imgs={l.imgs} /></div>
                     : null}
                   <div className="pb">
                     <div className="pt">{l.title}</div>

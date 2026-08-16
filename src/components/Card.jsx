@@ -1,5 +1,6 @@
-import { fmtP, imgUrl, handleImgError, hostOf, srcOf, dist, fmtDist } from '../utils.js'
+import { fmtP, hostOf, srcOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import Gallery from './Gallery.jsx'
 
 export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
@@ -17,7 +18,7 @@ export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, 
     >
       <div className="cimg">
         {hasImgs
-          ? <img loading="lazy" src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+          ? <Gallery imgs={l.imgs} />
           : <div className="cimg-ph">📷</div>}
         <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
         {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
@@ -28,7 +29,6 @@ export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, 
           <button className={'vbtn' + (seen ? ' seendone' : '')} title={t(seen ? 'seen_unmark' : 'seen_mark')} onClick={(e) => { e.stopPropagation(); onToggleSeen(l.id) }}>👁</button>
         </div>
         <span className="price" title={eur || undefined}>{fmtP(l)}</span>
-        {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
       </div>
       <div className="cbody">
         <div className="ctitle">
