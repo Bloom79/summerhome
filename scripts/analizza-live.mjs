@@ -176,14 +176,17 @@ if (isAuction) {
         { role: 'user', content: JSON.stringify(dossier) },
       ],
     })
-    const resp = await new Promise((resolve, reject) => execFile('curl', ['-sf', '--max-time', '60', '-X', 'POST',
+    const resp = await new Promise((resolve, reject) => execFile('curl', ['-s', '--max-time', '60', '-X', 'POST',
       'https://models.github.ai/inference/chat/completions',
       '-H', `Authorization: Bearer ${process.env.GITHUB_TOKEN || ''}`,
-      '-H', 'Content-Type: application/json', '-H', 'Accept: application/vnd.github+json',
+      '-H', 'Content-Type: application/json',
       '-d', body], { maxBuffer: 4e6 }, (e, so) => (e ? reject(e) : resolve(so.toString()))))
-    const verdict = JSON.parse(resp)?.choices?.[0]?.message?.content
+    const parsed = JSON.parse(resp)
+    const verdict = parsed?.choices?.[0]?.message?.content
+    if (!verdict) console.log('LLM response:', resp.slice(0, 400))
     if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
-  } catch { lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '') }
+    else lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '')
+  } catch (e) { console.log('LLM call failed:', e.message); lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '') }
   lines.push('<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '')
 }
 
