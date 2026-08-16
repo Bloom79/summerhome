@@ -104,7 +104,9 @@ const MH_BURTONPORT = {
 const rmSearch = async (code, index) => {
   let html
   try {
-    html = await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E${code}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}`)
+    // sortType=6 = newest first: the default sort buries fresh listings
+    // beyond the two pages we fetch, and a daily differ needs the newest.
+    html = await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E${code}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}&sortType=6`)
   } catch { return [] }
   const k = html.indexOf('"properties":[')
   if (k < 0) return []

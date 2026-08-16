@@ -232,7 +232,7 @@ if (cc === 'ie') {
   searchKeys = [loc.replace('REGION^', '')]
   const pages = await pmap([0, 24], async (index) => {
     try {
-      return await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=${encodeURIComponent(loc)}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}`)
+      return await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=${encodeURIComponent(loc)}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}&sortType=6`)
     } catch { return '' }
   }, 2)
   const props = []
