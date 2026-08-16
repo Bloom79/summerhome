@@ -162,6 +162,24 @@ export default {
       return json({ ok: true }, 200, cors)
     }
 
+    // GET /analisi?issue=N — relay the live-analysis report (last comment).
+    if (request.method === 'GET' && u.pathname === '/analisi') {
+      const n = +u.searchParams.get('issue')
+      if (!n) return json({ error: 'issue param required' }, 400, cors)
+      const r = await gh(`/repos/${REPO}/issues/${n}`)
+      if (!r.ok) return json({ error: 'github ' + r.status }, 502, cors)
+      const it = await r.json()
+      let report = null
+      if (it.state === 'closed' && it.comments > 0) {
+        const cr = await gh(`/repos/${REPO}/issues/${n}/comments`)
+        if (cr.ok) {
+          const cs = await cr.json()
+          report = (cs[cs.length - 1] || {}).body || null
+        }
+      }
+      return json({ state: it.state, report }, 200, { ...cors, 'Cache-Control': 'no-store' })
+    }
+
     // GET /status?issue=N — live progress for the portal's status widget.
     if (request.method === 'GET') {
       if (u.pathname !== '/status') return json({ error: 'not found' }, 404, cors)
@@ -238,6 +256,34 @@ export default {
       if (!body?.endpoint) return json({ error: 'endpoint required' }, 400, cors)
       await env.ALERTS.delete('sub:' + (await sha256hex(body.endpoint)))
       return json({ ok: true }, 200, cors)
+    }
+
+    // POST /analizza — {url, id, addr}: file a live-analysis request.
+    if (u.pathname === '/analizza') {
+      let body
+      try { body = await request.json() } catch { return json({ error: 'invalid JSON' }, 400, cors) }
+      const url2 = String(body?.url || '')
+      if (!/^https:\/\/(www\.rightmove\.co\.uk|www\.onthemarket\.com|www\.s1homes\.com|www\.myhome\.ie|tspc\.co\.uk)\//.test(url2))
+        return json({ error: 'unknown listing url' }, 400, cors)
+      const addr = String(body?.addr || '').slice(0, 90)
+      // Dedupe: an open analysis for the same url is the same request.
+      const listRes2 = await gh(`/repos/${REPO}/issues?state=open&labels=analizza&per_page=30`)
+      if (listRes2.ok) {
+        for (const it of await listRes2.json())
+          if ((it.body || '').includes(url2)) return json({ ok: true, duplicate: true, issue: it.number }, 200, cors)
+      }
+      const payload = { url: url2, id: +body?.id || null, addr }
+      const body2 = [
+        'Richiesta di **analisi live** dal portale CasaTrova.',
+        '', '```json', JSON.stringify(payload, null, 2), '```',
+      ].join('\n')
+      const res2 = await gh(`/repos/${REPO}/issues`, {
+        method: 'POST',
+        body: JSON.stringify({ title: `Analizza: ${addr || url2}`, body: body2, labels: ['analizza'] }),
+      })
+      if (!res2.ok) return json({ error: 'github ' + res2.status }, 502, cors)
+      const issue = await res2.json()
+      return json({ ok: true, issue: issue.number }, 200, cors)
     }
 
     if (u.pathname !== '/') return json({ error: 'not found' }, 404, cors)

@@ -3,6 +3,7 @@ import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax } from '.
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
 import { analyzeListing } from '../analyze.js'
+import { CERCA_QUI_ENDPOINT } from '../config.js'
 
 // Airports relevant to the portal's coasts; the modal shows driving time
 // from the closest one (OSRM demo server, cached per listing).
@@ -25,6 +26,55 @@ const hav = (a, b, c, d) => {
   return 12742000 * Math.asin(Math.sqrt(s))
 }
 const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
+
+
+// Minimal renderer for the agent's markdown report (bold, headings,
+// bullets, links) — no markdown library needed.
+function mdLite(text) {
+  const linkify = (s, k) => s.split(/(https?:\/\/\S+)/g).map((seg, i) =>
+    /^https?:\/\//.test(seg) ? <a key={k + '-' + i} href={seg} target="_blank" rel="noopener noreferrer">{new URL(seg).hostname.replace('www.', '')} ↗</a> : seg)
+  const rich = (s, k) => s.split(/\*\*(.+?)\*\*/g).map((seg, i) => i % 2 ? <b key={k + 'b' + i}>{seg}</b> : linkify(seg, k + i))
+  return text.split('\n').map((ln, i) => {
+    if (ln.startsWith('## ') || ln.startsWith('---')) return null
+    if (ln.startsWith('### ')) return <div className="lrh" key={i}>{rich(ln.slice(4), i)}</div>
+    if (ln.startsWith('_')) return <div className="lrsm" key={i}>{ln.replace(/_/g, '')}</div>
+    if (ln.startsWith('  - ')) return <div className="lrli sub" key={i}>{rich(ln.slice(4), i)}</div>
+    if (ln.startsWith('- ')) return <div className="lrli" key={i}>{rich(ln.slice(2), i)}</div>
+    if (!ln.trim()) return null
+    return <div key={i}>{rich(ln, i)}</div>
+  })
+}
+
+// On-demand live analysis: files an "Analizza:" request through the worker,
+// a GitHub workflow runs scripts/analizza-live.mjs against the LIVE sources
+// (~1 minute) and the report lands back here.
+function LiveAnalysis({ l }) {
+  const { t } = useI18n()
+  const [st, setSt] = useState(null)
+  useEffect(() => { setSt(null) }, [l.id])
+  const start = async (e) => {
+    e.stopPropagation()
+    setSt('run')
+    try {
+      const r = await fetch(`${CERCA_QUI_ENDPOINT}/analizza`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: l.url, id: l.id, addr: l.addr }),
+      })
+      const j = await r.json()
+      if (!j.issue) throw new Error(j.error || 'no issue')
+      for (let i = 0; i < 30; i++) {
+        await new Promise((res) => setTimeout(res, 6000))
+        const s = await (await fetch(`${CERCA_QUI_ENDPOINT}/analisi?issue=${j.issue}`)).json()
+        if (s.report) { setSt({ report: s.report }); return }
+      }
+      throw new Error('timeout')
+    } catch { setSt('err') }
+  }
+  if (st === null) return <button className="livebtn" onClick={start}>🤖 {t('live_btn')}</button>
+  if (st === 'run') return <div className="liverun">⏳ {t('live_running')}</div>
+  if (st === 'err') return <div className="liverun">⚠️ {t('live_err')} <button className="livebtn" onClick={start}>↻ {t('live_retry')}</button></div>
+  return <div className="lreport">{mdLite(st.report)}</div>
+}
 
 export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
@@ -204,6 +254,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
                 </div>
                 <div className="dbar"><i style={{ width: Math.max(an.score, 2) + '%' }} /></div>
                 <DealChecks deal={an} />
+                <LiveAnalysis l={l} />
               </div>
             )
           })()}
