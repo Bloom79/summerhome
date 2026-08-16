@@ -166,27 +166,36 @@ if (isAuction) {
   lines.push(`- Rischio complessivo: **${dossier.indicatori.rischio}** · deposito 10% all'aggiudicazione (£${dossier.indicatori.deposito_10pct_gbp.toLocaleString('en-GB')} alla base) · saldo in 28 giorni (mutuo difficile nei tempi)`)
   lines.push('')
 
-  // -- Stage 3: the agent reasons ON the dossier (GitHub Models, free in Actions) --
-  try {
-    const body = JSON.stringify({
-      model: 'openai/gpt-4o-mini',
-      max_tokens: 400,
-      messages: [
-        { role: 'system', content: "Sei un analista immobiliare scozzese. Ricevi un dossier JSON su un lotto d'asta: TUTTI i numeri sono già calcolati, non inventarne. Rispondi in italiano, 120-180 parole, markdown con al massimo 4 bullet: 1) verdetto secco (occasione sì/no/dipende e perché), 2) strategia d'offerta concreta, 3) il rischio che pesa di più, 4) per chi ha senso questo lotto (es. investimento, casa vacanze, da evitare)." },
-        { role: 'user', content: JSON.stringify(dossier) },
-      ],
-    })
-    const resp = await new Promise((resolve, reject) => execFile('curl', ['-s', '--max-time', '60', '-X', 'POST',
-      'https://models.github.ai/inference/chat/completions',
-      '-H', `Authorization: Bearer ${process.env.GITHUB_TOKEN || ''}`,
-      '-H', 'Content-Type: application/json',
-      '-d', body], { maxBuffer: 4e6 }, (e, so) => (e ? reject(e) : resolve(so.toString()))))
-    const parsed = JSON.parse(resp)
-    const verdict = parsed?.choices?.[0]?.message?.content
-    if (!verdict) console.log('LLM response:', resp.slice(0, 400))
-    if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
-    else lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '')
-  } catch (e) { console.log('LLM call failed:', e.message); lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '') }
+  // -- Stage 3: the agent reasons ON the dossier. Primary channel: the
+  // Anthropic API (repo secret ANTHROPIC_API_KEY). Fallback: GitHub
+  // Models — free in Actions but in scheduled retirement, so expect
+  // brownouts. Either way the numbers above never come from the model.
+  const SYS = "Sei un analista immobiliare scozzese. Ricevi un dossier JSON su un lotto d'asta: TUTTI i numeri sono già calcolati, non inventarne. Rispondi in italiano, 120-180 parole, markdown con al massimo 4 bullet: 1) verdetto secco (occasione sì/no/dipende e perché), 2) strategia d'offerta concreta, 3) il rischio che pesa di più, 4) per chi ha senso questo lotto (es. investimento, casa vacanze, da evitare)."
+  const post = (url, headers, body) => new Promise((resolve, reject) => execFile('curl',
+    ['-s', '--max-time', '60', '-X', 'POST', url, '-H', 'Content-Type: application/json',
+      ...headers.flatMap((h) => ['-H', h]), '-d', body], { maxBuffer: 4e6 },
+    (e, so) => (e ? reject(e) : resolve(so.toString()))))
+  let verdict = null
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const resp = await post('https://api.anthropic.com/v1/messages',
+        [`x-api-key: ${process.env.ANTHROPIC_API_KEY}`, 'anthropic-version: 2023-06-01'],
+        JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: SYS, messages: [{ role: 'user', content: JSON.stringify(dossier) }] }))
+      verdict = JSON.parse(resp)?.content?.[0]?.text || null
+      if (!verdict) console.log('Anthropic response:', resp.slice(0, 300))
+    } catch (e) { console.log('Anthropic call failed:', e.message) }
+  }
+  if (!verdict) {
+    try {
+      const resp = await post('https://models.github.ai/inference/chat/completions',
+        [`Authorization: Bearer ${process.env.GITHUB_TOKEN || ''}`],
+        JSON.stringify({ model: 'openai/gpt-4o-mini', max_tokens: 400, messages: [{ role: 'system', content: SYS }, { role: 'user', content: JSON.stringify(dossier) }] }))
+      verdict = JSON.parse(resp)?.choices?.[0]?.message?.content || null
+      if (!verdict) console.log('LLM response:', resp.slice(0, 300))
+    } catch (e) { console.log('LLM call failed:', e.message) }
+  }
+  if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
+  else lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '')
   lines.push('<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '')
 }
 
