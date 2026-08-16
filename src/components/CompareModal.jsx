@@ -1,4 +1,4 @@
-import { fmtP, imgUrl, handleImgError, hostOf } from '../utils.js'
+import { fmtP, imgUrl, handleImgError, hostOf , buyTax } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 // Side-by-side comparison of the favourite listings.
@@ -14,6 +14,7 @@ export default function CompareModal({ items, gbpEur, noteText, votes = {}, onOp
   const rows = [
     [t('cmp_price'), (l) => <><b>{fmtP(l)}</b>{eur(l) ? <div className="cmp-sub">{eur(l)}</div> : null}{lastDrop(l) ? <div className="cmp-sub">{lastDrop(l)}</div> : null}</>],
     [t('cmp_zone'), (l) => l.zone],
+    [t('tax_title'), (l) => { const tx = buyTax(l); return tx ? tx.sym + tx.total.toLocaleString('it-IT') : '\u2014' }],
     [t('st_rooms'), (l) => l.rooms ?? '—'],
     [t('st_baths'), (l) => l.baths ?? '—'],
     [t('cmp_type'), (l) => typeLabel(l.type)],

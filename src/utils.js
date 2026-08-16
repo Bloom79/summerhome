@@ -91,3 +91,28 @@ export const srcOf = (url) => {
   for (const [re, key, label] of SOURCES) if (re.test(url || '')) return { key, label }
   return null
 }
+
+// ---- Imposte d'acquisto stimate (SECONDA casa) ----
+// Scozia: LBTT a scaglioni (0/2/5/10/12%) + ADS 8% sull'intero prezzo per
+// le additional dwellings (aliquota dal 5 dic 2024). Irlanda: imposta di
+// registro 1% fino a 1M, 2% fino a 1.5M, 6% oltre. Stima indicativa.
+export const buyTax = (l) => {
+  if (l.contract === 'rent' || !l.price) return null
+  const p = l.price
+  if (l.currency === 'GBP') {
+    const bands = [[145000, 0], [250000, 0.02], [325000, 0.05], [750000, 0.10], [Infinity, 0.12]]
+    let lbtt = 0, prev = 0
+    for (const [cap, rate] of bands) {
+      const amt = Math.min(p, cap) - prev
+      if (amt > 0) lbtt += amt * rate
+      prev = cap
+      if (p <= cap) break
+    }
+    const ads = p >= 40000 ? p * 0.08 : 0
+    return { sym: '\u00a3', lbtt: Math.round(lbtt), ads: Math.round(ads), total: Math.round(lbtt + ads) }
+  }
+  const sd = p <= 1000000 ? p * 0.01
+    : p <= 1500000 ? 10000 + (p - 1000000) * 0.02
+    : 20000 + (p - 1500000) * 0.06
+  return { sym: '\u20ac', lbtt: Math.round(sd), ads: 0, total: Math.round(sd) }
+}

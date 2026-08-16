@@ -73,6 +73,7 @@ export default function ListPanel({
           <option value="pdesc">{t('sort_pdesc')}</option>
           <option value="sdesc">{t('sort_sdesc')}</option>
           <option value="new">{t('sort_new')}</option>
+          <option value="deal">{t('sort_deal')}</option>
           <option value="dist">{t('sort_dist')}</option>
         </select>}
       </div>

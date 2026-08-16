@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
-const emptyDraft = { zone: '', priceMax: '', rooms: '', seaView: false, garden: false, ev: { nuove: true, ribassi: true, vendute: false } }
+const emptyDraft = { zone: '', priceMax: '', rooms: '', seaView: false, garden: false, ev: { nuove: true, ribassi: true, vendute: false, occasioni: true } }
 
 // Create/manage saved alerts (zone + filters + event types) and show the
 // recent matches ("novità") computed against them.
@@ -19,7 +19,7 @@ export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, o
     if (a.rooms) p.push(`≥${a.rooms} ${t('al_rooms')}`)
     if (a.seaView) p.push(t('sea_view'))
     if (a.garden) p.push(t('garden'))
-    const evs = [a.ev?.nuove && t('al_ev_new'), a.ev?.ribassi && t('al_ev_drop'), a.ev?.vendute && t('al_ev_sold')].filter(Boolean)
+    const evs = [a.ev?.nuove && t('al_ev_new'), a.ev?.ribassi && t('al_ev_drop'), a.ev?.occasioni && t('al_ev_deal'), a.ev?.vendute && t('al_ev_sold')].filter(Boolean)
     return `${p.join(' · ')} — ${evs.join(', ')}`
   }
 
@@ -77,6 +77,7 @@ export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, o
           </div>
           <div className="alchecks alev">
             <label><input type="checkbox" checked={draft.ev.nuove} onChange={() => setEv('nuove')} />{t('al_ev_new')}</label>
+            <label><input type="checkbox" checked={!!draft.ev.occasioni} onChange={() => setEv('occasioni')} />{t('al_ev_deal')}</label>
             <label><input type="checkbox" checked={draft.ev.ribassi} onChange={() => setEv('ribassi')} />{t('al_ev_drop')}</label>
             <label><input type="checkbox" checked={draft.ev.vendute} onChange={() => setEv('vendute')} />{t('al_ev_sold')}</label>
           </div>

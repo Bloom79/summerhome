@@ -397,3 +397,16 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .dealscroll{max-height:60vh;overflow-y:auto}
 .dealbox{background:#f5f0ff;border:1px solid #ded1f7;border-radius:12px;padding:10px 12px;margin:10px 0}
 .dealbox .dhead{margin-bottom:6px}
+
+.dchecks li.neutral{color:var(--muted)}
+.dchecks li.neutral .dpts{color:#9aa6b2}
+.dbar{height:6px;background:#e6def6;border-radius:99px;margin:5px 0 9px;overflow:hidden}
+.dbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7c3aed,#dc2626)}
+.dealbox.neutral{background:#f4f6f8;border-color:var(--line)}
+.dealbox.neutral .dbar{background:#e2e8ee}
+.dscore.none{background:#64748b}
+.dmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.75rem;color:var(--muted);margin:2px 0 5px}
+.dsave{color:#0f766e;font-weight:700}
+.dfav{margin-left:auto;border:0;background:transparent;font-size:1rem;cursor:pointer}
+.dstats{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.85rem;font-weight:700;color:var(--ink);margin:2px 0 6px}
+.dstats select{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.78rem;background:#fff;color:var(--ink)}

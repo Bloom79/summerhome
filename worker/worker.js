@@ -15,6 +15,7 @@ import { buildPushPayload } from '@block65/webcrypto-web-push'
 
 const REPO = 'Bloom79/summerhome'
 const RAW_DATA = 'https://raw.githubusercontent.com/Bloom79/summerhome/main/public/data.json'
+const RAW_DEALS = 'https://raw.githubusercontent.com/Bloom79/summerhome/main/public/deals.json'
 const PORTAL = 'https://bloom79.github.io/summerhome/'
 const ALLOWED_ORIGINS = [
   'https://bloom79.github.io',
@@ -44,7 +45,7 @@ const matchListing = (l, a) =>
   (!a.seaView || !!l.seaView) &&
   (!a.garden || (l.feats || []).includes('Giardino'))
 
-const EV_KEY = { nuova: 'nuove', ribasso: 'ribassi', venduta: 'vendute' }
+const EV_KEY = { nuova: 'nuove', ribasso: 'ribassi', venduta: 'vendute', occasione: 'occasioni' }
 
 async function runCheck(env) {
   const now = Date.now()
@@ -57,9 +58,15 @@ async function runCheck(env) {
   for (const l of db.listings || [])
     cur[l.url] = { price: l.price, zone: l.zone, rooms: l.rooms, seaView: !!l.seaView, feats: l.feats || [], addr: l.addr, currency: l.currency }
   const soldUrls = (db.sold || []).map((s) => s.url).filter(Boolean)
+  // Daily bargain analysis: push when a listing ENTERS the deals list.
+  let dealUrls = [], dealScore = {}
+  try {
+    const dj = await (await fetch(`${RAW_DEALS}?t=${now}`)).json()
+    for (const d of dj.deals || []) { dealUrls.push(d.url); dealScore[d.url] = d.score }
+  } catch { /* deals file optional */ }
 
   const snapRaw = await env.ALERTS.get('snapshot')
-  await env.ALERTS.put('snapshot', JSON.stringify({ listings: cur, soldUrls }))
+  await env.ALERTS.put('snapshot', JSON.stringify({ listings: cur, soldUrls, dealUrls }))
   if (!snapRaw) return { first: true, listings: Object.keys(cur).length }
   const snap = JSON.parse(snapRaw)
 
@@ -72,6 +79,9 @@ async function runCheck(env) {
   const oldSold = new Set(snap.soldUrls || [])
   for (const u of soldUrls)
     if (!oldSold.has(u) && snap.listings[u]) events.push({ type: 'venduta', l: { ...snap.listings[u], url: u } })
+  const oldDeals = new Set(snap.dealUrls || [])
+  for (const u of dealUrls)
+    if (!oldDeals.has(u) && cur[u]) events.push({ type: 'occasione', l: { ...cur[u], url: u }, score: dealScore[u] })
   if (!events.length) return { events: 0 }
 
   const vapid = { subject: 'mailto:dedalus79@gmail.com', publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }
@@ -90,6 +100,7 @@ async function runCheck(env) {
     if (by('nuova').length) parts.push(`🏠 ${by('nuova').length} nuove: ${by('nuova').slice(0, 3).map((h) => fmt(h.l)).join(', ')}`)
     if (by('ribasso').length) parts.push(`📉 ${by('ribasso').length} ribassi: ${by('ribasso').slice(0, 3).map((h) => `${fmt(h.l)} (era ${Math.round(h.oldPrice / 1000)}k)`).join(', ')}`)
     if (by('venduta').length) parts.push(`🔴 ${by('venduta').length} vendute/ritirate`)
+    if (by('occasione').length) parts.push(`💎 ${by('occasione').length} occasioni: ${by('occasione').slice(0, 3).map((h) => `${fmt(h.l)} (${h.score}pt)`).join(', ')}`)
     const msg = {
       data: JSON.stringify({ title: 'CasaTrova 🔔 novità per i tuoi avvisi', body: parts.join(' · '), url: PORTAL }),
       options: { ttl: 86400 },

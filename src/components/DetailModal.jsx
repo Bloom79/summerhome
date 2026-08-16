@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError } from '../utils.js'
+import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
+import { analyzeListing } from '../analyze.js'
 
 // Airports relevant to the portal's coasts; the modal shows driving time
 // from the closest one (OSRM demo server, cached per listing).
@@ -25,7 +26,7 @@ const hav = (a, b, c, d) => {
 }
 const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
 
-export default function DetailModal({ l, deal, fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
   const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
@@ -177,12 +178,31 @@ export default function DetailModal({ l, deal, fav, similar = [], onOpenListing,
             <div className="mprice">{fmtP(l)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
-          {deal && (
-            <div className="dealbox">
-              <div className="dhead"><span className={'dscore' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {deal.score}/100</span> <b>{t('deal_analysis')}</b></div>
-              <DealChecks deal={deal} />
-            </div>
-          )}
+          {(() => {
+            const an = analyzeListing(l, allListings, gbpEur, dealPages, updated)
+            if (!an) return null
+            return (
+              <div className={'dealbox' + (an.isDeal ? '' : ' neutral')}>
+                <div className="dhead">
+                  <span className={'dscore' + (an.tier === 'top' ? ' top' : '') + (an.isDeal ? '' : ' none')}>{an.isDeal ? (an.tier === 'top' ? '🔥' : '💎') : '🔍'} {an.score}/100</span>
+                  <b>{t('deal_analysis')}</b>
+                </div>
+                <div className="dbar"><i style={{ width: an.score + '%' }} /></div>
+                <DealChecks deal={an} />
+              </div>
+            )
+          })()}
+          {(() => {
+            const tx = buyTax(l)
+            if (!tx) return null
+            const f = (n) => tx.sym + n.toLocaleString('it-IT')
+            return (
+              <div className="mtax">
+                🏛 {t('tax_title')}: <b>{f(tx.total)}</b>{' '}
+                <small>{tx.ads ? t('tax_scot', { lbtt: f(tx.lbtt), ads: f(tx.ads) }) : t('tax_ie')}</small>
+              </div>
+            )
+          })()}
           {l.url && (
             <div className="msource">
               {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}

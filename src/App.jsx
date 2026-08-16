@@ -140,11 +140,12 @@ export default function App({ initialDb }) {
   const [dealsOpen, setDealsOpen] = useState(false)
   // Daily bargain analysis (scripts/analyze-deals.mjs -> public/deals.json).
   const [deals, setDeals] = useState([])
+  const [dealPages, setDealPages] = useState({})
   const [dealsOnly, setDealsOnly] = useState(false)
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}deals.json`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => { if (j?.deals) setDeals(j.deals) })
+      .then((j) => { if (j?.deals) setDeals(j.deals); if (j?.pages) setDealPages(j.pages) })
       .catch(() => { /* deals are optional */ })
   }, [db.updated])
   const dealById = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals])
@@ -323,11 +324,12 @@ export default function App({ initialDb }) {
     else if (sort === 'pdesc') arr.sort((a, b) => b.price - a.price)
     else if (sort === 'sdesc') arr.sort((a, b) => b.size - a.size)
     else if (sort === 'new') arr.sort((a, b) => b.date.localeCompare(a.date))
+    else if (sort === 'deal') arr.sort((a, b) => (dealById.get(b.id)?.score || 0) - (dealById.get(a.id)?.score || 0))
     else if (sort === 'dist' && userPos)
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
     return arr
-  }, [viewItems, seenFilter, seen, sort, userPos])
+  }, [viewItems, seenFilter, seen, sort, userPos, dealById])
 
   // Manual seen toggling + bulk triage of the current results.
   const toggleSeen = useCallback((id) => {
@@ -985,6 +987,9 @@ export default function App({ initialDb }) {
       {selected && (
         <DetailModal
           deal={dealById.get(selected.id)}
+          allListings={LISTINGS}
+          dealPages={dealPages}
+          updated={LAST_UPDATED}
           l={selected}
           fav={favs.has(selected.id)}
           similar={similar}
@@ -1023,7 +1028,7 @@ export default function App({ initialDb }) {
       )}
 
       {dealsOpen && (
-        <DealsModal deals={deals} listings={LISTINGS} onOpen={openDetail} onClose={() => setDealsOpen(false)} />
+        <DealsModal deals={deals} listings={LISTINGS} gbpEur={db.gbpEur} updated={LAST_UPDATED} favs={favs} onToggleFav={toggleFav} onOpen={openDetail} onClose={() => setDealsOpen(false)} />
       )}
 
       {compareOpen && (
