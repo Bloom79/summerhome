@@ -41,7 +41,13 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.G_COPILOT }}
         run: |
           npm install -g @github/copilot >/dev/null 2>&1 || true
-          copilot -p "$(cat analisi-prompt.txt)" > verdetto-raw.txt 2>copilot-err.txt || true
+          # Opus 5 richiesto dal proprietario; se lo slug non è accettato si
+          # ripiega sul modello automatico invece di perdere il verdetto.
+          copilot -p "$(cat analisi-prompt.txt)" --model claude-opus-5 > verdetto-raw.txt 2>copilot-err.txt || true
+          if [ ! -s verdetto-raw.txt ]; then
+            echo "--- claude-opus-5 rifiutato, stderr:"; head -c 600 copilot-err.txt; echo
+            copilot -p "$(cat analisi-prompt.txt)" > verdetto-raw.txt 2>>copilot-err.txt || true
+          fi
           sed -e 's/\x1b\[[0-9;]*[A-Za-z]//g' verdetto-raw.txt > verdetto.txt || true
           echo "--- copilot stderr (primi 400 char):"; head -c 400 copilot-err.txt || true
           node - <<'EOF'
