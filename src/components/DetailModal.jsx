@@ -2,6 +2,19 @@ import { useEffect, useState } from 'react'
 import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
+// Airports relevant to the portal's coasts; the modal shows driving time
+// from the closest one (OSRM demo server, cached per listing).
+const GATES = [
+  ['Edimburgo', 55.9508, -3.3615],
+  ['Glasgow', 55.8642, -4.4331],
+  ['Inverness', 57.5425, -4.0475],
+  ['Aberdeen', 57.2019, -2.1978],
+  ['Dublino', 53.4264, -6.2499],
+  ['Donegal', 55.0442, -8.3410],
+]
+const travelCache = (() => { try { return JSON.parse(localStorage.getItem('ct_travel')) || {} } catch { return {} } })()
+const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`)
+
 export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
@@ -21,6 +34,32 @@ export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose,
 
   // Reset gallery when a different listing opens.
   useEffect(() => { setIdx(0) }, [l.id])
+
+  // Driving time from the nearest airport (one OSRM table request, cached).
+  const [travel, setTravel] = useState(null)
+  useEffect(() => {
+    setTravel(travelCache[l.url] || null)
+    if (travelCache[l.url]) return
+    let alive = true
+    const coords = [...GATES.map((g) => `${g[2]},${g[1]}`), `${l.lng},${l.lat}`].join(';')
+    fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?sources=${GATES.map((_, i) => i).join(';')}&destinations=${GATES.length}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive || j.code !== 'Ok') return
+        let best = null
+        j.durations.forEach((row, i) => {
+          const s = row && row[0]
+          if (s != null && (best == null || s < best.s)) best = { s, g: GATES[i][0] }
+        })
+        if (!best) return
+        const rec = { g: best.g, min: Math.round(best.s / 60) }
+        travelCache[l.url] = rec
+        try { localStorage.setItem('ct_travel', JSON.stringify(travelCache)) } catch { /* full */ }
+        setTravel(rec)
+      })
+      .catch(() => { /* offline or OSRM busy: just hide the line */ })
+    return () => { alive = false }
+  }, [l.url, l.lat, l.lng])
 
   // Keyboard: Esc closes, arrows navigate the gallery.
   useEffect(() => {
@@ -108,6 +147,7 @@ export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose,
           <div className="locbox">
             <h4>{t('loc_title')}</h4>
             <div className="coords">{l.lat.toFixed(6)}, {l.lng.toFixed(6)}</div>
+            {travel && <div className="travel">🚗 {t('travel_from', { t: fmtDur(travel.min), g: travel.g })}</div>}
             <div className="loclinks">
               <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_gmaps')}</a>
               <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>

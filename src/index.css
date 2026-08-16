@@ -99,6 +99,21 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mbtn.on{background:var(--brand);color:#fff}
 .cdate{color:var(--muted);white-space:nowrap}
 .newb.redb{background:#c0392b}
+.clusterpin{display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:var(--brand);color:#fff;border:3px solid #fff;border-radius:50%;font-size:.82rem;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.3);transform:translate(-50%,-50%);cursor:pointer}
+.cmpbox{max-width:min(92vw,900px)}
+.cmp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cmp-table{border-collapse:collapse;font-size:.82rem;color:var(--ink);min-width:100%}
+.cmp-table th,.cmp-table td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;min-width:130px;max-width:180px}
+.cmp-table th{position:relative}
+.cmp-table th img{width:130px;height:86px;object-fit:cover;border-radius:8px;cursor:pointer;display:block}
+.cmp-ph{width:130px;height:86px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.cmp-addr{font-weight:700;margin-top:5px;cursor:pointer}
+.cmp-addr:hover{text-decoration:underline}
+.cmp-x{position:absolute;top:4px;right:4px;border:0;background:rgba(255,255,255,.9);border-radius:7px;cursor:pointer;padding:2px 5px}
+.cmp-label{font-weight:700;color:var(--muted);white-space:nowrap;min-width:90px!important}
+.cmp-sub{font-size:.76rem;color:var(--muted)}
+.cmp-link{color:var(--brand);font-weight:600}
+.travel{margin-top:6px;font-size:.85rem;color:var(--ink);font-weight:600}
 .noteb{margin-right:6px}
 .mhist{background:#fdf3ee;border:1px solid #f3ddd0;border-radius:10px;padding:9px 12px;font-size:.85rem;color:var(--ink);margin-bottom:12px;overflow-x:auto;white-space:nowrap}
 .notesbox{margin:14px 0}

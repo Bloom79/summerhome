@@ -6,6 +6,7 @@ import ListPanel from './components/ListPanel.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
+import CompareModal from './components/CompareModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
@@ -114,6 +115,7 @@ export default function App({ initialDb }) {
   const [alerts, setAlerts] = useState(() => loadJSON('ct_alerts', []))
   const [news, setNews] = useState(() => loadJSON('ct_news', []))
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
   const [pushErr, setPushErr] = useState('')
 
@@ -582,6 +584,13 @@ export default function App({ initialDb }) {
     setSort(v)
   }, [userPos, toast, t])
 
+  // Listings per zone, shown in the zone dropdown labels.
+  const zoneCounts = useMemo(() => {
+    const m = {}
+    for (const l of LISTINGS) m[l.zone] = (m[l.zone] || 0) + 1
+    return m
+  }, [LISTINGS])
+
   // Active-filter chips shown under the result count: with persistence, a
   // filter left on days ago must be visible, not a silent mystery.
   const activeFilters = []
@@ -631,6 +640,7 @@ export default function App({ initialDb }) {
           activeFilters={activeFilters}
           onClearFilters={clearAllFilters}
           zones={db.zones}
+          zoneCounts={zoneCounts}
           features={db.features}
           updated={LAST_UPDATED}
           gbpEur={db.gbpEur}
@@ -654,6 +664,8 @@ export default function App({ initialDb }) {
           onToggleSea={() => setSeaOnly((v) => !v)}
           onToggleGarden={() => setGardenOnly((v) => !v)}
           onToggleSold={() => setSoldView((v) => !v)}
+          favCount={favs.size}
+          onOpenCompare={() => setCompareOpen(true)}
           onOpenAlerts={() => setAlertsOpen(true)}
           alertsUnseen={news.filter((n) => !n.seen).length}
           hasAlerts={alerts.length > 0}
@@ -667,6 +679,7 @@ export default function App({ initialDb }) {
 
         <MapPanel
           items={displayItems}
+          zoom={mapZoom}
           highlightId={highlightId}
           userPos={userPos}
           areaSync={areaSync}
@@ -676,6 +689,7 @@ export default function App({ initialDb }) {
           onFitAll={onFitAll}
           onAgentSearchHere={onAgentSearchHere}
           onMarkerClick={onMarkerClick}
+          onClusterClick={(lat, lng) => mapRef.current?.flyTo([lat, lng], Math.min(mapZoom + 3, 14), { duration: 0.8 })}
           onOpen={openDetail}
           onSeen={markSeen}
           onMapReady={onMapReady}
@@ -699,6 +713,17 @@ export default function App({ initialDb }) {
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}
           toast={toast}
+        />
+      )}
+
+      {compareOpen && (
+        <CompareModal
+          items={LISTINGS.filter((l) => favs.has(l.id))}
+          gbpEur={db.gbpEur}
+          notes={notes}
+          onOpen={openDetail}
+          onToggleFav={toggleFav}
+          onClose={() => setCompareOpen(false)}
         />
       )}
 

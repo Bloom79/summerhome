@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, ZoomControl, useMapEvents } from 'react-leaflet'
 import { fmtP, shortP, imgUrl, handleImgError, hostOf } from '../utils.js'
@@ -25,11 +25,40 @@ function MapBridge({ onReady, onBoundsChange }) {
   return null
 }
 
+const clusterIcon = (n) =>
+  L.divIcon({ className: '', html: `<div class="clusterpin">${n}</div>`, iconSize: [0, 0] })
+
 export default function MapPanel({
-  items, highlightId, userPos, areaSync, seen, soldView,
-  onToggleAreaSync, onFitAll, onAgentSearchHere, onMarkerClick, onOpen, onSeen, onMapReady, onBoundsChange,
+  items, zoom, highlightId, userPos, areaSync, seen, soldView,
+  onToggleAreaSync, onFitAll, onAgentSearchHere, onMarkerClick, onClusterClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
+
+  // Grid clustering, no plugins: below street zoom, cells with 3+ houses
+  // collapse into a count bubble that zooms in when clicked. The highlighted
+  // listing always stays an individual pin.
+  const { singles, groups } = useMemo(() => {
+    if (zoom >= 12) return { singles: items, groups: [] }
+    const cell = 360 / Math.pow(2, zoom + 4)
+    const grid = new Map()
+    for (const l of items) {
+      const key = `${Math.round(l.lat / cell)}|${Math.round(l.lng / cell)}`
+      if (!grid.has(key)) grid.set(key, [])
+      grid.get(key).push(l)
+    }
+    const s = [], g = []
+    for (const arr of grid.values()) {
+      if (arr.length >= 3 && !arr.some((l) => l.id === highlightId)) {
+        g.push({
+          lat: arr.reduce((a, l) => a + l.lat, 0) / arr.length,
+          lng: arr.reduce((a, l) => a + l.lng, 0) / arr.length,
+          n: arr.length,
+          key: arr[0].id,
+        })
+      } else s.push(...arr)
+    }
+    return { singles: s, groups: g }
+  }, [items, zoom, highlightId])
   return (
     <section id="mapwrap">
       <div id="map">
@@ -45,7 +74,16 @@ export default function MapPanel({
           <ZoomControl position="bottomright" />
           <MapBridge onReady={onMapReady} onBoundsChange={onBoundsChange} />
 
-          {items.map((l) => (
+          {groups.map((g) => (
+            <Marker
+              key={'c' + g.key}
+              position={[g.lat, g.lng]}
+              icon={clusterIcon(g.n)}
+              eventHandlers={{ click: () => onClusterClick(g.lat, g.lng) }}
+            />
+          ))}
+
+          {singles.map((l) => (
             <Marker
               key={l.id}
               position={[l.lat, l.lng]}

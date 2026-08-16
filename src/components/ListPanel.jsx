@@ -4,9 +4,9 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, features, updated, gbpEur, notes, reducedOnly, onToggleReduced, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, reducedOnly, onToggleReduced, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
-  onOpenAlerts, alertsUnseen, hasAlerts,
+  favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -14,6 +14,7 @@ export default function ListPanel({
     <section id="panel">
       <Filters
         zones={zones}
+        zoneCounts={zoneCounts}
         features={features}
         filters={filters}
         onImmediate={onImmediate}
@@ -29,6 +30,8 @@ export default function ListPanel({
         soldView={soldView}
         soldCount={soldCount}
         onToggleSold={onToggleSold}
+        favCount={favCount}
+        onOpenCompare={onOpenCompare}
         onOpenAlerts={onOpenAlerts}
         alertsUnseen={alertsUnseen}
         hasAlerts={hasAlerts}

@@ -4,7 +4,7 @@ import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ zones, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, reducedOnly, onToggleReduced, soldView, soldCount, onToggleSold, onOpenAlerts, alertsUnseen, hasAlerts }) {
+export default function Filters({ zones, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, reducedOnly, onToggleReduced, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -60,7 +60,7 @@ export default function Filters({ zones, features, filters, onImmediate, onApply
       <div id="filterbar">
         <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
           <option value="">{t('all_zones')}</option>
-          {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+          {zones.map((z) => <option key={z} value={z}>{z}{zoneCounts?.[z] ? ` (${zoneCounts[z]})` : ''}</option>)}
         </select>
         <div className="msel" ref={priceRef}>
           <button className={'chip' + (bands.length ? ' active' : '')} onClick={() => setPriceOpen((o) => !o)}>
@@ -105,6 +105,9 @@ export default function Filters({ zones, features, filters, onImmediate, onApply
         <button className={'chip' + (gardenOnly ? ' active' : '')} onClick={onToggleGarden}>{t('garden')}</button>
         <button className={'chip' + (reducedOnly ? ' active' : '')} onClick={onToggleReduced}>{t('reduced')}</button>
         <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}</button>
+        {favCount >= 2 && (
+          <button className="chip" onClick={onOpenCompare}>⚖️ {t('cmp_chip')} ({favCount})</button>
+        )}
         <button className={'chip' + (hasAlerts ? ' active' : '')} onClick={onOpenAlerts}>
           🔔 {t('al_chip')}{alertsUnseen > 0 ? <span className="badge">{alertsUnseen}</span> : null}
         </button>
