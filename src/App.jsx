@@ -369,9 +369,21 @@ export default function App({ initialDb }) {
   }, [LISTINGS])
 
   // Re-fit when the filter criteria change — not on favouriting or map pans.
+  // On the phone, filters are usually adjusted from the Lista tab with the
+  // map hidden: refitting there would silently throw away the user's map
+  // position, so we skip it — except for a ZONE change, which is deliberate
+  // navigation (deferred to when the map is shown again).
   const firstFit = useRef(true)
+  const mobileViewRef = useRef(mobileView)
+  useEffect(() => { mobileViewRef.current = mobileView }, [mobileView])
+  const prevZoneRef = useRef(filters.zone)
   useEffect(() => {
     if (firstFit.current) { firstFit.current = false; return }
+    const zoneChanged = prevZoneRef.current !== filters.zone
+    prevZoneRef.current = filters.zone
+    const phone = typeof window !== 'undefined' && window.matchMedia('(max-width:840px)').matches
+    if (phone && !zoneChanged) return // keep the user's map position on chip/filter tweaks
+    if (phone && mobileViewRef.current === 'list') { needsFitRef.current = true; return }
     const map = mapRef.current
     if (!map) { needsFitRef.current = true; return }
     fitToCriteria(map, true)

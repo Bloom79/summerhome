@@ -37,6 +37,22 @@ const pmap = async (items, fn, limit = 8) => {
   return res
 }
 
+// Geo waterfront check: OSM coastline/beach within ~80m of the point. Ads
+// for a house facing the harbour wall often never say "beachfront" — the
+// map does. Best-effort: any Overpass failure just means no tag today.
+const nearCoast = async (la, ln) => {
+  const q = `[out:json][timeout:8];(way(around:80,${la},${ln})["natural"="coastline"];way(around:80,${la},${ln})["natural"="beach"];node(around:80,${la},${ln})["natural"="beach"];);out 1;`
+  for (const ep of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+    try {
+      const j = await new Promise((resolve, reject) =>
+        execFile('curl', ['-sf', '--max-time', '12', '-A', 'casatrova-agent/1.0', ep, '--data-urlencode', `data=${q}`], { maxBuffer: 4e6 },
+          (e, so) => (e ? reject(e) : resolve(JSON.parse(so.toString())))))
+      return (j.elements || []).length > 0
+    } catch { /* try next mirror */ }
+  }
+  return false
+}
+
 const validCoords = (la, ln) => typeof la === 'number' && typeof ln === 'number' &&
   la >= 49.5 && la <= 61.2 && ln >= -11.5 && ln <= 1.9 && la !== 0 && ln !== 0
 
@@ -487,6 +503,10 @@ for (const [url, cand] of scraped) {
 await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), rmEnrich, 8)
 await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), otmEnrich, 8)
 await pmap(enrichQueue.filter((l) => /tspc\.co\.uk/.test(l.url)), tspcEnrich, 8)
+// Waterfront geo-tag for the new listings (text rules already ran).
+await pmap(enrichQueue.filter((l) => !l.feats.includes('Spiaggia')), async (l) => {
+  if (await nearCoast(l.lat, l.lng)) l.feats.push('Spiaggia')
+}, 3)
 
 // Missing urls: verify on the source before archiving; live ones carry over.
 const missing = db.listings.filter((l) => !scraped.has(l.url))

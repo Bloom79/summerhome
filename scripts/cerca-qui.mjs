@@ -155,6 +155,22 @@ const featsOf = (text) => {
   return f
 }
 
+// Geo waterfront check: OSM coastline/beach within ~80m of the point. Ads
+// for a house facing the harbour wall often never say "beachfront" — the
+// map does. Best-effort: any Overpass failure just means no tag today.
+const nearCoast = async (la, ln) => {
+  const q = `[out:json][timeout:8];(way(around:80,${la},${ln})["natural"="coastline"];way(around:80,${la},${ln})["natural"="beach"];node(around:80,${la},${ln})["natural"="beach"];);out 1;`
+  for (const ep of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+    try {
+      const j = await new Promise((resolve, reject) =>
+        execFile('curl', ['-sf', '--max-time', '12', '-A', 'casatrova-agent/1.0', ep, '--data-urlencode', `data=${q}`], { maxBuffer: 4e6 },
+          (e, so) => (e ? reject(e) : resolve(JSON.parse(so.toString())))))
+      return (j.elements || []).length > 0
+    } catch { /* try next mirror */ }
+  }
+  return false
+}
+
 const CAP = 20
 const listings = []
 let searchKeys = []
@@ -408,6 +424,11 @@ if (cc === 'ie') {
     })
   }
 }
+
+// Waterfront geo-tag (text rules already ran during parsing).
+await pmap(listings.filter((l) => !l.feats.includes('Spiaggia')), async (l) => {
+  if (await nearCoast(l.lat, l.lng)) l.feats.push('Spiaggia')
+}, 3)
 
 const alreadyInArea = db.listings.filter((l) => inBox(l.lat, l.lng)).length
 if (!listings.length)
