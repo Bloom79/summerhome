@@ -3,6 +3,7 @@ import L from 'leaflet'
 import { dist } from './utils.js'
 import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
+import Filters from './components/Filters.jsx'
 import MapPanel from './components/MapPanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
@@ -117,6 +118,9 @@ export default function App({ initialDb }) {
   const [highlightId, setHighlightId] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
   const [mobileView, setMobileView] = useState('list')
+  // Mobile filter bottom-sheet: filters must be reachable from the map view
+  // too, with touch-sized controls.
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [toastOn, setToastOn] = useState(false)
   // "Trova nuove case qui" panel: null | {loading} | {place, coords, url}
@@ -914,7 +918,45 @@ export default function App({ initialDb }) {
       <div id="viewtoggle">
         <button className={mobileView === 'list' ? 'on' : ''} onClick={() => setView('list')}>{t('vt_list')}</button>
         <button className={mobileView === 'map' ? 'on' : ''} onClick={() => setView('map')}>{t('vt_map')}</button>
+        <button onClick={() => setSheetOpen(true)}>
+          🎛 {t('vt_filters')}{activeFilters.length > 0 && <span className="badge">{activeFilters.length}</span>}
+        </button>
       </div>
+
+      {sheetOpen && (
+        <div id="fsheetwrap" onClick={() => setSheetOpen(false)}>
+          <div id="fsheet" onClick={(e) => e.stopPropagation()}>
+            <div id="fsheethead">
+              <b>🎛 {t('vt_filters')}</b>
+              <button id="fsheetx" onClick={() => setSheetOpen(false)}>✕</button>
+            </div>
+            <Filters
+              zones={db.zones}
+              zoneCounts={zoneCounts}
+              features={db.features}
+              filters={filters}
+              onImmediate={(k, v) => setFilters((f) => ({ ...f, [k]: v }))}
+              onApplyAdvanced={(adv) => setFilters((f) => ({ ...f, ...adv }))}
+              favOnly={favOnly} onToggleFavOnly={() => setFavOnly((v) => !v)}
+              seaOnly={seaOnly} onToggleSea={() => setSeaOnly((v) => !v)}
+              gardenOnly={gardenOnly} onToggleGarden={() => setGardenOnly((v) => !v)}
+              beachOnly={beachOnly} onToggleBeach={() => setBeachOnly((v) => !v)}
+              reducedOnly={reducedOnly} onToggleReduced={() => setReducedOnly((v) => !v)}
+              bothOnly={bothOnly} onToggleBoth={() => setBothOnly((v) => !v)}
+              soldView={soldView} soldCount={SOLD.length} onToggleSold={() => setSoldView((v) => !v)}
+              favCount={favs.size}
+              onOpenCompare={() => { setSheetOpen(false); setCompareOpen(true) }}
+              onOpenAlerts={() => { setSheetOpen(false); setAlertsOpen(true) }}
+              alertsUnseen={news.filter((n) => !n.seen).length}
+              hasAlerts={alerts.length > 0}
+            />
+            <div id="fsheetfoot">
+              <button className="btn ghost" onClick={clearAllFilters}>{t('af_clear_all')}</button>
+              <button className="btn primary" onClick={() => setSheetOpen(false)}>{t('show_n', { n: displayItems.length })}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <DetailModal

@@ -316,3 +316,31 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .cimg .tag.st-removed{background:#5b6770}
 .pricepin.sold{background:#7c2b2b;border-color:#7c2b2b;color:#fff}
 .pricepin.sold:after{border-top-color:#7c2b2b}
+
+/* ---- Mobile filter bottom-sheet ---- */
+#fsheetwrap{position:fixed;inset:0;background:rgba(0,25,30,.5);z-index:3000;display:flex;align-items:flex-end;animation:fadein .15s ease-out}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+#fsheet{background:var(--bg,#f4f6f6);width:100%;max-height:88dvh;border-radius:20px 20px 0 0;overflow-y:auto;overscroll-behavior:contain;animation:sheetup .22s ease-out;box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+@keyframes sheetup{from{transform:translateY(35%)}to{transform:translateY(0)}}
+#fsheethead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;background:var(--bg,#f4f6f6);font-size:1.08rem;border-bottom:1px solid var(--line)}
+#fsheetx{border:0;background:#fff;border:1.5px solid var(--line);border-radius:50%;width:36px;height:36px;font-size:1rem;cursor:pointer}
+#fsheet #filterbar{background:transparent;border-bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
+#fsheet #filterbar .chip{min-height:48px;font-size:.95rem;width:100%;display:flex;align-items:center;justify-content:center;border-radius:12px;white-space:normal;text-align:center}
+#fsheet #filterbar select.chip{grid-column:1/-1;text-align:left;display:block;line-height:32px}
+#fsheet .msel{grid-column:1/-1;position:static}
+#fsheet .msel>.chip{justify-content:flex-start}
+#fsheet .mselpanel{position:static;box-shadow:none;border-radius:12px;margin-top:8px;min-width:0}
+#fsheet .mselpanel label{padding:11px 10px;font-size:.95rem;display:flex;gap:10px;align-items:center}
+#fsheet .mselpanel input[type=checkbox]{width:20px;height:20px}
+#fsheet #advfilters{border-bottom:0;border-top:1px solid var(--line);max-height:none;overflow:visible}
+#fsheet #advfilters input,#fsheet #advfilters select{min-height:44px;font-size:1rem}
+#fsheet .feat span{padding:10px 14px;font-size:.92rem}
+#fsheetfoot{position:sticky;bottom:0;z-index:2;display:flex;gap:10px;padding:12px 16px calc(14px + env(safe-area-inset-bottom));background:var(--bg,#f4f6f6);border-top:1px solid var(--line)}
+#fsheetfoot .btn{flex:1;min-height:50px;font-size:1rem;border-radius:12px}
+#viewtoggle .badge{background:var(--brand);color:#fff;border-radius:999px;padding:1px 7px;font-size:.72rem;margin-left:6px}
+@media(min-width:841px){#viewtoggle{display:none}}
+@media(max-width:840px){
+  /* On phones the filter bar moves into the bottom sheet: the inline strip
+     was too cramped to tap and absent from the map view. */
+  #panel>#filterbar,#panel>#advfilters{display:none}
+}
