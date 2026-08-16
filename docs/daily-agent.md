@@ -39,6 +39,17 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 6. If a source can't be fetched for a zone, it keeps that zone's previous
    listings rather than emptying it, and makes no commit if nothing changed.
 
+## Bargain analysis (Occasioni)
+
+After each refresh, `scripts/analyze-deals.mjs` scores every listing with
+predefined checks — price per m² and absolute price vs zone medians,
+tracked reductions, time on the portal, seller-motivation wording on the
+source page (fixed price, closing date, no chain, quick sale), value-add
+potential — and writes `public/deals.json`. A listing is a deal only with
+a real price signal; tiers 💎 (45+) and 🔥 (70+). The portal shows them in
+the 💎 Occasioni view with the full check breakdown, as a card badge, as a
+filter chip, and in each deal's detail sheet.
+
 ## Cerca qui (user-requested areas)
 
 Pan/zoom the map to any area and press **🤖 Trova nuove case qui**. The

@@ -2,7 +2,7 @@ import { fmtP, hostOf, srcOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
-export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
+export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
@@ -34,6 +34,7 @@ export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, 
         <div className="ctitle">
           {isNew && <span className="newb">✨ {t('new_badge')}</span>}
           {reduced && <span className="newb redb">📉 {t('reduced_badge')}</span>}
+          {deal && <span className={'newb dealb' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {t('deal_badge')} {deal.score}</span>}
           {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}
           {Object.entries(vote).filter(([n]) => n !== profile).map(([n, v]) => (
             <span key={n} className={'voteb ' + (v === 1 ? 'yes' : 'no')}>{v === 1 ? '👍' : '👎'} {n}</span>

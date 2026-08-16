@@ -13,14 +13,14 @@ export default function Gallery({ imgs }) {
   }
   return (
     <>
-      <div className="gal" ref={ref} onScroll={onScroll}>
+      <div className="sgal" ref={ref} onScroll={onScroll}>
         {imgs.map((src, i) => (
           <img key={src} loading={i === 0 ? 'eager' : 'lazy'} src={imgUrl(src)} onError={(e) => handleImgError(e)} alt="" />
         ))}
       </div>
-      {imgs.length > 1 && <span className="galn">📷 {idx + 1}/{imgs.length}</span>}
+      {imgs.length > 1 && <span className="sgaln">📷 {idx + 1}/{imgs.length}</span>}
       {imgs.length > 1 && (
-        <div className="galdots">
+        <div className="sgaldots">
           {imgs.map((_, i) => <i key={i} className={i === idx ? 'on' : ''} />)}
         </div>
       )}

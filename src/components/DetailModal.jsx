@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import { DealChecks } from './DealsModal.jsx'
 
 // Airports relevant to the portal's coasts; the modal shows driving time
 // from the closest one (OSRM demo server, cached per listing).
@@ -24,7 +25,7 @@ const hav = (a, b, c, d) => {
 }
 const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
 
-export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, deal, fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
 
   const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
@@ -176,6 +177,12 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
             <div className="mprice">{fmtP(l)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
+          {deal && (
+            <div className="dealbox">
+              <div className="dhead"><span className={'dscore' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {deal.score}/100</span> <b>{t('deal_analysis')}</b></div>
+              <DealChecks deal={deal} />
+            </div>
+          )}
           {l.url && (
             <div className="msource">
               {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}

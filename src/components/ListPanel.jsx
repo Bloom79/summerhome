@@ -4,8 +4,8 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
-  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleSold, onSortChange,
+  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleDeals, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
@@ -28,6 +28,9 @@ export default function ListPanel({
         onToggleGarden={onToggleGarden}
         beachOnly={beachOnly}
         onToggleBeach={onToggleBeach}
+        dealsOnly={dealsOnly}
+        dealsCount={dealsCount}
+        onToggleDeals={onToggleDeals}
         reducedOnly={reducedOnly}
         onToggleReduced={onToggleReduced}
         bothOnly={bothOnly}
@@ -91,6 +94,7 @@ export default function ListPanel({
           {items.map((l) => (
             <div key={l.id} ref={(el) => { if (cardRefs) cardRefs.current[l.id] = el }}>
               {soldView ? <SoldCard s={l} /> : <Card
+            deal={dealById && dealById.get(l.id)}
                 l={l}
                 updated={updated}
                 gbpEur={gbpEur}

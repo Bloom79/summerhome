@@ -9,6 +9,7 @@ import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
 import StatsModal from './components/StatsModal.jsx'
+import DealsModal from './components/DealsModal.jsx'
 import SyncModal from './components/SyncModal.jsx'
 import ProfileModal from './components/ProfileModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
@@ -136,6 +137,17 @@ export default function App({ initialDb }) {
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const [dealsOpen, setDealsOpen] = useState(false)
+  // Daily bargain analysis (scripts/analyze-deals.mjs -> public/deals.json).
+  const [deals, setDeals] = useState([])
+  const [dealsOnly, setDealsOnly] = useState(false)
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}deals.json`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.deals) setDeals(j.deals) })
+      .catch(() => { /* deals are optional */ })
+  }, [db.updated])
+  const dealById = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals])
   const [syncOpen, setSyncOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
   const [pushErr, setPushErr] = useState('')
@@ -255,6 +267,7 @@ export default function App({ initialDb }) {
     if (seaOnly && !l.seaView) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
     if (beachOnly && !l.feats.includes('Spiaggia')) return false
+    if (dealsOnly && !dealById.has(l.id)) return false
     if (reducedOnly && !isReduced(l)) return false
     if (bothOnly && !bothLike(l)) return false
     if (filters.freshness) {
@@ -272,7 +285,7 @@ export default function App({ initialDb }) {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, beachOnly, reducedOnly, bothOnly, bothLike, favs])
+  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, beachOnly, dealsOnly, dealById, reducedOnly, bothOnly, bothLike, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
@@ -705,6 +718,7 @@ export default function App({ initialDb }) {
   if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
   if (beachOnly) af(t('beach'), () => setBeachOnly(false))
+  if (dealsOnly) af(t('deals_chip'), () => setDealsOnly(false))
   if (reducedOnly) af(t('reduced'), () => setReducedOnly(false))
   if (bothOnly) af(t('both_chip'), () => setBothOnly(false))
   if (seenFilter) af(t(seenFilter === 'unseen' ? 'seen_unseen' : 'seen_seen'), () => setSeenFilter(''))
@@ -832,6 +846,8 @@ export default function App({ initialDb }) {
         onFlyTo={flyTo}
         onNearMe={onNearMe}
         onOpenStats={() => setStatsOpen(true)}
+        onOpenDeals={() => setDealsOpen(true)}
+        dealsCount={deals.length}
         onOpenSync={() => setSyncOpen(true)}
         deskView={deskView}
         onDeskView={setDeskView}
@@ -846,6 +862,7 @@ export default function App({ initialDb }) {
       <div id="main">
         <ListPanel
           items={displayItems}
+          dealById={dealById}
           activeFilters={activeFilters}
           onClearFilters={clearAllFilters}
           zones={db.zones}
@@ -866,6 +883,8 @@ export default function App({ initialDb }) {
           seaOnly={seaOnly}
           gardenOnly={gardenOnly}
           beachOnly={beachOnly}
+          dealsOnly={dealsOnly}
+          dealsCount={deals.length}
           soldView={soldView}
           soldCount={SOLD.length}
           favs={favs}
@@ -879,6 +898,7 @@ export default function App({ initialDb }) {
           onToggleSea={() => setSeaOnly((v) => !v)}
           onToggleGarden={() => setGardenOnly((v) => !v)}
           onToggleBeach={() => setBeachOnly((v) => !v)}
+          onToggleDeals={() => setDealsOnly((v) => !v)}
           onToggleSold={() => setSoldView((v) => !v)}
           favCount={favs.size}
           onOpenCompare={() => setCompareOpen(true)}
@@ -944,6 +964,7 @@ export default function App({ initialDb }) {
               seaOnly={seaOnly} onToggleSea={() => setSeaOnly((v) => !v)}
               gardenOnly={gardenOnly} onToggleGarden={() => setGardenOnly((v) => !v)}
               beachOnly={beachOnly} onToggleBeach={() => setBeachOnly((v) => !v)}
+              dealsOnly={dealsOnly} onToggleDeals={() => setDealsOnly((v) => !v)} dealsCount={deals.length}
               reducedOnly={reducedOnly} onToggleReduced={() => setReducedOnly((v) => !v)}
               bothOnly={bothOnly} onToggleBoth={() => setBothOnly((v) => !v)}
               soldView={soldView} soldCount={SOLD.length} onToggleSold={() => setSoldView((v) => !v)}
@@ -963,6 +984,7 @@ export default function App({ initialDb }) {
 
       {selected && (
         <DetailModal
+          deal={dealById.get(selected.id)}
           l={selected}
           fav={favs.has(selected.id)}
           similar={similar}
@@ -998,6 +1020,10 @@ export default function App({ initialDb }) {
           onPickZone={(z) => setFilters((f) => ({ ...f, zone: z }))}
           onClose={() => setStatsOpen(false)}
         />
+      )}
+
+      {dealsOpen && (
+        <DealsModal deals={deals} listings={LISTINGS} onOpen={openDetail} onClose={() => setDealsOpen(false)} />
       )}
 
       {compareOpen && (
