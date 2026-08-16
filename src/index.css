@@ -98,6 +98,13 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mbtn:hover{background:var(--brand-light)}
 .mbtn.on{background:var(--brand);color:#fff}
 .cdate{color:var(--muted);white-space:nowrap}
+.newb.redb{background:#c0392b}
+.noteb{margin-right:6px}
+.mhist{background:#fdf3ee;border:1px solid #f3ddd0;border-radius:10px;padding:9px 12px;font-size:.85rem;color:var(--ink);margin-bottom:12px;overflow-x:auto;white-space:nowrap}
+.notesbox{margin:14px 0}
+.notesbox h4{font-size:.85rem;color:var(--ink);margin-bottom:6px}
+.notesbox textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.85rem;font-family:inherit;color:var(--ink);resize:vertical;background:#fbfdfd}
+.notesbox textarea:focus{outline:2px solid var(--brand-light);border-color:var(--brand)}
 #afbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 16px 8px;background:#fff}
 .aflabel{font-size:.76rem;color:var(--muted);font-weight:600}
 .afchip{border:0;background:var(--brand);color:#fff;border-radius:999px;padding:4px 10px;font-size:.76rem;font-weight:600;cursor:pointer}

@@ -28,6 +28,10 @@ function trackVisit() {
 
 const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10)
 
+// True when the latest tracked price change was a reduction.
+const isReduced = (l) => Array.isArray(l.hist) && l.hist.length > 1 &&
+  l.hist[l.hist.length - 1].p < l.hist[l.hist.length - 2].p
+
 // A listing matches the price filter if no band is selected, or its price
 // falls inside any selected band (min inclusive, max exclusive).
 const inPriceBands = (price, ids) => {
@@ -84,6 +88,9 @@ export default function App({ initialDb }) {
   const [favOnly, setFavOnly] = useState(!!ui?.favOnly)
   const [seaOnly, setSeaOnly] = useState(!!ui?.seaOnly)
   const [gardenOnly, setGardenOnly] = useState(!!ui?.gardenOnly)
+  const [reducedOnly, setReducedOnly] = useState(!!ui?.reducedOnly)
+  // Personal notes per listing (keyed by source url, local only).
+  const [notes, setNotes] = useState(() => loadJSON('ct_notes', {}))
   const [soldView, setSoldView] = useState(false)
   const [favs, setFavs] = useState(() => loadIdSet('ct_favs'))
   const [seen, setSeen] = useState(() => loadIdSet('ct_seen'))
@@ -112,8 +119,18 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly })
-  }, [filters, sort, favOnly, seaOnly, gardenOnly])
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly])
+
+  const saveNote = useCallback((url, text) => {
+    setNotes((prev) => {
+      const next = { ...prev }
+      if (text && text.trim()) next[url] = text
+      else delete next[url]
+      saveJSON('ct_notes', next)
+      return next
+    })
+  }, [])
 
   const mapRef = useRef(null)
   const cardRefs = useRef({})
@@ -173,6 +190,7 @@ export default function App({ initialDb }) {
     if (favOnly && !favs.has(l.id)) return false
     if (seaOnly && !l.seaView) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
+    if (reducedOnly && !isReduced(l)) return false
     if (filters.freshness) {
       // 'visit' with no previous visit falls back to today's additions.
       const cutoff = filters.freshness === 'visit' ? (lastVisit || LAST_UPDATED) : daysAgo(+filters.freshness)
@@ -188,7 +206,7 @@ export default function App({ initialDb }) {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, favs])
+  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, reducedOnly, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
@@ -575,13 +593,27 @@ export default function App({ initialDb }) {
   if (filters.contract) af(t(filters.contract === 'sale' ? 'for_sale' : 'for_rent'), () => setFilters((f) => ({ ...f, contract: '' })))
   if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
+  if (reducedOnly) af(t('reduced'), () => setReducedOnly(false))
   if (favOnly) af(t('favourites'), () => setFavOnly(false))
   const advCount = (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) + (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
   if (advCount) af(`${t('adv_filters')} (${advCount})`, () => setFilters((f) => ({ ...f, smin: null, smax: null, rooms: '', baths: '', feats: [] })))
   const clearAllFilters = () => {
     setFilters(initialFilters)
-    setSeaOnly(false); setGardenOnly(false); setFavOnly(false)
+    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false)
   }
+
+  // Shareable deep link: ?casa=<id> opens the listing's detail directly.
+  useEffect(() => {
+    const id = +new URLSearchParams(window.location.search).get('casa')
+    if (id && LISTINGS.some((l) => l.id === id)) openDetail(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    const u = new URL(window.location.href)
+    if (selectedId != null) u.searchParams.set('casa', selectedId)
+    else u.searchParams.delete('casa')
+    window.history.replaceState(null, '', u)
+  }, [selectedId])
 
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
@@ -601,6 +633,10 @@ export default function App({ initialDb }) {
           zones={db.zones}
           features={db.features}
           updated={LAST_UPDATED}
+          gbpEur={db.gbpEur}
+          notes={notes}
+          reducedOnly={reducedOnly}
+          onToggleReduced={() => setReducedOnly((v) => !v)}
           filters={filters}
           favOnly={favOnly}
           seaOnly={seaOnly}
@@ -656,6 +692,9 @@ export default function App({ initialDb }) {
         <DetailModal
           l={selected}
           fav={favs.has(selected.id)}
+          gbpEur={db.gbpEur}
+          note={notes[selected.url] || ''}
+          onSaveNote={saveNote}
           onClose={() => setSelectedId(null)}
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}

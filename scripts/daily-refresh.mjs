@@ -237,6 +237,8 @@ for (const [url, cand] of scraped) {
   const old = prevByUrl.get(url)
   if (!old) { enrichQueue.push(cand); nextListings.push(cand); events.nuove.push(cand); continue }
   const merged = { ...old, price: cand.price, imgs: cand.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths }
+  if (cand.price !== old.price)
+    merged.hist = [...(old.hist || [{ d: old.date, p: old.price }]), { d: TODAY, p: cand.price }].slice(-10)
   if (cand.price < old.price) events.ribassi.push({ ...merged, oldPrice: old.price })
   else if (cand.price > old.price) events.rialzi.push({ ...merged, oldPrice: old.price })
   nextListings.push(merged)
@@ -296,6 +298,11 @@ let maxId = Math.max(0, ...db.listings.map((l) => l.id))
 for (const l of nextListings) if (!l.id) l.id = ++maxId
 const zoneSet = new Set([...db.zones])
 for (const l of nextListings) if (!zoneSet.has(l.zone)) { db.zones.push(l.zone); zoneSet.add(l.zone) }
+// Indicative GBP→EUR rate for the price display (ECB via frankfurter.app).
+try {
+  const fx = JSON.parse(await get('https://api.frankfurter.dev/v1/latest?base=GBP&symbols=EUR'))
+  if (fx?.rates?.EUR > 0.5 && fx.rates.EUR < 3) db.gbpEur = +fx.rates.EUR.toFixed(4)
+} catch { /* keep previous rate */ }
 db.updated = TODAY
 db.listings = nextListings
 db.sold = [...soldNew, ...db.sold].slice(0, 150)

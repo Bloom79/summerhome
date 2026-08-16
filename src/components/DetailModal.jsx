@@ -2,8 +2,19 @@ import { useEffect, useState } from 'react'
 import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, fav, gbpEur, note, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
   const { t, featLabel, listingDesc } = useI18n()
+
+  const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
+
+  const share = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?casa=${l.id}`
+    if (navigator.share) {
+      try { await navigator.share({ title: l.title, url }) } catch { /* user dismissed */ }
+      return
+    }
+    try { await navigator.clipboard.writeText(url); toast(t('t_link_copied')) } catch { /* clipboard denied */ }
+  }
   const [idx, setIdx] = useState(0)
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const move = (d) => { if (hasImgs) setIdx((i) => (i + d + l.imgs.length) % l.imgs.length) }
@@ -65,7 +76,7 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
         <div className="mbody">
           <div className="mhead">
             <div><div className="mtitle">{l.title}</div></div>
-            <div className="mprice">{fmtP(l)}<br /><small>{ppm}</small></div>
+            <div className="mprice">{fmtP(l)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
           {l.url && (
@@ -85,6 +96,12 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
             {l.energy ? <div className="stat"><b>{l.energy}</b><span>{t('st_epc')}</span></div> : null}
           </div>
 
+          {Array.isArray(l.hist) && l.hist.length > 1 && (
+            <div className="mhist">
+              📉 {t('st_hist')}: {l.hist.map((h) => `${priceSym(l)}${h.p.toLocaleString('en-GB')} (${h.d.slice(8, 10)}/${h.d.slice(5, 7)})`).join(' → ')}
+            </div>
+          )}
+
           <p className="mdesc">{listingDesc(l)}</p>
           <div className="mfeats">{l.feats.map((f) => <span key={f}>✓ {featLabel(f)}</span>)}</div>
 
@@ -98,11 +115,22 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
             </div>
           </div>
 
+          <div className="notesbox">
+            <h4>{t('notes_label')}</h4>
+            <textarea
+              value={note || ''}
+              placeholder={t('notes_ph')}
+              onChange={(e) => onSaveNote(l.url, e.target.value)}
+              rows={3}
+            />
+          </div>
+
           <div className="mcta">
             {l.url && (
               <a className="btn primary" href={l.url} target="_blank" rel="noopener noreferrer" style={{ textAlign: 'center', textDecoration: 'none' }}>{t('view_original')}</a>
             )}
             <button className="btn ghost" onClick={() => onToggleFav(l.id)}>{fav ? t('saved') : t('save')}</button>
+            <button className="btn ghost" onClick={share}>🔗 {t('share')}</button>
           </div>
         </div>
       </div>

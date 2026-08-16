@@ -1,11 +1,13 @@
 import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Card({ l, updated, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
+export default function Card({ l, updated, gbpEur, hasNote, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const isNew = l.date === updated
+  const reduced = Array.isArray(l.hist) && l.hist.length > 1 && l.hist[l.hist.length - 1].p < l.hist[l.hist.length - 2].p
+  const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
   return (
     <div
       className={'card' + (highlighted ? ' hl' : '') + (seen ? ' seen' : '')}
@@ -20,11 +22,16 @@ export default function Card({ l, updated, fav, seen, highlighted, userPos, onOp
         <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
         {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>
-        <span className="price">{fmtP(l)}</span>
+        <span className="price" title={eur || undefined}>{fmtP(l)}</span>
         {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}
       </div>
       <div className="cbody">
-        <div className="ctitle">{isNew && <span className="newb">✨ {t('new_badge')}</span>}{l.title}</div>
+        <div className="ctitle">
+          {isNew && <span className="newb">✨ {t('new_badge')}</span>}
+          {reduced && <span className="newb redb">📉 {t('reduced_badge')}</span>}
+          {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}
+          {l.title}
+        </div>
         <div className="caddr">📍 {l.addr}</div>
         <div className="cstats">
           {l.size ? <span><b>{l.size}</b> m²</span> : null}

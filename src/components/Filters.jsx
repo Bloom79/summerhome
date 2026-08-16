@@ -4,7 +4,7 @@ import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ zones, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, soldView, soldCount, onToggleSold, onOpenAlerts, alertsUnseen, hasAlerts }) {
+export default function Filters({ zones, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, reducedOnly, onToggleReduced, soldView, soldCount, onToggleSold, onOpenAlerts, alertsUnseen, hasAlerts }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -103,6 +103,7 @@ export default function Filters({ zones, features, filters, onImmediate, onApply
         </button>
         <button className={'chip' + (seaOnly ? ' active' : '')} onClick={onToggleSea}>{t('sea_view')}</button>
         <button className={'chip' + (gardenOnly ? ' active' : '')} onClick={onToggleGarden}>{t('garden')}</button>
+        <button className={'chip' + (reducedOnly ? ' active' : '')} onClick={onToggleReduced}>{t('reduced')}</button>
         <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}</button>
         <button className={'chip' + (hasAlerts ? ' active' : '')} onClick={onOpenAlerts}>
           🔔 {t('al_chip')}{alertsUnseen > 0 ? <span className="badge">{alertsUnseen}</span> : null}

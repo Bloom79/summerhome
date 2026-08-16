@@ -4,7 +4,7 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, features, updated, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, zones, features, updated, gbpEur, notes, reducedOnly, onToggleReduced, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
   onOpenAlerts, alertsUnseen, hasAlerts,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
@@ -24,6 +24,8 @@ export default function ListPanel({
         onToggleSea={onToggleSea}
         gardenOnly={gardenOnly}
         onToggleGarden={onToggleGarden}
+        reducedOnly={reducedOnly}
+        onToggleReduced={onToggleReduced}
         soldView={soldView}
         soldCount={soldCount}
         onToggleSold={onToggleSold}
@@ -67,6 +69,8 @@ export default function ListPanel({
               {soldView ? <SoldCard s={l} /> : <Card
                 l={l}
                 updated={updated}
+                gbpEur={gbpEur}
+                hasNote={!!(notes && notes[l.url])}
                 fav={favs.has(l.id)}
                 seen={seen.has(l.id)}
                 highlighted={highlightId === l.id}
