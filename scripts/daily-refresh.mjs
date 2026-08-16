@@ -556,6 +556,44 @@ const aucAll = []
       })
     }
   } catch { /* auction source is best-effort */ }
+  // Prime Property Auctions (Glasgow) — WordPress SSR: detail pages embed a
+  // JSON blob with cleaned_address, exact coordinates, guide price, beds,
+  // baths and the gallery. Lots sell "offer now" style, so an auction date
+  // only exists when the blurb announces a closing/bidding date.
+  try {
+    const html = await get('https://primepropertyauctions.co.uk/properties/')
+    const slugs = [...new Set([...html.matchAll(/href="\/property\/([^"/]+)\//g)].map((m) => m[1]))]
+    for (const slug of slugs) {
+      let page = ''
+      try { page = await get(`https://primepropertyauctions.co.uk/property/${slug}/`) } catch { continue }
+      const addr = (/cleaned_address:"([^"]+)"/.exec(page) || [])[1]
+      if (!addr || AUC_SKIP.test(slug + ' ' + addr)) continue
+      const zt = zoneOfAuction(addr)
+      if (!zt) continue
+      const lat = +((/latitude:(-?\d+\.\d+)/.exec(page) || [])[1])
+      const lng = +((/longitude:(-?\d+\.\d+)/.exec(page) || [])[1])
+      const price = +((/(?:^|[^a-zA-Z])price:(\d+)/.exec(page) || [])[1] || 0)
+      if (!price || price < 10000 || !validCoords(lat, lng)) continue
+      const auctionCtx = (/(?:auction|closing|bidding)[^.]{0,80}?(\d{1,2}(?:st|nd|rd|th)?\s+[A-Z][a-z]{2,8}\s+20\d\d)/i.exec(page) || [])[1]
+      // The gallery repeats each photo in several crop sizes: keep the
+      // standard 1024px variant only (falling back to whatever exists).
+      const rawImgs = [...new Set([...page.matchAll(/https:\/\/primepropertyauctions\.flywheelsites\.com\/wp-content\/uploads\/[^"',\s\\]+\.(?:jpe?g|png|webp)/gi)].map((x) => x[0]))]
+        .filter((u) => !/logo|floorplan|scaled|Report/i.test(u))
+      const hd = rawImgs.filter((u) => /-1024x/.test(u))
+      const imgs = (hd.length ? hd : rawImgs).slice(0, 15)
+      aucCands.push({
+        id: 0, title: addr, contract: 'sale',
+        type: /flat|apartment/i.test(page.slice(0, 40000)) && /propertyType:"flat"/.test(page) ? 'Appartamento' : typeOfTitle(slug.replace(/-/g, ' ')),
+        price, currency: 'GBP', size: null,
+        rooms: +((/numberOfBedrooms:(\d+)/.exec(page) || [])[1] || 0) || null,
+        baths: +((/numberOfBathroomsTotal:(\d+)/.exec(page) || [])[1] || 0) || null,
+        floor: null, year: null, energy: null,
+        zone: zt.zone, town: zt.town, addr, lat, lng, imgs,
+        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction: auctionCtx ? isoDate(auctionCtx) : null,
+        url: `https://primepropertyauctions.co.uk/property/${slug}/`,
+      })
+    }
+  } catch { /* auction source is best-effort */ }
   const byZone = {}
   for (const l of aucCands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   // Auctions churn in weeks, not months: a low daily cap would drip-feed a
@@ -659,7 +697,7 @@ await pmap(missing, async (l) => {
     try { page = await get(l.url) } catch { nextListings.push(l); return }
     if (/<title>\s*Property Unavailable/i.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
-  } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk/.test(l.url)) {
+  } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/.test(l.url)) {
     // Auction lots: gone from the catalogue means sold or withdrawn; a
     // passed auction date means the auction happened either way.
     if (l.auction && l.auction < TODAY) soldNew.push({ ...toSold(l), status: 'removed' })
