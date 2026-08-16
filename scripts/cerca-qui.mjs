@@ -138,10 +138,18 @@ const GARDEN = [
   /"gardens?"/i, // a stand-alone key-features bullet
   /gardens?\s+(?:and|&|with)\s+(?:garage|parking|driveway|patio|decking|greenhouse|shed)/i,
 ]
+// Beachfront needs DIRECT adjacency phrasing — "walking distance to the
+// beach" is half of coastal ad copy and must not count.
+const BEACH = [
+  /beach ?front|beach[- ]?side|shore ?front|foreshore|water'?s edge/i,
+  /(?:\bon|onto|edge of|bordering|adjoining|beside|directly (?:on|above|overlooking)|(?:private|direct) access to) (?:the |[A-Z][a-z]+ )?(?:beach|shore|strand)\b/i,
+  /steps? (?:from|to|away from) the (?:beach|shore|sea|strand|water)\b/i,
+]
 const featsOf = (text) => {
   const f = []
   if (/\bgarages?\b/i.test(text)) f.push('Garage')
   if (GARDEN.some((r) => r.test(text))) f.push('Giardino')
+  if (BEACH.some((r) => r.test(text))) f.push('Spiaggia')
   if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
   return f
@@ -193,15 +201,20 @@ if (cc === 'ie') {
     if (!price || !cm) { stats.dropQuality++; return null }
     const [plng, plat] = [+cm[1], +cm[2]]
     if (!inBox(plat, plng)) { stats.dropBounds++; return null }
-    const beds = +(/"NumberOfBeds":(\d+)/.exec(page)?.[1] || 0) || null
-    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
     const text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
+    // Not every brochure carries the NumberOfBeds JSON — fall back to the
+    // visible "3 beds 1 bath" strapline.
+    const bedsRaw = +(/"NumberOfBeds":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*beds?\b/i.exec(text)?.[1] || 0)
+    const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
+    const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
+    const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
+    const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 6)
     // Title is "€price | address - agency - id - MyHome.ie"; the h1 is cleaner.
     const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
     const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
     return {
       id: 0, title: addrTxt, type: 'Casa indipendente', contract: 'sale', price, currency: 'EUR',
-      size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
+      size: null, rooms: beds, baths, floor: null, year: null, energy: null,
       zone: zoneName, town, addr: addrTxt, lat: plat, lng: plng, imgs,
       feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url: u,
     }
@@ -241,7 +254,7 @@ if (cc === 'ie') {
     if (!pla || !pln) { stats.dropQuality++; return false }
     if (!inBox(pla, pln)) { stats.dropBounds++; return false }
     const sub = (p.propertySubType || '').toLowerCase()
-    if (/land|plot|site|garage|parking/.test(sub)) { stats.dropQuality++; return false }
+    if (/land|plot|site|garage|parking|private hall|block of/.test(sub)) { stats.dropQuality++; return false }
     if (!p.price?.amount) { stats.dropQuality++; return false }
     const url = `https://www.rightmove.co.uk/properties/${p.id}`
     if (existingUrls.has(url) || seen.has(url)) { stats.dropDup++; return false }
@@ -380,8 +393,8 @@ if (cc === 'ie') {
       id: 0, title: addrTxt, contract: 'sale',
       type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
       price: o.price, currency: 'GBP',
-      size: null, rooms: +(/([0-9]+)\s*bedroom/.exec(featStr)?.[1] || 0) || null,
-      baths: +(/([0-9]+)\s*bathroom/.exec(featStr)?.[1] || 0) || null,
+      size: null, rooms: ((n) => (n >= 1 && n <= 12 ? n : null))(+(/([0-9]+)\s*bedroom/.exec(featStr)?.[1] || 0)),
+      baths: ((n) => (n >= 1 && n <= 10 ? n : null))(+(/([0-9]+)\s*bathroom/.exec(featStr)?.[1] || 0)),
       floor: null, year: null, energy: null,
       zone: zoneName, town, addr: addrTxt, lat: pla, lng: pln,
       imgs: (o.media || []).slice(0, 6).map((mo) => mo.metadata?.src?.url).filter((u) => u && u.startsWith('https://cdn.s1homes.com/')),

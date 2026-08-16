@@ -92,6 +92,7 @@ export default function App({ initialDb }) {
   const [favOnly, setFavOnly] = useState(!!ui?.favOnly)
   const [seaOnly, setSeaOnly] = useState(!!ui?.seaOnly)
   const [gardenOnly, setGardenOnly] = useState(!!ui?.gardenOnly)
+  const [beachOnly, setBeachOnly] = useState(!!ui?.beachOnly)
   const [reducedOnly, setReducedOnly] = useState(!!ui?.reducedOnly)
   const [bothOnly, setBothOnly] = useState(!!ui?.bothOnly)
   // Triage: '' = all, 'unseen' = still to review, 'seen' = already reviewed.
@@ -137,8 +138,8 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, seenFilter, deskView })
-  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, seenFilter, deskView])
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, reducedOnly, bothOnly, seenFilter, deskView })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, reducedOnly, bothOnly, seenFilter, deskView])
 
   const saveNote = useCallback((url, text) => {
     setNotes((prev) => {
@@ -249,6 +250,7 @@ export default function App({ initialDb }) {
     if (favOnly && !favs.has(l.id)) return false
     if (seaOnly && !l.seaView) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
+    if (beachOnly && !l.feats.includes('Spiaggia')) return false
     if (reducedOnly && !isReduced(l)) return false
     if (bothOnly && !bothLike(l)) return false
     if (filters.freshness) {
@@ -266,7 +268,7 @@ export default function App({ initialDb }) {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, bothLike, favs])
+  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, beachOnly, reducedOnly, bothOnly, bothLike, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
@@ -353,7 +355,7 @@ export default function App({ initialDb }) {
     if (!map) { needsFitRef.current = true; return }
     fitToCriteria(map, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, seaOnly, gardenOnly, favOnly, soldView])
+  }, [filters, seaOnly, gardenOnly, beachOnly, favOnly, soldView])
 
   // ---- Map lifecycle ----
   const onMapReady = useCallback((map) => {
@@ -698,6 +700,7 @@ export default function App({ initialDb }) {
   if (filters.contract) af(t(filters.contract === 'sale' ? 'for_sale' : 'for_rent'), () => setFilters((f) => ({ ...f, contract: '' })))
   if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
+  if (beachOnly) af(t('beach'), () => setBeachOnly(false))
   if (reducedOnly) af(t('reduced'), () => setReducedOnly(false))
   if (bothOnly) af(t('both_chip'), () => setBothOnly(false))
   if (seenFilter) af(t(seenFilter === 'unseen' ? 'seen_unseen' : 'seen_seen'), () => setSeenFilter(''))
@@ -855,6 +858,7 @@ export default function App({ initialDb }) {
           favOnly={favOnly}
           seaOnly={seaOnly}
           gardenOnly={gardenOnly}
+          beachOnly={beachOnly}
           soldView={soldView}
           soldCount={SOLD.length}
           favs={favs}
@@ -867,6 +871,7 @@ export default function App({ initialDb }) {
           onToggleFavOnly={() => setFavOnly((v) => !v)}
           onToggleSea={() => setSeaOnly((v) => !v)}
           onToggleGarden={() => setGardenOnly((v) => !v)}
+          onToggleBeach={() => setBeachOnly((v) => !v)}
           onToggleSold={() => setSoldView((v) => !v)}
           favCount={favs.size}
           onOpenCompare={() => setCompareOpen(true)}

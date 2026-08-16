@@ -12,7 +12,7 @@ const TYPES = {
 
 // Feature tag labels IT -> EN
 const FEATS = {
-  'Garage': 'Garage', 'Giardino': 'Garden', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
+  'Garage': 'Garage', 'Giardino': 'Garden', 'Spiaggia': 'Beachfront', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
   'Vista mare': 'Sea view', 'Fronte porto': 'Harbour front', 'Vicino spiaggia': 'Near beach',
   'Vicino golf': 'Near golf', 'Centro storico': 'Historic centre',
 }
@@ -24,7 +24,7 @@ const STR = {
     banner: '🌊 Annunci reali con foto da MyHome.ie e Rightmove — coste e laghi di Scozia + Donegal (Irlanda) · usa il filtro Zona · aggiornato {date}',
     all_zones: 'Tutte le zone', sale_rent: 'Vendita e affitto', for_sale: 'In vendita', for_rent: 'In affitto',
     all_types: 'Tutti i tipi', adv_filters: 'Filtri avanzati', favourites: 'Preferiti', sea_view: '🌊 Vista mare',
-    garden: '🌳 Giardino', seen_badge: 'Vista', new_badge: 'Nuovo',
+    garden: '🌳 Giardino', beach: '🏖 Spiaggia', seen_badge: 'Vista', new_badge: 'Nuovo',
     sold_chip: 'Vendute', sold_found: '{n} vendute o ritirate', st_sold: 'Venduta', st_sale_agreed: 'Offerta accettata', st_removed: 'Ritirata', sold_meta: 'rimossa il {d} · in vendita ≥{n} giorni',
     price_any: '💶 Prezzo', price_label: 'Prezzo', price_upto: 'Fino a {v}', price_over: 'Oltre {v}', price_clear: 'Azzera',
     fresh_all: '📅 Aggiunte: tutte', fresh_1: 'Aggiunte oggi', fresh_3: 'Aggiunte: ultimi 3 giorni', fresh_7: 'Aggiunte: ultima settimana', fresh_visit: 'Dalla mia ultima visita',
@@ -116,7 +116,7 @@ const STR = {
     banner: '🌊 Real listings with photos from MyHome.ie and Rightmove — Scotland coasts & lochs + Donegal (Ireland) · use the Zone filter · updated {date}',
     all_zones: 'All areas', sale_rent: 'Sale & rent', for_sale: 'For sale', for_rent: 'To rent',
     all_types: 'All types', adv_filters: 'Advanced filters', favourites: 'Favourites', sea_view: '🌊 Sea view',
-    garden: '🌳 Garden', seen_badge: 'Seen', new_badge: 'New',
+    garden: '🌳 Garden', beach: '🏖 Beachfront', seen_badge: 'Seen', new_badge: 'New',
     sold_chip: 'Sold', sold_found: '{n} sold or withdrawn', st_sold: 'Sold', st_sale_agreed: 'Sale agreed', st_removed: 'Withdrawn', sold_meta: 'removed {d} · listed ≥{n} days',
     price_any: '💶 Price', price_label: 'Price', price_upto: 'Up to {v}', price_over: 'Over {v}', price_clear: 'Clear',
     fresh_all: '📅 Added: all', fresh_1: 'Added today', fresh_3: 'Added: last 3 days', fresh_7: 'Added: last week', fresh_visit: 'Since my last visit',

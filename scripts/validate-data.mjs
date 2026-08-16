@@ -52,6 +52,7 @@ for (const l of db.listings || []) {
   if (!Array.isArray(l.imgs)) err(`imgs mancante: ${tag}`)
   else for (const im of l.imgs) if (!IMGHOSTS.test(im)) err(`foto da host sconosciuto: ${tag} → ${im.slice(0, 60)}`)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(l.date || '')) err(`date non valida: ${tag}`)
+  if (l.rooms != null && (l.rooms < 1 || l.rooms > 12)) warn.push(`camere implausibili (${l.rooms}): ${tag}`)
   if (l.date > db.updated) err(`date nel futuro rispetto a updated: ${tag}`)
   const key = `${String(l.addr).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)}|${l.price}`
   if (addrPrice.has(key)) warn.push(`possibile doppione indirizzo+prezzo: ${tag}`)

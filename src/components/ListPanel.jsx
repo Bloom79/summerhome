@@ -4,8 +4,8 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
-  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
+  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
@@ -26,6 +26,8 @@ export default function ListPanel({
         onToggleSea={onToggleSea}
         gardenOnly={gardenOnly}
         onToggleGarden={onToggleGarden}
+        beachOnly={beachOnly}
+        onToggleBeach={onToggleBeach}
         reducedOnly={reducedOnly}
         onToggleReduced={onToggleReduced}
         bothOnly={bothOnly}
