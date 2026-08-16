@@ -28,6 +28,40 @@ const hav = (a, b, c, d) => {
 const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
 
 
+// Block-level pass: <details> sections become native collapsibles and
+// fenced code becomes a <pre>, so the report reads summary-first with the
+// long sections folded away. Plain runs fall through to mdLite.
+function mdBlocks(text) {
+  const out = []
+  const rows = text.split('\n')
+  let buf = [], i = 0, k = 0
+  const flush = () => { if (buf.length) { out.push(<div key={'t' + k++}>{mdLite(buf.join('\n'))}</div>); buf = [] } }
+  while (i < rows.length) {
+    const dm = /^<details><summary>(.*?)<\/summary>$/.exec(rows[i])
+    if (dm) {
+      flush()
+      const inner = []
+      let depth = 1
+      i++
+      while (i < rows.length && depth > 0) {
+        if (/^<details/.test(rows[i])) depth++
+        else if (rows[i] === '</details>') { depth--; if (!depth) break }
+        inner.push(rows[i]); i++
+      }
+      out.push(<details className="lrdet" key={'d' + k++}><summary>{dm[1]}</summary><div>{mdBlocks(inner.join('\n'))}</div></details>)
+    } else if (rows[i].startsWith('```')) {
+      flush()
+      const code = []
+      i++
+      while (i < rows.length && !rows[i].startsWith('```')) { code.push(rows[i]); i++ }
+      out.push(<pre className="lrpre" key={'c' + k++}>{code.join('\n')}</pre>)
+    } else buf.push(rows[i])
+    i++
+  }
+  flush()
+  return out
+}
+
 // Minimal renderer for the agent's markdown report (bold, headings,
 // bullets, links) — no markdown library needed.
 function mdLite(text) {
@@ -128,7 +162,7 @@ function LiveAnalysis({ l, toast }) {
     </div>
   )
   if (st === 'err') return <div className="liverun">⚠️ {t('live_err')} <button className="livebtn" onClick={start}>↻ {t('live_retry')}</button></div>
-  return <div className="lreport">{mdLite(st.report)}</div>
+  return <div className="lreport">{mdBlocks(st.report)}</div>
 }
 
 export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {

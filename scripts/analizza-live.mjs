@@ -42,6 +42,10 @@ const sym = l.currency === 'EUR' ? '€' : '£'
 const fx = db.gbpEur || 1.15
 const eur = (x) => (x.currency === 'GBP' ? x.price * fx : x.price)
 const lines = [`## 🤖 Analisi live — ${l.addr}`, `_${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · prezzi live dalle fonti_`, '']
+// TL;DR block: when populated, it goes right under the header and the
+// full sections collapse into a <details> — summary first, details on tap.
+const sintesi = []
+let dossierLines = []
 
 // ---- 1. The source page, right now ----
 let page = ''
@@ -194,16 +198,17 @@ if (isAuction) {
       if (!verdict) console.log('OpenAI response:', resp.slice(0, 300))
     } catch (e) { console.log('OpenAI call failed:', e.message) }
   }
-  if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
+  sintesi.push(`**Base £${l.price.toLocaleString('en-GB')}**${stima ? ` · valore stimato **€${stima.toLocaleString('it-IT')}**` : ''}${offertaMax ? ` · 🎯 offerta max **£${offertaMax.toLocaleString('en-GB')}**` : ''} · rischio **${dossier.indicatori.rischio}**${l.auction ? ` · asta **${l.auction.slice(8, 10)}/${l.auction.slice(5, 7)}**` : ''}`, '')
+  if (verdict) { sintesi.push("### 🧠 In sintesi (agente)", verdict.trim(), '') }
   else {
     // No API key produced a verdict: hand over to the workflow, which can
     // run the official Copilot CLI (billed to the owner's subscription)
     // and replace this marker with the reasoned verdict — or with the
     // no-LLM note if that fails too.
-    lines.push('<!--VERDETTO_QUI-->', '')
+    sintesi.push('<!--VERDETTO_QUI-->', '')
     try { writeFileSync(ROOT + 'analisi-prompt.txt', SYS + '\n\nRispondi direttamente in markdown, senza usare strumenti e senza premesse.\n\nDOSSIER:\n' + JSON.stringify(dossier)) } catch { /* marker stays inert */ }
   }
-  lines.push('<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '')
+  dossierLines = ['<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '']
 }
 
 // ---- 3. Second opinion: live OnTheMarket search for the same town ----
@@ -249,5 +254,10 @@ if (l.currency === 'GBP') {
 }
 lines.push('', '_Analisi automatica su fonti live — non è una perizia né consulenza fiscale._')
 
-writeFileSync(ROOT + 'analisi-report.md', lines.join('\n') + '\n')
+// With a TL;DR, the header stays, the summary leads, and every detailed
+// section folds away — readable at a glance, complete on demand.
+const outLines = sintesi.length
+  ? [...lines.slice(0, 3), ...sintesi, '<details><summary>📋 Tutti i dettagli e gli indicatori</summary>', '', ...lines.slice(3), '</details>', '', ...dossierLines]
+  : [...lines, ...dossierLines]
+writeFileSync(ROOT + 'analisi-report.md', outLines.join('\n') + '\n')
 out('status', 'ok')
