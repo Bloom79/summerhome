@@ -944,6 +944,7 @@ export default function App({ initialDb }) {
           zones={db.zones}
           listings={LISTINGS}
           sold={SOLD}
+          gbpEur={db.gbpEur}
           onPickZone={(z) => setFilters((f) => ({ ...f, zone: z }))}
           onClose={() => setStatsOpen(false)}
         />

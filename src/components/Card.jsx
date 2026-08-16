@@ -1,4 +1,4 @@
-import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
+import { fmtP, imgUrl, handleImgError, hostOf, srcOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
@@ -47,6 +47,7 @@ export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, 
           {l.baths ? <span dangerouslySetInnerHTML={{ __html: t(l.baths === 1 ? 'bath_one' : 'bath_many', { n: `<b>${l.baths}</b>` }) }} /> : null}
           <span>{typeLabel(l.type)}</span>
           {l.date && <span className="cdate" title={t('added_title')}>📅 {l.date.slice(8, 10)}/{l.date.slice(5, 7)}</span>}
+          {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}
         </div>
         {d != null && <div className="cdist">📏 {t('dist_from_you', { d: fmtDist(d) })}</div>}
         {l.url && (

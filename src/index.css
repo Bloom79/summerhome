@@ -89,6 +89,9 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .cimg-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#9bb3b5}
 .csrc{display:inline-block;margin-top:9px;font-size:.82rem;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:6px 13px;text-decoration:none}
 .csrc:hover{filter:brightness(1.06)}
+.srcb{display:inline-flex;align-items:center;gap:5px;font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--muted);border:1px solid color-mix(in srgb,var(--muted) 30%,transparent);border-radius:5px;padding:1px 7px;white-space:nowrap}
+.srcb::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sc,#889)}
+.srcb-rightmove{--sc:#00b092}.srcb-otm{--sc:#e85c4f}.srcb-s1{--sc:#7c3aed}.srcb-tspc{--sc:#2563eb}.srcb-myhome{--sc:#f59e0b}
 #empty{padding:50px 24px;text-align:center;color:var(--muted)}
 #empty .big{font-size:2.4rem;margin-bottom:10px}
 

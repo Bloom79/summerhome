@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fmtP, priceSym, hostOf, imgUrl, handleImgError } from '../utils.js'
+import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
 // Airports relevant to the portal's coasts; the modal shows driving time
@@ -178,6 +178,7 @@ export default function DetailModal({ l, fav, similar = [], onOpenListing, gbpEu
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
           {l.url && (
             <div className="msource">
+              {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}
               🔗 {t('src_label')}:{' '}
               <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
             </div>

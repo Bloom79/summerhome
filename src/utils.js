@@ -77,3 +77,17 @@ export const zoomForType = (type) =>
   : ['city', 'town'].includes(type) ? 13
   : ['village', 'hamlet'].includes(type) ? 14
   : 11
+
+// ---- Sorgente dell'annuncio ----
+// Badge identity for each data source (key drives the badge colour).
+const SOURCES = [
+  [/rightmove/, 'rightmove', 'Rightmove'],
+  [/onthemarket/, 'otm', 'OnTheMarket'],
+  [/s1homes/, 's1', 's1homes'],
+  [/tspc/, 'tspc', 'TSPC'],
+  [/myhome/, 'myhome', 'MyHome'],
+]
+export const srcOf = (url) => {
+  for (const [re, key, label] of SOURCES) if (re.test(url || '')) return { key, label }
+  return null
+}
