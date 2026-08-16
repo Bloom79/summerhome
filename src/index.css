@@ -97,6 +97,7 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mbtn{background:#fff;border:0;border-radius:10px;box-shadow:var(--shadow);padding:9px 13px;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px}
 .mbtn:hover{background:var(--brand-light)}
 .mbtn.on{background:var(--brand);color:#fff}
+.cdate{color:var(--muted);white-space:nowrap}
 .mbtn.agent{background:var(--accent);color:#fff}
 .mbtn.agent:hover{filter:brightness(1.08)}
 #agentmodal{position:fixed;inset:0;background:rgba(12,30,32,.6);z-index:2500;display:flex;align-items:center;justify-content:center;padding:18px}

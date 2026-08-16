@@ -76,6 +76,7 @@ export default function DetailModal({ l, fav, onClose, onToggleFav, onShowOnMap,
           )}
 
           <div className="mstats">
+            {l.date ? <div className="stat"><b>{l.date.slice(8, 10)}/{l.date.slice(5, 7)}</b><span>{t('st_added')}</span></div> : null}
             {l.size ? <div className="stat"><b>{l.size} m²</b><span>{t('st_area')}</span></div> : null}
             {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>{t('st_rooms')}</span></div> : null}
             {l.baths ? <div className="stat"><b>{l.baths}</b><span>{t('st_baths')}</span></div> : null}

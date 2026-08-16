@@ -80,6 +80,13 @@ export default function Filters({ zones, features, filters, onImmediate, onApply
             </div>
           )}
         </div>
+        <select className={'chip' + (filters.freshness ? ' active' : '')} value={filters.freshness} onChange={(e) => onImmediate('freshness', e.target.value)}>
+          <option value="">{t('fresh_all')}</option>
+          <option value="1">{t('fresh_1')}</option>
+          <option value="3">{t('fresh_3')}</option>
+          <option value="7">{t('fresh_7')}</option>
+          <option value="visit">{t('fresh_visit')}</option>
+        </select>
         <select className="chip" value={filters.contract} onChange={(e) => onImmediate('contract', e.target.value)}>
           <option value="">{t('sale_rent')}</option>
           <option value="sale">{t('for_sale')}</option>

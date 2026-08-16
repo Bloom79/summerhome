@@ -31,6 +31,7 @@ export default function Card({ l, updated, fav, seen, highlighted, userPos, onOp
           {l.rooms ? <span dangerouslySetInnerHTML={{ __html: t(l.rooms === 1 ? 'bed_one' : 'bed_many', { n: `<b>${l.rooms}</b>` }) }} /> : null}
           {l.baths ? <span dangerouslySetInnerHTML={{ __html: t(l.baths === 1 ? 'bath_one' : 'bath_many', { n: `<b>${l.baths}</b>` }) }} /> : null}
           <span>{typeLabel(l.type)}</span>
+          {l.date && <span className="cdate" title={t('added_title')}>📅 {l.date.slice(8, 10)}/{l.date.slice(5, 7)}</span>}
         </div>
         {d != null && <div className="cdist">📏 {t('dist_from_you', { d: fmtDist(d) })}</div>}
         {l.url && (

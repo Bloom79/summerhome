@@ -11,8 +11,22 @@ import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
 const initialFilters = {
   zone: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
-  rooms: '', baths: '', feats: [],
+  rooms: '', baths: '', feats: [], freshness: '',
 }
+
+// Previous-visit date (YYYY-MM-DD) for the "since my last visit" filter.
+// Reloads within 6 hours count as the same visit, so the reference doesn't
+// collapse to "a minute ago" on every refresh.
+function trackVisit() {
+  const now = Date.now()
+  const rec = loadJSON('ct_visit', null)
+  if (!rec) { saveJSON('ct_visit', { last: now, prev: null }); return null }
+  if (now - rec.last > 6 * 3600e3) { saveJSON('ct_visit', { last: now, prev: rec.last }); return new Date(rec.last).toISOString().slice(0, 10) }
+  saveJSON('ct_visit', { ...rec, last: rec.last })
+  return rec.prev ? new Date(rec.prev).toISOString().slice(0, 10) : null
+}
+
+const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10)
 
 // A listing matches the price filter if no band is selected, or its price
 // falls inside any selected band (min inclusive, max exclusive).
@@ -64,6 +78,7 @@ export default function App({ initialDb }) {
   const { listings: LISTINGS, sold: SOLD, updated: LAST_UPDATED } = db
   // Filters and toggles survive a page refresh.
   const [ui] = useState(() => loadJSON('ct_ui', null))
+  const [lastVisit] = useState(() => trackVisit())
   const [filters, setFilters] = useState(() => (ui?.filters ? { ...initialFilters, ...ui.filters } : initialFilters))
   const [sort, setSort] = useState(ui?.sort || 'rel')
   const [favOnly, setFavOnly] = useState(!!ui?.favOnly)
@@ -158,6 +173,11 @@ export default function App({ initialDb }) {
     if (favOnly && !favs.has(l.id)) return false
     if (seaOnly && !l.seaView) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
+    if (filters.freshness) {
+      // 'visit' with no previous visit falls back to today's additions.
+      const cutoff = filters.freshness === 'visit' ? (lastVisit || LAST_UPDATED) : daysAgo(+filters.freshness)
+      if (!l.date || l.date < cutoff) return false
+    }
     if (filters.zone && l.zone !== filters.zone) return false
     if (filters.contract && l.contract !== filters.contract) return false
     if (filters.type && l.type !== filters.type) return false
@@ -168,7 +188,7 @@ export default function App({ initialDb }) {
     if (filters.baths && l.baths < +filters.baths) return false
     for (const f of filters.feats) if (!l.feats.includes(f)) return false
     return true
-  }), [LISTINGS, filters, favOnly, seaOnly, gardenOnly, favs])
+  }), [LISTINGS, LAST_UPDATED, lastVisit, filters, favOnly, seaOnly, gardenOnly, favs])
 
   // Sold/removed archive view: entries verified gone on the source portal.
   // Only the zone filter applies; each gets a stable pseudo-id for map keys.
