@@ -22,7 +22,8 @@ concurrency:
 
 jobs:
   handle:
-    if: startsWith(github.event.issue.title, 'Cerca qui:')
+    # Author gate: only the owner's issues trigger runs (see analizza.yml).
+    if: startsWith(github.event.issue.title, 'Cerca qui:') && github.event.issue.user.login == 'Bloom79'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:

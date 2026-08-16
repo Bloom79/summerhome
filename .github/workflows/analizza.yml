@@ -15,7 +15,10 @@ permissions:
 
 jobs:
   analizza:
-    if: startsWith(github.event.issue.title, 'Analizza:')
+    # Author gate: on a public repo ANYONE can open issues — only the
+    # owner's may trigger runs (the worker files them with the owner's PAT),
+    # or strangers could drain Actions minutes and the Copilot quota.
+    if: startsWith(github.event.issue.title, 'Analizza:') && github.event.issue.user.login == 'Bloom79'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
