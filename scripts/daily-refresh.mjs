@@ -486,7 +486,9 @@ const aucAll = []
   // Google Maps link, so no geocoding round-trip is needed.
   try {
     for (let off = 0; off < 1600; off += 39) {
-      const html = await get(`https://www.futurepropertyauctions.co.uk/catalogue_viewall.asp${off ? `?offset=${off}` : ''}`)
+      let html
+      // One flaky page must not abort the remaining ~17 catalogue pages.
+      try { html = await get(`https://www.futurepropertyauctions.co.uk/catalogue_viewall.asp${off ? `?offset=${off}` : ''}`) } catch { continue }
       const cards = html.split('class="listing-badges"').slice(1)
       if (!cards.length) break
       for (const c of cards) {
@@ -556,7 +558,9 @@ const aucAll = []
   } catch { /* auction source is best-effort */ }
   const byZone = {}
   for (const l of aucCands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
-  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 8); console.log(`aste → ${z}: ${arr.length} lotti`) }
+  // Auctions churn in weeks, not months: a low daily cap would drip-feed a
+  // catalogue that is already capped by the zone filter itself.
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 30); console.log(`aste → ${z}: ${arr.length} lotti`) }
   aucAll.push(...aucCands)
 }
 
