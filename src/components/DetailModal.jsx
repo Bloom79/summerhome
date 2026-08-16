@@ -35,7 +35,7 @@ function mdLite(text) {
     /^https?:\/\//.test(seg) ? <a key={k + '-' + i} href={seg} target="_blank" rel="noopener noreferrer">{new URL(seg).hostname.replace('www.', '')} ↗</a> : seg)
   const rich = (s, k) => s.split(/\*\*(.+?)\*\*/g).map((seg, i) => i % 2 ? <b key={k + 'b' + i}>{seg}</b> : linkify(seg, k + i))
   return text.split('\n').map((ln, i) => {
-    if (ln.startsWith('## ') || ln.startsWith('---')) return null
+    if (ln.startsWith('## ') || ln.startsWith('---') || ln.startsWith('<!--')) return null
     if (ln.startsWith('### ')) return <div className="lrh" key={i}>{rich(ln.slice(4), i)}</div>
     if (ln.startsWith('_')) return <div className="lrsm" key={i}>{ln.replace(/_/g, '')}</div>
     if (ln.startsWith('  - ')) return <div className="lrli sub" key={i}>{rich(ln.slice(4), i)}</div>

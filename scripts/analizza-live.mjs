@@ -195,7 +195,14 @@ if (isAuction) {
     } catch (e) { console.log('OpenAI call failed:', e.message) }
   }
   if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
-  else lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '')
+  else {
+    // No API key produced a verdict: hand over to the workflow, which can
+    // run the official Copilot CLI (billed to the owner's subscription)
+    // and replace this marker with the reasoned verdict — or with the
+    // no-LLM note if that fails too.
+    lines.push('<!--VERDETTO_QUI-->', '')
+    try { writeFileSync(ROOT + 'analisi-prompt.txt', SYS + '\n\nRispondi direttamente in markdown, senza usare strumenti e senza premesse.\n\nDOSSIER:\n' + JSON.stringify(dossier)) } catch { /* marker stays inert */ }
+  }
   lines.push('<details><summary>📊 Dossier dati (per trasparenza)</summary>', '', '```json', JSON.stringify(dossier, null, 1), '```', '</details>', '')
 }
 

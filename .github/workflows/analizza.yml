@@ -31,6 +31,29 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: node scripts/analizza-live.mjs
 
+      - name: Verdetto agente via Copilot CLI
+        if: ${{ hashFiles('analisi-prompt.txt') != '' }}
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.G_COPILOT }}
+        run: |
+          npm install -g @github/copilot >/dev/null 2>&1 || true
+          copilot -p "$(cat analisi-prompt.txt)" > verdetto-raw.txt 2>copilot-err.txt || true
+          sed -e 's/\x1b\[[0-9;]*[A-Za-z]//g' verdetto-raw.txt > verdetto.txt || true
+          echo "--- copilot stderr (primi 400 char):"; head -c 400 copilot-err.txt || true
+          node - <<'EOF'
+          const fs = require('fs')
+          let rep = fs.readFileSync('analisi-report.md', 'utf8')
+          let v = ''
+          try { v = fs.readFileSync('verdetto.txt', 'utf8').trim() } catch {}
+          const ok = v && v.length > 80 && !/not authorized|authentication|login|error/i.test(v.slice(0, 120))
+          rep = rep.replace('<!--VERDETTO_QUI-->', ok
+            ? "### 🧠 Valutazione ragionata dell'agente (Copilot)\n" + v
+            : '_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._')
+          fs.writeFileSync('analisi-report.md', rep)
+          console.log('verdetto Copilot:', ok ? 'inserito' : 'non disponibile')
+          EOF
+
       - name: Post report and close
         env:
           GH_TOKEN: ${{ github.token }}
