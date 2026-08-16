@@ -1,7 +1,7 @@
 import { fmtP, imgUrl, handleImgError, hostOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
+export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel } = useI18n()
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
@@ -25,6 +25,7 @@ export default function Card({ l, updated, gbpEur, hasNote, vote = {}, profile, 
         <div className="votebtns">
           <button className={'vbtn' + (vote[profile] === 1 ? ' yes' : '')} onClick={(e) => { e.stopPropagation(); onVote(l.url, 1) }}>👍</button>
           <button className={'vbtn' + (vote[profile] === -1 ? ' no' : '')} onClick={(e) => { e.stopPropagation(); onVote(l.url, -1) }}>👎</button>
+          <button className={'vbtn' + (seen ? ' seendone' : '')} title={t(seen ? 'seen_unmark' : 'seen_mark')} onClick={(e) => { e.stopPropagation(); onToggleSeen(l.id) }}>👁</button>
         </div>
         <span className="price" title={eur || undefined}>{fmtP(l)}</span>
         {hasImgs && <span className="nimg">📷 {l.imgs.length}</span>}

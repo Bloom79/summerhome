@@ -94,6 +94,10 @@ export default function App({ initialDb }) {
   const [gardenOnly, setGardenOnly] = useState(!!ui?.gardenOnly)
   const [reducedOnly, setReducedOnly] = useState(!!ui?.reducedOnly)
   const [bothOnly, setBothOnly] = useState(!!ui?.bothOnly)
+  // Triage: '' = all, 'unseen' = still to review, 'seen' = already reviewed.
+  const [seenFilter, setSeenFilter] = useState(ui?.seenFilter || '')
+  // Desktop layout: list-only / split / map-only.
+  const [deskView, setDeskView] = useState(ui?.deskView || 'split')
   // Notes per listing, per person: { url: { name: text } } (legacy: plain string).
   const [notes, setNotes] = useState(() => loadJSON('ct_notes', {}))
   // Couple mode: who is using this device, and everyone's 👍/👎 per listing.
@@ -133,8 +137,8 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly })
-  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly])
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, seenFilter, deskView })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly, reducedOnly, bothOnly, seenFilter, deskView])
 
   const saveNote = useCallback((url, text) => {
     setNotes((prev) => {
@@ -273,12 +277,28 @@ export default function App({ initialDb }) {
 
   useEffect(() => { criteriaRef.current = soldView ? soldItems : criteriaItems }, [criteriaItems, soldItems, soldView])
 
-  const items = useMemo(() => {
+  // Criteria + viewport, before the seen-triage split. With the map hidden
+  // (desktop list-only view) the viewport filter is meaningless — and the
+  // 0-size map reports degenerate bounds — so it is skipped there.
+  const viewItems = useMemo(() => {
     let out = criteriaItems
-    if (areaSync && bounds && mapZoom > 6) {
+    if (deskView !== 'list' && areaSync && bounds && mapZoom > 6) {
       out = out.filter((l) => bounds.contains([l.lat, l.lng]))
     }
+    return out
+  }, [criteriaItems, areaSync, bounds, mapZoom, deskView])
 
+  // How many of the current results are still to review vs already seen.
+  const seenCounts = useMemo(() => {
+    let u = 0
+    for (const l of viewItems) if (!seen.has(l.id)) u++
+    return { all: viewItems.length, unseen: u, seen: viewItems.length - u }
+  }, [viewItems, seen])
+
+  const items = useMemo(() => {
+    let out = viewItems
+    if (seenFilter === 'unseen') out = out.filter((l) => !seen.has(l.id))
+    else if (seenFilter === 'seen') out = out.filter((l) => seen.has(l.id))
     const arr = [...out]
     if (sort === 'pasc') arr.sort((a, b) => a.price - b.price)
     else if (sort === 'pdesc') arr.sort((a, b) => b.price - a.price)
@@ -288,7 +308,29 @@ export default function App({ initialDb }) {
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
     return arr
-  }, [criteriaItems, areaSync, bounds, mapZoom, sort, userPos])
+  }, [viewItems, seenFilter, seen, sort, userPos])
+
+  // Manual seen toggling + bulk triage of the current results.
+  const toggleSeen = useCallback((id) => {
+    setSeen((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      try { localStorage.setItem('ct_seen', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
+  const markAllSeen = () => {
+    if (!items.length) return
+    const n = items.length
+    setSeen((prev) => {
+      const next = new Set(prev)
+      items.forEach((l) => next.add(l.id))
+      try { localStorage.setItem('ct_seen', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
+    toast(t('t_marked_seen', { n }))
+  }
 
   // Fit the map to the current filter-matching houses. Only counts as done
   // when the container has a real size; otherwise it is deferred (needsFit)
@@ -658,12 +700,13 @@ export default function App({ initialDb }) {
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
   if (reducedOnly) af(t('reduced'), () => setReducedOnly(false))
   if (bothOnly) af(t('both_chip'), () => setBothOnly(false))
+  if (seenFilter) af(t(seenFilter === 'unseen' ? 'seen_unseen' : 'seen_seen'), () => setSeenFilter(''))
   if (favOnly) af(t('favourites'), () => setFavOnly(false))
   const advCount = (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) + (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
   if (advCount) af(`${t('adv_filters')} (${advCount})`, () => setFilters((f) => ({ ...f, smin: null, smax: null, rooms: '', baths: '', feats: [] })))
   const clearAllFilters = () => {
     setFilters(initialFilters)
-    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false); setBothOnly(false)
+    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false); setBothOnly(false); setSeenFilter('')
   }
 
   // Device sync via the worker. With the same code saved on both devices it
@@ -775,7 +818,7 @@ export default function App({ initialDb }) {
   const displayItems = soldView ? soldItems : items
 
   return (
-    <div className={'app' + (mobileView === 'map' ? ' mapview' : '')}>
+    <div className={'app' + (mobileView === 'map' ? ' mapview' : '') + ' desk-' + deskView}>
       <Header
         listings={LISTINGS}
         onOpenListing={openDetail}
@@ -783,6 +826,8 @@ export default function App({ initialDb }) {
         onNearMe={onNearMe}
         onOpenStats={() => setStatsOpen(true)}
         onOpenSync={() => setSyncOpen(true)}
+        deskView={deskView}
+        onDeskView={setDeskView}
         toast={toast}
       />
 
@@ -825,6 +870,11 @@ export default function App({ initialDb }) {
           onToggleSold={() => setSoldView((v) => !v)}
           favCount={favs.size}
           onOpenCompare={() => setCompareOpen(true)}
+          seenFilter={seenFilter}
+          seenCounts={seenCounts}
+          onSeenFilter={setSeenFilter}
+          onMarkAllSeen={markAllSeen}
+          onToggleSeen={toggleSeen}
           onOpenAlerts={() => setAlertsOpen(true)}
           alertsUnseen={news.filter((n) => !n.seen).length}
           hasAlerts={alerts.length > 0}

@@ -105,7 +105,7 @@ export default function Filters({ zones, zoneCounts, features, filters, onImmedi
         <button className={'chip' + (gardenOnly ? ' active' : '')} onClick={onToggleGarden}>{t('garden')}</button>
         <button className={'chip' + (reducedOnly ? ' active' : '')} onClick={onToggleReduced}>{t('reduced')}</button>
         <button className={'chip' + (bothOnly ? ' active' : '')} onClick={onToggleBoth}>{t('both_chip')}</button>
-        <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}</button>
+        <button className={'chip' + (favOnly ? ' active' : '')} onClick={onToggleFavOnly}>❤️ {t('favourites')}{favCount > 0 ? ` (${favCount})` : ''}</button>
         {favCount >= 2 && (
           <button className="chip" onClick={onOpenCompare}>⚖️ {t('cmp_chip')} ({favCount})</button>
         )}

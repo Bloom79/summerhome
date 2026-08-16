@@ -7,6 +7,7 @@ export default function ListPanel({
   items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
+  seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -38,6 +39,23 @@ export default function ListPanel({
         alertsUnseen={alertsUnseen}
         hasAlerts={hasAlerts}
       />
+
+      {!soldView && (
+        <div id="seentabs">
+          <button className={seenFilter === '' ? 'on' : ''} onClick={() => onSeenFilter('')}>
+            {t('seen_all')} <b>{seenCounts.all}</b>
+          </button>
+          <button className={seenFilter === 'unseen' ? 'on' : ''} onClick={() => onSeenFilter('unseen')}>
+            👁 {t('seen_unseen')} <b>{seenCounts.unseen}</b>
+          </button>
+          <button className={seenFilter === 'seen' ? 'on' : ''} onClick={() => onSeenFilter('seen')}>
+            ✓ {t('seen_seen')} <b>{seenCounts.seen}</b>
+          </button>
+          {seenFilter === 'unseen' && seenCounts.unseen > 0 && (
+            <button className="markall" onClick={onMarkAllSeen}>{t('mark_all_seen')}</button>
+          )}
+        </div>
+      )}
 
       <div id="resmeta">
         <div id="count" dangerouslySetInnerHTML={{
@@ -79,6 +97,7 @@ export default function ListPanel({
                 vote={(votes && votes[l.url]) || {}}
                 profile={profile}
                 onVote={onVote}
+                onToggleSeen={onToggleSeen}
                 fav={favs.has(l.id)}
                 seen={seen.has(l.id)}
                 highlighted={highlightId === l.id}

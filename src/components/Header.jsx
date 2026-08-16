@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenSync, toast }) {
+export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenSync, deskView, onDeskView, toast }) {
   const { t, lang, setLang } = useI18n()
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -108,6 +108,11 @@ export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onO
       <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
       <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
       <button className="hbtn" onClick={onOpenSync} title={t('sync_title')}>🔄</button>
+      <div className="deskview">
+        <button className={deskView === 'list' ? 'on' : ''} title={t('view_list')} onClick={() => onDeskView('list')}>☰</button>
+        <button className={deskView === 'split' ? 'on' : ''} title={t('view_split')} onClick={() => onDeskView('split')}>◧</button>
+        <button className={deskView === 'map' ? 'on' : ''} title={t('view_map')} onClick={() => onDeskView('map')}>🗺</button>
+      </div>
       <div className="langtog">
         <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
         <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>

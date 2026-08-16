@@ -136,6 +136,24 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .vsel.yes{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .vsel.no{background:#c0392b;color:#fff;border-color:#c0392b}
 .partnernote{margin-top:8px;background:#f6f9f9;border-radius:9px;padding:8px 11px;font-size:.83rem;color:var(--ink)}
+#seentabs{display:flex;align-items:center;gap:6px;padding:9px 16px 0;flex-wrap:wrap}
+#seentabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:.8rem;font-weight:600;color:var(--ink);cursor:pointer}
+#seentabs button b{font-weight:800}
+#seentabs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+#seentabs .markall{border-color:var(--accent);color:var(--accent);font-weight:700}
+#seentabs .markall:hover{background:var(--accent);color:#fff}
+.card:not(.seen){border-left:4px solid var(--accent)}
+.vbtn.seendone{background:#546e7a}
+.deskview{display:flex;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
+.deskview button{border:0;background:transparent;color:#dfe9ea;padding:8px 12px;font-size:.9rem;cursor:pointer}
+.deskview button.on{background:var(--accent);color:#fff}
+@media (min-width:841px){
+  .app.desk-list #mapwrap{display:none}
+  .app.desk-list #panel{width:100%;max-width:100%;border-right:0}
+  .app.desk-list #list{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;align-content:start}
+  .app.desk-map #panel{display:none}
+}
+@media (max-width:840px){.deskview{display:none}}
 .synccode{font-size:1.6rem;font-weight:800;letter-spacing:.35em;text-align:center;background:var(--brand-light);border-radius:10px;padding:10px;color:var(--brand-dark)}
 .syncrow{display:flex;gap:8px}
 .syncrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:1rem;letter-spacing:.25em;text-transform:uppercase;font-weight:700}
