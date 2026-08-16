@@ -6,10 +6,10 @@
 const median = (a) => (a.length ? [...a].sort((p, q) => p - q)[Math.floor(a.length / 2)] : null)
 
 export function analyzeListing(l, listings, gbpEur, pages = {}, updated = '') {
-  if (!l || l.contract === 'rent' || !l.price) return null
+  if (!l || l.contract === 'rent' || !l.price || l.feats.includes('Asta')) return null
   const fx = gbpEur || 1.15
   const eur = (x) => (x.currency === 'GBP' ? x.price * fx : x.price)
-  const sale = listings.filter((x) => x.contract !== 'rent')
+  const sale = listings.filter((x) => x.contract !== 'rent' && !x.feats.includes('Asta'))
   const checks = []
 
   // A. €/m² vs zone median (max 32)

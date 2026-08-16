@@ -91,7 +91,7 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .csrc:hover{filter:brightness(1.06)}
 .srcb{display:inline-flex;align-items:center;gap:5px;font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--muted);border:1px solid color-mix(in srgb,var(--muted) 30%,transparent);border-radius:5px;padding:1px 7px;white-space:nowrap}
 .srcb::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sc,#889)}
-.srcb-rightmove{--sc:#00b092}.srcb-otm{--sc:#e85c4f}.srcb-s1{--sc:#7c3aed}.srcb-tspc{--sc:#2563eb}.srcb-myhome{--sc:#f59e0b}
+.srcb-rightmove{--sc:#00b092}.srcb-otm{--sc:#e85c4f}.srcb-s1{--sc:#7c3aed}.srcb-tspc{--sc:#2563eb}.srcb-myhome{--sc:#f59e0b}.srcb-auction{--sc:#b45309}
 #empty{padding:50px 24px;text-align:center;color:var(--muted)}
 #empty .big{font-size:2.4rem;margin-bottom:10px}
 
@@ -421,6 +421,10 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .livebtn{margin-top:8px;border:1.5px solid #7c3aed;background:#fff;color:#7c3aed;border-radius:10px;padding:8px 14px;font-size:.84rem;font-weight:700;cursor:pointer}
 .livebtn:hover{background:#f5f0ff}
 .liverun{margin-top:8px;font-size:.84rem;color:var(--muted)}
+.liveprog{height:5px;border-radius:3px;background:#ece6f8;overflow:hidden;margin-bottom:6px}
+.liveprog i{display:block;height:100%;width:38%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a78bfa);animation:liveslide 1.1s ease-in-out infinite alternate}
+@keyframes liveslide{from{margin-left:0}to{margin-left:62%}}
+.livesec{color:#7c3aed;font-variant-numeric:tabular-nums}
 .lreport{margin-top:10px;border-top:1px dashed #cbb8ef;padding-top:8px;font-size:.84rem;line-height:1.45}
 .lreport .lrh{font-weight:800;margin:9px 0 3px}
 .lreport .lrli{padding-left:14px;position:relative}
@@ -429,3 +433,4 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .lreport .lrli.sub::before{left:14px;content:'\2013'}
 .lreport .lrsm{font-size:.74rem;color:var(--muted);margin-bottom:4px}
 .lreport a{color:var(--brand);font-weight:700}
+.newb.aucb{background:#b45309}

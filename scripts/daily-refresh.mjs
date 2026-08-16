@@ -441,6 +441,93 @@ const tspcEnrich = async (l) => {
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`tspc → ${z}: ${arr.length} candidati`) }
 }
 
+
+// ---- Case all'asta (Scozia): Future Property Auctions + Auction House.
+// Guide/opening bids are teaser prices, not market prices: auction lots
+// carry the 'Asta' feat and an `auction` date, are EXCLUDED from zone
+// medians and the deals analysis, and archive themselves once the auction
+// date has passed. Coordinates come from the postcode (postcodes.io).
+const MONTHS = { january: '01', february: '02', march: '03', april: '04', may: '05', june: '06', july: '07', august: '08', september: '09', october: '10', november: '11', december: '12' }
+const isoDate = (txt) => {
+  const m = /(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]+)\s+(20\d\d)/.exec(txt || '')
+  if (!m || !MONTHS[m[2].toLowerCase()]) return null
+  return `${m[3]}-${MONTHS[m[2].toLowerCase()]}-${String(+m[1]).padStart(2, '0')}`
+}
+const pcGeo = async (pc) => {
+  try {
+    const j = JSON.parse(await get(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`))
+    return j.result && validCoords(j.result.latitude, j.result.longitude) ? [j.result.latitude, j.result.longitude] : null
+  } catch { return null }
+}
+const POUND = '(?:£|�|&pound;)'
+const typeOfTitle = (t) => /bungalow/i.test(t) ? 'Bungalow' : /flat|apartment|maisonette/i.test(t) ? 'Appartamento' : /cottage/i.test(t) ? 'Cottage' : 'Casa indipendente'
+{
+  const aucCands = []
+  // Future Property Auctions — one server-rendered catalogue page.
+  try {
+    const html = await get('https://www.futurepropertyauctions.co.uk/catalogue_viewall.asp')
+    for (const c of html.split('class="listing-badges"').slice(1)) {
+      const chunk = c.slice(0, 3500)
+      const title = (/<h4><a[^>]*>([^<]+)/.exec(chunk) || [])[1]
+      if (!title || /land|site|garage|plot|commercial|shop|office/i.test(title)) continue
+      const zt = zoneOf(title)
+      if (!zt) continue
+      const bid = +((new RegExp(POUND + '\\s?([\\d,]+)').exec(chunk) || [])[1] || '').replace(/,/g, '')
+      const did = (/property_details\.asp\?id=(\d+)/.exec(chunk) || [])[1]
+      if (!bid || bid < 10000 || !did) continue
+      let page = ''
+      try { page = await get(`https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`) } catch { continue }
+      const pc = (/[A-Z]{1,2}\d{1,2}[A-Z]? \d[A-Z]{2}/.exec(page) || [])[0]
+      const geo = pc ? await pcGeo(pc) : null
+      if (!geo) continue
+      const beds = +((/(\d+)\s*Bed/i.exec(page) || [])[1] || 0) || null
+      const auction = isoDate(page)
+      const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 15)
+      aucCands.push({
+        id: 0, title: title.trim(), contract: 'sale', type: typeOfTitle(title),
+        price: bid, currency: 'GBP', size: null, rooms: beds, baths: null, floor: null, year: null, energy: null,
+        zone: zt.zone, town: zt.town, addr: title.trim(), lat: geo[0], lng: geo[1], imgs,
+        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
+        url: `https://www.futurepropertyauctions.co.uk/property_details.asp?id=${did}`,
+      })
+    }
+  } catch { /* auction source is best-effort */ }
+  // Auction House Scotland — network listing page.
+  try {
+    const html = await get('https://www.auctionhouse.co.uk/scotland')
+    const rx = /href="(\/scotland\/auction\/lot\/\d+)"[\s\S]{0,3500}?image-sticker[^>]*>\s*Lot\s*\d+[\s\S]{0,800}?Guide \| (?:£|�|&pound;)([\d,]+)[\s\S]{0,500}?blue-text">([^<]+)<\/p>\s*<p[^>]*grid-address">([^<]+)</g
+    for (const m of html.matchAll(rx)) {
+      const [, path, guide, bedsType, addr] = m
+      if (/land|site|garage|plot|commercial/i.test(bedsType + addr)) continue
+      const zt = zoneOf(addr)
+      if (!zt) continue
+      const bid = +guide.replace(/,/g, '')
+      if (!bid || bid < 10000) continue
+      const pc = (/[A-Z]{1,2}\d{1,2}[A-Z]? \d[A-Z]{2}/.exec(addr) || [])[0]
+      const geo = pc ? await pcGeo(pc) : null
+      if (!geo) continue
+      const url2 = `https://www.auctionhouse.co.uk${path}`
+      let auction = null, imgs = []
+      try {
+        const det = await get(url2)
+        auction = isoDate(det)
+        imgs = [...new Set([...det.matchAll(/\/lot-image\/\d+/g)].map((x) => 'https://www.auctionhouse.co.uk' + x[0]))].slice(0, 15)
+      } catch { /* keep card data */ }
+      aucCands.push({
+        id: 0, title: addr.trim(), contract: 'sale', type: typeOfTitle(bedsType),
+        price: bid, currency: 'GBP', size: null, rooms: +((/(\d+)\s*Bed/i.exec(bedsType) || [])[1] || 0) || null,
+        baths: null, floor: null, year: null, energy: null,
+        zone: zt.zone, town: zt.town, addr: addr.trim(), lat: geo[0], lng: geo[1], imgs,
+        feats: ['Asta'], seaView: false, desc: '', date: TODAY, auction,
+        url: url2,
+      })
+    }
+  } catch { /* auction source is best-effort */ }
+  const byZone = {}
+  for (const l of aucCands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 8); console.log(`aste → ${z}: ${arr.length} lotti`) }
+}
+
 // Extra zones (user-requested)
 for (const z of extra) {
   const pad = { latPad: (z.bounds.north - z.bounds.south) * 0.3, lngPad: (z.bounds.east - z.bounds.west) * 0.3 }
@@ -536,6 +623,11 @@ await pmap(missing, async (l) => {
     try { page = await get(l.url) } catch { nextListings.push(l); return }
     if (/<title>\s*Property Unavailable/i.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
+  } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk/.test(l.url)) {
+    // Auction lots: gone from the catalogue means sold or withdrawn; a
+    // passed auction date means the auction happened either way.
+    if (l.auction && l.auction < TODAY) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
   } else if (/onthemarket\.com/.test(l.url)) {
     // OnTheMarket hard-404s dead listings; live pages carry priceRaw in
     // their __NEXT_DATA__ blob.
@@ -587,6 +679,7 @@ let maxId = Math.max(0, ...db.listings.map((l) => l.id))
 for (const l of nextListings) if (!l.id) l.id = ++maxId
 const zoneSet = new Set([...db.zones])
 for (const l of nextListings) if (!zoneSet.has(l.zone)) { db.zones.push(l.zone); zoneSet.add(l.zone) }
+if (!db.features.includes('Asta')) db.features.push('Asta')
 // Indicative GBP→EUR rate for the price display (ECB via frankfurter.app).
 try {
   const fx = JSON.parse(await get('https://api.frankfurter.dev/v1/latest?base=GBP&symbols=EUR'))

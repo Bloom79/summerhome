@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
@@ -48,30 +48,85 @@ function mdLite(text) {
 // On-demand live analysis: files an "Analizza:" request through the worker,
 // a GitHub workflow runs scripts/analizza-live.mjs against the LIVE sources
 // (~1 minute) and the report lands back here.
-function LiveAnalysis({ l }) {
+// Per-listing analysis state that OUTLIVES the component: closing the sheet
+// mid-analysis must not lose the run, and a finished report must reappear
+// instantly on reopen (id → {t0, report?, error?}).
+const liveCache = new Map()
+
+// The whole request+poll runs detached from React: it only writes liveCache
+// and fires the completion notice, so unmounts can't kill it. A single
+// failed poll (phone backgrounded, network blip) is retried, not fatal.
+async function liveRun(l, doneMsg) {
+  const entry = { t0: Date.now() }
+  liveCache.set(l.id, entry)
+  try {
+    const r = await fetch(`${CERCA_QUI_ENDPOINT}/analizza`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: l.url, id: l.id, addr: l.addr }),
+    })
+    const j = await r.json()
+    if (!j.issue) throw new Error(j.error || 'no issue')
+    for (let i = 0; i < 60; i++) {
+      await new Promise((res) => setTimeout(res, 5000))
+      try {
+        const s = await (await fetch(`${CERCA_QUI_ENDPOINT}/analisi?issue=${j.issue}`)).json()
+        if (s.report) {
+          entry.report = s.report
+          if (document.visibilityState !== 'visible' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            const reg = await navigator.serviceWorker?.getRegistration()
+            if (reg) reg.showNotification('CasaTrova', { body: `${doneMsg} — ${l.addr}`, tag: 'analisi', icon: 'icon-192.png' })
+          }
+          return
+        }
+      } catch { /* transient — keep polling */ }
+    }
+    throw new Error('timeout')
+  } catch { entry.error = true }
+}
+
+function LiveAnalysis({ l, toast }) {
   const { t } = useI18n()
   const [st, setSt] = useState(null)
-  useEffect(() => { setSt(null) }, [l.id])
-  const start = async (e) => {
+  const [sec, setSec] = useState(0)
+  const notified = useRef(false)
+
+  // Rehydrate from the cache on every listing change (or reopen).
+  useEffect(() => {
+    const c = liveCache.get(l.id)
+    notified.current = !!c?.report
+    setSt(c?.report ? { report: c.report } : c?.error ? 'err' : c ? 'run' : null)
+    setSec(c && !c.report ? Math.round((Date.now() - c.t0) / 1000) : 0)
+  }, [l.id])
+
+  // While running: tick the elapsed counter and watch the cache for the
+  // result — the fetch loop itself never touches component state.
+  useEffect(() => {
+    if (st !== 'run') return undefined
+    const iv = setInterval(() => {
+      const c = liveCache.get(l.id)
+      if (c?.report) {
+        setSt({ report: c.report })
+        if (!notified.current) { notified.current = true; if (toast) toast(t('live_done')) }
+      } else if (c?.error) setSt('err')
+      else setSec((s) => s + 1)
+    }, 1000)
+    return () => clearInterval(iv)
+  }, [st, l.id])
+
+  const start = (e) => {
     e.stopPropagation()
+    notified.current = false
+    setSec(0)
     setSt('run')
-    try {
-      const r = await fetch(`${CERCA_QUI_ENDPOINT}/analizza`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: l.url, id: l.id, addr: l.addr }),
-      })
-      const j = await r.json()
-      if (!j.issue) throw new Error(j.error || 'no issue')
-      for (let i = 0; i < 30; i++) {
-        await new Promise((res) => setTimeout(res, 6000))
-        const s = await (await fetch(`${CERCA_QUI_ENDPOINT}/analisi?issue=${j.issue}`)).json()
-        if (s.report) { setSt({ report: s.report }); return }
-      }
-      throw new Error('timeout')
-    } catch { setSt('err') }
+    liveRun(l, t('live_done'))
   }
   if (st === null) return <button className="livebtn" onClick={start}>🤖 {t('live_btn')}</button>
-  if (st === 'run') return <div className="liverun">⏳ {t('live_running')}</div>
+  if (st === 'run') return (
+    <div className="liverun">
+      <div className="liveprog"><i /></div>
+      <span>🤖 {t('live_running')} <b className="livesec">{sec}s</b></span>
+    </div>
+  )
   if (st === 'err') return <div className="liverun">⚠️ {t('live_err')} <button className="livebtn" onClick={start}>↻ {t('live_retry')}</button></div>
   return <div className="lreport">{mdLite(st.report)}</div>
 }
@@ -231,6 +286,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
 
           <div className="mstats">
             {l.date ? <div className="stat"><b>{l.date.slice(8, 10)}/{l.date.slice(5, 7)}</b><span>{t('st_added')}</span></div> : null}
+            {l.auction ? <div className="stat"><b>🔨 {l.auction.slice(8, 10)}/{l.auction.slice(5, 7)}</b><span>{t('st_auction')}</span></div> : null}
             {l.size ? <div className="stat"><b>{l.size} m²</b><span>{t('st_area')}</span></div> : null}
             {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>{t('st_rooms')}</span></div> : null}
             {l.baths ? <div className="stat"><b>{l.baths}</b><span>{t('st_baths')}</span></div> : null}
@@ -254,7 +310,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
                 </div>
                 <div className="dbar"><i style={{ width: Math.max(an.score, 2) + '%' }} /></div>
                 <DealChecks deal={an} />
-                <LiveAnalysis l={l} />
+                <LiveAnalysis l={l} toast={toast} />
               </div>
             )
           })()}

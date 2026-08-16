@@ -34,6 +34,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         <div className="ctitle">
           {isNew && <span className="newb">✨ {t('new_badge')}</span>}
           {reduced && <span className="newb redb">📉 {t('reduced_badge')}</span>}
+          {l.auction && <span className="newb aucb">🔨 {t('auction_badge')} {l.auction.slice(8, 10)}/{l.auction.slice(5, 7)}</span>}
           {deal && <span className={'newb dealb' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {t('deal_badge')} {deal.score}</span>}
           {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}
           {Object.entries(vote).filter(([n]) => n !== profile).map(([n, v]) => (

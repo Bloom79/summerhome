@@ -86,6 +86,8 @@ const SOURCES = [
   [/s1homes/, 's1', 's1homes'],
   [/tspc/, 'tspc', 'TSPC'],
   [/myhome/, 'myhome', 'MyHome'],
+  [/futurepropertyauctions/, 'auction', 'Future PA'],
+  [/auctionhouse/, 'auction', 'Auction House'],
 ]
 export const srcOf = (url) => {
   for (const [re, key, label] of SOURCES) if (re.test(url || '')) return { key, label }

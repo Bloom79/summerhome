@@ -30,8 +30,8 @@ if (!Array.isArray(db.listings) || db.listings.length < 50)
 
 // ---- Per-listing invariants ----
 const ids = new Set(), urls = new Set(), addrPrice = new Set()
-const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/|https:\/\/www\.s1homes\.com\/|https:\/\/www\.onthemarket\.com\/|https:\/\/tspc\.co\.uk\/)/
-const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/|https:\/\/cdn\.s1homes\.com\/|https:\/\/media\.onthemarket\.com\/|https:\/\/docs\.tspc\.co\.uk\/)/
+const HOSTS = /^(https:\/\/www\.rightmove\.co\.uk\/|https:\/\/www\.myhome\.ie\/|https:\/\/www\.s1homes\.com\/|https:\/\/www\.onthemarket\.com\/|https:\/\/tspc\.co\.uk\/|https:\/\/www\.futurepropertyauctions\.co\.uk\/|https:\/\/www\.auctionhouse\.co\.uk\/)/
+const IMGHOSTS = /^(https:\/\/media\.rightmove\.co\.uk\/|https:\/\/photos-[a-z]\.propertyimages\.ie\/|https:\/\/cdn\.s1homes\.com\/|https:\/\/media\.onthemarket\.com\/|https:\/\/docs\.tspc\.co\.uk\/|https:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/|https:\/\/www\.auctionhouse\.co\.uk\/lot-image\/)/
 const TYPES = new Set(['Casa indipendente', 'Cottage', 'Villa', 'Appartamento', 'Bungalow'])
 const zoneCounts = {}
 for (const l of db.listings || []) {

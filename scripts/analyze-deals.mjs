@@ -44,7 +44,8 @@ const prev = existsSync(dealsPath) ? JSON.parse(readFileSync(dealsPath, 'utf8'))
 const pageCache = prev.pages || {}
 const fx = db.gbpEur || 1.15
 const eur = (l) => l.currency === 'GBP' ? l.price * fx : l.price
-const sale = db.listings.filter((l) => l.contract !== 'rent')
+// Auction guide prices are teasers: lots are neither deals nor comps.
+const sale = db.listings.filter((l) => l.contract !== 'rent' && !l.feats.includes('Asta'))
 
 // ---- Zone statistics (the listing itself is excluded from its own comps) ----
 const zoneUnit = {}   // zone -> [{url, unit}]

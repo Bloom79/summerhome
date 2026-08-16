@@ -12,7 +12,7 @@ const TYPES = {
 
 // Feature tag labels IT -> EN
 const FEATS = {
-  'Garage': 'Garage', 'Giardino': 'Garden', 'Spiaggia': 'Beachfront', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
+  'Garage': 'Garage', 'Giardino': 'Garden', 'Spiaggia': 'Beachfront', 'Asta': 'Auction', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
   'Vista mare': 'Sea view', 'Fronte porto': 'Harbour front', 'Vicino spiaggia': 'Near beach',
   'Vicino golf': 'Near golf', 'Centro storico': 'Historic centre',
 }
@@ -69,6 +69,8 @@ const STR = {
     dc_m_quick: 'Venditore motivato / vendita rapida',
     dc_upside: 'Da ammodernare: potenziale di rivalutazione', dc_upside_land: ' \u00b7 con terreno',
     dc_premium: 'Vista mare sotto la mediana di zona', dc_premium_beach: ' \u00b7 fronte spiaggia',
+    auction_badge: 'Asta', st_auction: "All'asta il",
+    live_done: 'Analisi live pronta ✓', auction_chip: 'Aste',
     live_btn: "Analisi live dell'agente (~1 min)", live_running: "L'agente sta interrogando le fonti dal vivo\u2026 pronto in circa un minuto.", live_err: 'Analisi non riuscita.', live_retry: 'Riprova',
     sheet_area_note: 'La lista segue la mappa: {n} case nell\'area inquadrata, {tot} in tutto il portale coi filtri attuali.',
     deals_stats: '{n} occasioni · {top} 🔥 · {fresh} nuove oggi', deal_days: 'da {d} gg', deal_saving: '{v} sotto la mediana',
@@ -188,6 +190,8 @@ const STR = {
     dc_m_quick: 'Motivated seller / quick sale',
     dc_upside: 'Needs modernisation: value-add potential', dc_upside_land: ' \u00b7 with land',
     dc_premium: 'Sea view below the zone median', dc_premium_beach: ' \u00b7 beachfront',
+    auction_badge: 'Auction', st_auction: 'Auction on',
+    live_done: 'Live analysis ready ✓', auction_chip: 'Auctions',
     live_btn: 'Live agent analysis (~1 min)', live_running: 'The agent is checking the live sources\u2026 ready in about a minute.', live_err: 'Analysis failed.', live_retry: 'Retry',
     sheet_area_note: 'List follows the map: {n} homes in the framed area, {tot} portal-wide with these filters.',
     deals_stats: '{n} deals · {top} 🔥 · {fresh} new today', deal_days: '{d}d listed', deal_saving: '{v} below median',

@@ -8,7 +8,8 @@ const fmtK = (n, sym) => sym + (n >= 1000000 ? +(n / 1000000).toFixed(2) + 'M' :
 export default function StatsModal({ zones, listings, sold, gbpEur, onPickZone, onClose }) {
   const { t } = useI18n()
   const rows = zones.map((z) => {
-    const ls = listings.filter((l) => l.zone === z)
+    // Auction teaser prices would poison the medians.
+    const ls = listings.filter((l) => l.zone === z && !l.feats.includes('Asta'))
     if (!ls.length) return null
     const prices = ls.map((l) => l.price).sort((a, b) => a - b)
     const sym = ls[0].currency === 'EUR' ? '€' : '£'
