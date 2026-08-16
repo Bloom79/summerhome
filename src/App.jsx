@@ -266,7 +266,9 @@ export default function App({ initialDb }) {
   // the auto-fit (that would loop). `items` then also applies the viewport.
   const criteriaItems = useMemo(() => LISTINGS.filter((l) => {
     if (favOnly && !favs.has(l.id)) return false
-    if (seaOnly && !l.seaView) return false
+    // "Vista mare" = the ad claims a view OR the home is geo-verified on the
+    // waterfront (Spiaggia): harbour-front ads often never say "sea view".
+    if (seaOnly && !l.seaView && !l.feats.includes('Spiaggia')) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
     if (beachOnly && !l.feats.includes('Spiaggia')) return false
     if (auctionOnly && !l.feats.includes('Asta')) return false
