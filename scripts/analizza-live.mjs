@@ -185,14 +185,14 @@ if (isAuction) {
       if (!verdict) console.log('Anthropic response:', resp.slice(0, 300))
     } catch (e) { console.log('Anthropic call failed:', e.message) }
   }
-  if (!verdict) {
+  if (!verdict && process.env.OPENAI_API_KEY) {
     try {
-      const resp = await post('https://models.github.ai/inference/chat/completions',
-        [`Authorization: Bearer ${process.env.GITHUB_TOKEN || ''}`],
-        JSON.stringify({ model: 'openai/gpt-4o-mini', max_tokens: 400, messages: [{ role: 'system', content: SYS }, { role: 'user', content: JSON.stringify(dossier) }] }))
+      const resp = await post('https://api.openai.com/v1/chat/completions',
+        [`Authorization: Bearer ${process.env.OPENAI_API_KEY}`],
+        JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 400, messages: [{ role: 'system', content: SYS }, { role: 'user', content: JSON.stringify(dossier) }] }))
       verdict = JSON.parse(resp)?.choices?.[0]?.message?.content || null
-      if (!verdict) console.log('LLM response:', resp.slice(0, 300))
-    } catch (e) { console.log('LLM call failed:', e.message) }
+      if (!verdict) console.log('OpenAI response:', resp.slice(0, 300))
+    } catch (e) { console.log('OpenAI call failed:', e.message) }
   }
   if (verdict) { lines.push("### 🧠 Valutazione ragionata dell'agente"); lines.push(verdict.trim()); lines.push('') }
   else lines.push('_Valutazione LLM non disponibile in questo run — sopra trovi comunque tutti gli indicatori calcolati._', '')
