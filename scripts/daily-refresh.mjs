@@ -146,7 +146,10 @@ const rmCandidate = (p, zone, town) => {
     size: null, rooms: p.bedrooms ?? null, baths: p.bathrooms || null, floor: null, year: null, energy: null,
     zone, town, addr: p.displayAddress, lat: p.location.latitude, lng: p.location.longitude,
     imgs: (p.propertyImages?.images || []).slice(0, 6).map((im) => (im.srcUrl || '').replace('media.rightmove.co.uk:443', 'media.rightmove.co.uk')).filter(Boolean),
-    feats: [], seaView: false, desc: '', date: TODAY,
+    // The ad's REAL publication date (search results expose it): a listing
+    // recovered weeks late must not show up as "added today".
+    feats: [], seaView: false, desc: '',
+    date: ((d) => (/^20\d{2}-\d{2}-\d{2}/.test(d) && d.slice(0, 10) < TODAY ? d.slice(0, 10) : TODAY))(p.firstVisibleDate || ''),
     url: `https://www.rightmove.co.uk/properties/${p.id}`,
   }
 }
@@ -314,7 +317,9 @@ const s1Candidate = (o, ztOverride) => {
     floor: null, year: null, energy: null,
     zone: zt.zone, town: zt.town, addr, lat: la, lng: ln,
     imgs: (o.media || []).slice(0, 6).map((m) => m.metadata?.src?.url).filter((u) => u && u.startsWith('https://cdn.s1homes.com/')),
-    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY,
+    // s1homes property ids start with the listing datetime (YYYYMMDD…).
+    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '',
+    date: ((m) => (m && `${m[1]}-${m[2]}-${m[3]}` < TODAY && +m[2] <= 12 && +m[3] <= 31 ? `${m[1]}-${m[2]}-${m[3]}` : TODAY))(/^(20\d{2})(\d{2})(\d{2})/.exec(String(o.propertyId || ''))),
     url: `https://www.s1homes.com/property/${o.propertyId}`,
   }
 }
@@ -375,6 +380,12 @@ const otmEnrich = async (l) => {
     if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
     const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 24).map((im) => im.largeUrl)
     if (big.length) l.imgs = big
+    // OTM only reveals coarse age buckets — better an estimated backdate
+    // than an old ad masquerading as "added today".
+    const ds = String(p.daysSinceAddedReduced || '')
+    const back = (n) => new Date(new Date(TODAY) - n * 864e5).toISOString().slice(0, 10)
+    if (/>\s*14/.test(ds)) l.date = back(15)
+    else if (/<\s*14/.test(ds)) l.date = back(8)
   } catch { /* enrich is best-effort */ }
   return l
 }
