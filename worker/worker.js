@@ -112,7 +112,9 @@ async function runCheck(env) {
       else if (res.status < 300) sent++
     } catch { /* transient push failure: keep the subscription */ }
   }
-  return { events: events.length, sent }
+  // subs in the response: a healthy run with 0 recipients is a signal the
+  // device needs to re-register (open the app), not a quiet success.
+  return { events: events.length, sent, subs: subs.keys.length }
 }
 
 export default {
