@@ -239,15 +239,20 @@ if (cc === 'ie') {
   listings.push(...parsed.filter(Boolean).slice(0, CAP))
 } else {
   // ---- Rightmove ----
-  let loc
-  try {
-    const ta = JSON.parse(await get(`https://los.rightmove.co.uk/typeahead?query=${encodeURIComponent(town)}&limit=10`))
-    loc = (ta.matches || []).find((x) => x.type === 'REGION')
-  } catch { /* handled below */ }
-  if (!loc) finish('error', `località Rightmove non trovata per ${town}`)
-  loc = `REGION^${loc.id}`
-  searchKeys = [loc.replace('REGION^', '')]
-  const pages = await pmap([0, 24], async (index) => {
+  // The request label may be a county ("Perth e Kinross"): try the Italian
+  // "e"→"and" fix and the towns actually inside the drawn area before
+  // giving up — and even then, keep going with the other portals instead
+  // of failing the whole request.
+  let loc = null
+  for (const cand of [...new Set([town, town.replace(/\s+e\s+/gi, ' and '), geoTown, nearestTown, ...nearTowns].filter(Boolean))]) {
+    try {
+      const ta = JSON.parse(await get(`https://los.rightmove.co.uk/typeahead?query=${encodeURIComponent(cand)}&limit=10`))
+      const hit = (ta.matches || []).find((x) => x.type === 'REGION')
+      if (hit) { loc = `REGION^${hit.id}`; break }
+    } catch { /* try the next candidate */ }
+  }
+  if (loc) searchKeys = [loc.replace('REGION^', '')]
+  const pages = !loc ? [] : await pmap([0, 24], async (index) => {
     try {
       return await get(`https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=${encodeURIComponent(loc)}&searchType=SALE&numberOfPropertiesPerPage=24&index=${index}&sortType=6`)
     } catch { return '' }
