@@ -80,5 +80,37 @@
       "Arisaig",
       "Tobermory"
     ]
+  },
+  {
+    "zone": "Argyll e Bute (Scozia)",
+    "country": "UK",
+    "portal": "rightmove",
+    "searchKeys": [
+      "95769"
+    ],
+    "filter": "Argyll e Bute",
+    "cap": 20,
+    "bounds": {
+      "north": 57.00834,
+      "south": 56.00811,
+      "east": -5.39941,
+      "west": -6.52826
+    },
+    "otmSlugs": [
+      "mallaig",
+      "glencoe",
+      "fort-william",
+      "oban",
+      "inveraray"
+    ],
+    "s1Towns": [
+      "Fort-William",
+      "Glencoe",
+      "Argyll-E-Bute",
+      "Mallaig",
+      "Lagnakeil",
+      "Oban",
+      "Inveraray"
+    ]
   }
 ]
