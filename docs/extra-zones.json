@@ -46,5 +46,39 @@
       "east": -8.36071,
       "west": -8.4898
     }
+  },
+  {
+    "zone": "Highland (Scozia)",
+    "country": "UK",
+    "portal": "rightmove",
+    "searchKeys": [
+      "61261"
+    ],
+    "filter": "Highland",
+    "cap": 20,
+    "bounds": {
+      "north": 57.2033,
+      "south": 56.70908,
+      "east": -5.45607,
+      "west": -6.0205
+    },
+    "otmSlugs": [
+      "highland",
+      "mallaig",
+      "lochailort",
+      "kyle-of-lochalsh",
+      "plockton",
+      "arisaig",
+      "tobermory"
+    ],
+    "s1Towns": [
+      "Mallaig",
+      "Plockton",
+      "Lochailort",
+      "Highland",
+      "Kyle-Of-Lochalsh",
+      "Arisaig",
+      "Tobermory"
+    ]
   }
 ]
