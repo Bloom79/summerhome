@@ -112,5 +112,38 @@
       "Oban",
       "Inveraray"
     ]
+  },
+  {
+    "zone": "Dunkeld (Scozia)",
+    "country": "UK",
+    "portal": "rightmove",
+    "searchKeys": [
+      "455"
+    ],
+    "filter": "Dunkeld",
+    "cap": 20,
+    "bounds": {
+      "north": 56.69206,
+      "south": 56.44655,
+      "east": -3.46275,
+      "west": -3.72093
+    },
+    "otmSlugs": [
+      "perth",
+      "dunkeld",
+      "birnam",
+      "killiecrankie",
+      "tibbermore",
+      "almondbank"
+    ],
+    "s1Towns": [
+      "Dunkeld",
+      "Birnam",
+      "Killiecrankie",
+      "Perth",
+      "West-Huntingtower",
+      "Tibbermore",
+      "Almondbank"
+    ]
   }
 ]
