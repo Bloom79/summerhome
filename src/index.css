@@ -234,6 +234,8 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .pricepin.gem:not(.hl){background:linear-gradient(135deg,#7c3aed,#c026d3);border-color:#7c3aed;color:#fff;animation:gempulse 1.8s ease-in-out infinite}
 .pricepin.gem:not(.hl):after{border-top-color:#a21caf}
 @keyframes gempulse{0%,100%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 0 rgba(192,38,211,.45)}50%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 8px rgba(192,38,211,0)}}
+.hbtn.hbon{background:#7c3aed;border-color:#7c3aed;color:#fff}
+#dealsummarybar{display:block;width:calc(100% - 20px);margin:8px 10px 0;padding:9px 12px;border:1.5px solid #7c3aed;background:#f5f0ff;color:#5b21b6;border-radius:10px;font-size:.84rem;font-weight:700;cursor:pointer;text-align:left}
 .maplegend{position:absolute;left:10px;bottom:26px;z-index:800;background:rgba(255,255,255,.92);border-radius:9px;padding:4px 10px;font-size:.68rem;font-weight:600;color:#334;box-shadow:0 1px 5px rgba(0,0,0,.2);pointer-events:none;max-width:70%}
 @media (max-width:840px){.maplegend{bottom:92px}}
 .leaflet-popup-content-wrapper{border-radius:12px;overflow:hidden;padding:0}

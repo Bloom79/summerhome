@@ -7,7 +7,7 @@ export default function ListPanel({
   items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleDeals, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
-  seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen,
+  seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen, onOpenDealsSummary,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
@@ -77,6 +77,12 @@ export default function ListPanel({
           <option value="dist">{t('sort_dist')}</option>
         </select>}
       </div>
+
+      {!soldView && dealsOnly && (
+        <button id="dealsummarybar" onClick={onOpenDealsSummary}>
+          📋 {t('deals_summary_btn')} →
+        </button>
+      )}
 
       {!soldView && activeFilters && activeFilters.length > 0 && (
         <div id="afbar">

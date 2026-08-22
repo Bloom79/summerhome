@@ -898,7 +898,8 @@ export default function App({ initialDb }) {
         onFlyTo={flyTo}
         onNearMe={onNearMe}
         onOpenStats={() => setStatsOpen(true)}
-        onOpenDeals={() => setDealsOpen(true)}
+        onToggleDeals={() => setDealsOnly((v) => !v)}
+        dealsActive={dealsOnly}
         dealsCount={deals.length}
         onOpenSync={() => setSyncOpen(true)}
         deskView={deskView}
@@ -958,6 +959,7 @@ export default function App({ initialDb }) {
           seenCounts={seenCounts}
           onSeenFilter={setSeenFilter}
           onMarkAllSeen={markAllSeen}
+          onOpenDealsSummary={() => setDealsOpen(true)}
           onToggleSeen={toggleSeen}
           onOpenAlerts={() => setAlertsOpen(true)}
           alertsUnseen={news.filter((n) => !n.seen).length}

@@ -161,7 +161,7 @@ const rmEnrich = async (l) => {
     l.seaView = SEA.some((r) => r.test(text))
     l.feats = featsOf(text)
     // The search JSON stops at 6 photos; the detail page carries them all.
-    const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 24)
+    const gal = [...new Set([...page.matchAll(/https:\/\/media\.rightmove\.co\.uk\/property-photo\/[\w/]+\.jpe?g/g)].map((x) => x[0]))].slice(0, 40)
     if (gal.length >= l.imgs.length) l.imgs = gal
     const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
     if (sqm > 15 && sqm < 2000) l.size = sqm
@@ -197,7 +197,7 @@ const mhParse = async (u, zone, town) => {
   const beds = bedsRaw >= 1 && bedsRaw <= 12 ? bedsRaw : null
   const bathsRaw = +(/"NumberOfBathrooms":(\d+)/.exec(page)?.[1] || /\b(\d{1,2})\s*baths?\b/i.exec(text)?.[1] || 0)
   const baths = bathsRaw >= 1 && bathsRaw <= 10 ? bathsRaw : null
-  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 24)
+  const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 40)
   const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
   const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
   return {
@@ -378,7 +378,7 @@ const otmEnrich = async (l) => {
     const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
     if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
     if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
-    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 24).map((im) => im.largeUrl)
+    const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 40).map((im) => im.largeUrl)
     if (big.length) l.imgs = big
     // OTM only reveals coarse age buckets — better an estimated backdate
     // than an old ad masquerading as "added today".
@@ -441,7 +441,7 @@ const tspcCandidate = (o) => {
 const tspcEnrich = async (l) => {
   try {
     const page = await get(l.url)
-    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 24)
+    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 40)
     if (gal.length) l.imgs = gal
     const desc = (/property="og:description" content="([\s\S]*?)"/.exec(page)?.[1] || '') + ' ' + l.title
     if (desc.trim()) { l.seaView = SEA.some((r) => r.test(desc)); l.feats = featsOf(desc) }
@@ -529,7 +529,7 @@ const aucAll = []
         if (!geo) continue
         const beds = +((/(\d+)\s*Bed/i.exec(title + ' ' + page) || [])[1] || 0) || null
         const auction = isoDate(chunk.replace(/&nbsp;/g, ' ')) || isoDate(page)
-        const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 15)
+        const imgs = [...new Set([...page.matchAll(/https?:\/\/www\.futurepropertyauctions\.co\.uk\/upload\/[\w]+\.jpg/gi)].map((x) => x[0].replace('http://', 'https://')))].slice(0, 30)
         // The lot description carries the same garden/sea-view/renovation
         // signals as any portal listing — feed it through the same rules.
         const dtxt = (page.split('property-description')[1] || '')
@@ -571,7 +571,7 @@ const aucAll = []
       try {
         const det = await get(url2)
         auction = isoDate(det)
-        imgs = [...new Set([...det.matchAll(/\/lot-image\/\d+/g)].map((x) => 'https://www.auctionhouse.co.uk' + x[0]))].slice(0, 15)
+        imgs = [...new Set([...det.matchAll(/\/lot-image\/\d+/g)].map((x) => 'https://www.auctionhouse.co.uk' + x[0]))].slice(0, 30)
         dtxt = det.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
       } catch { /* keep card data */ }
       aucCands.push({
@@ -608,7 +608,7 @@ const aucAll = []
       const rawImgs = [...new Set([...page.matchAll(/https:\/\/primepropertyauctions\.flywheelsites\.com\/wp-content\/uploads\/[^"',\s\\]+\.(?:jpe?g|png|webp)/gi)].map((x) => x[0]))]
         .filter((u) => !/logo|floorplan|scaled|Report/i.test(u))
       const hd = rawImgs.filter((u) => /-1024x/.test(u))
-      const imgs = (hd.length ? hd : rawImgs).slice(0, 15)
+      const imgs = (hd.length ? hd : rawImgs).slice(0, 30)
       const dtxt = page.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
       aucCands.push({
         id: 0, title: addr, contract: 'sale',
