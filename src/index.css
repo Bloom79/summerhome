@@ -229,6 +229,13 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .pricepin:after{content:'';position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--brand)}
 .pricepin.hl{background:var(--accent);border-color:var(--accent);color:#fff}
 .pricepin.hl:after{border-top-color:var(--accent)}
+.pricepin.fresh:not(.hl):not(.seen){background:#fff7ed;border-color:#d97706;color:#9a3412}
+.pricepin.fresh:not(.hl):not(.seen):after{border-top-color:#d97706}
+.pricepin.gem:not(.hl){background:linear-gradient(135deg,#7c3aed,#c026d3);border-color:#7c3aed;color:#fff;animation:gempulse 1.8s ease-in-out infinite}
+.pricepin.gem:not(.hl):after{border-top-color:#a21caf}
+@keyframes gempulse{0%,100%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 0 rgba(192,38,211,.45)}50%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 8px rgba(192,38,211,0)}}
+.maplegend{position:absolute;left:10px;bottom:26px;z-index:800;background:rgba(255,255,255,.92);border-radius:9px;padding:4px 10px;font-size:.68rem;font-weight:600;color:#334;box-shadow:0 1px 5px rgba(0,0,0,.2);pointer-events:none;max-width:70%}
+@media (max-width:840px){.maplegend{bottom:92px}}
 .leaflet-popup-content-wrapper{border-radius:12px;overflow:hidden;padding:0}
 .leaflet-popup-content{margin:0;width:230px!important}
 .pop img{width:100%;height:120px;object-fit:cover;display:block}

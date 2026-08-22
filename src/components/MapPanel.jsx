@@ -6,10 +6,12 @@ import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
-const pinIcon = (l, hl, seen, sold) =>
+// `pc` marks the special pins: 'fresh' = added in the last 3 days,
+// 'gem' = curated deal with sea view/garden priced below the zone median.
+const pinIcon = (l, hl, seen, sold, pc) =>
   L.divIcon({
     className: '',
-    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}${sold ? ' sold' : ''}">${shortP(l)}</div>`,
+    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}${sold ? ' sold' : ''}${pc && !sold ? ' ' + pc : ''}">${pc === 'gem' && !sold ? '💎 ' : pc === 'fresh' && !sold ? '✨ ' : ''}${shortP(l)}</div>`,
     iconSize: [0, 0],
   })
 
@@ -30,7 +32,7 @@ const clusterIcon = (n) =>
   L.divIcon({ className: '', html: `<div class="clusterpin">${n}</div>`, iconSize: [0, 0] })
 
 export default function MapPanel({
-  items, zoom, highlightId, userPos, areaSync, seen, soldView,
+  items, zoom, highlightId, userPos, areaSync, seen, soldView, pinClassOf,
   onToggleAreaSync, onFitAll, onAgentSearchHere, onMarkerClick, onClusterClick, onOpen, onSeen, onMapReady, onBoundsChange,
 }) {
   const { t } = useI18n()
@@ -88,7 +90,7 @@ export default function MapPanel({
             <Marker
               key={l.id}
               position={[l.lat, l.lng]}
-              icon={pinIcon(l, l.id === highlightId, seen && seen.has(l.id), soldView)}
+              icon={pinIcon(l, l.id === highlightId, seen && seen.has(l.id), soldView, pinClassOf ? pinClassOf(l) : '')}
               eventHandlers={{ click: () => onMarkerClick(l.id) }}
             >
               <Popup>
@@ -119,6 +121,8 @@ export default function MapPanel({
           )}
         </MapContainer>
       </div>
+
+      {!soldView && <div className="maplegend">{t('map_legend')}</div>}
 
       <div className="mapbtns">
         <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>

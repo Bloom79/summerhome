@@ -105,7 +105,12 @@ await pmap(db.listings, async (l) => {
   bySrc[src] = bySrc[src] || { total: 0, bad: 0, gone: 0, unreachable: 0 }
   bySrc[src].total++
   let probs
-  try { probs = await checks[src](l) } catch { bySrc[src].unreachable++; unreachable.push(l); return }
+  try { probs = await checks[src](l) } catch {
+    // One retry after a pause: slow portals (TSPC ~3.5s/page) throttle
+    // bursts, and a transient timeout must not read as a broken adapter.
+    await new Promise((r) => setTimeout(r, 4000))
+    try { probs = await checks[src](l) } catch { bySrc[src].unreachable++; unreachable.push(l); return }
+  }
   if (!probs.length) return
   if (probs[0] === 'gone') { bySrc[src].gone++; findings.push({ l, probs: ['non più sul portale (il prossimo refresh la archivierà)'] }) }
   else { bySrc[src].bad++; findings.push({ l, probs }) }

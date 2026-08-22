@@ -150,6 +150,35 @@ export default function App({ initialDb }) {
       .catch(() => { /* deals are optional */ })
   }, [db.updated])
   const dealById = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals])
+  // Special map pins: 'fresh' = added in the last 3 days; 'gem' = a curated
+  // deal WITH sea view or garden priced below the zone median for the same
+  // bedroom count (min 4 comparables; auction guide prices excluded).
+  const pinClassOf = useMemo(() => {
+    const fx = db.gbpEur || 1.15
+    const eurOf = (l) => (l.currency === 'GBP' ? l.price * fx : l.price)
+    const groups = new Map()
+    for (const l of LISTINGS) {
+      if (l.contract === 'rent' || l.feats.includes('Asta') || !l.rooms) continue
+      const k = l.zone + '|' + l.rooms
+      if (!groups.has(k)) groups.set(k, [])
+      groups.get(k).push(eurOf(l))
+    }
+    const med = new Map()
+    for (const [k, arr] of groups) {
+      if (arr.length < 4) continue
+      arr.sort((a, b) => a - b)
+      med.set(k, arr[Math.floor(arr.length / 2)])
+    }
+    const cutoff = (() => { const d = new Date(LAST_UPDATED || Date.now()); d.setDate(d.getDate() - 3); return d.toISOString().slice(0, 10) })()
+    return (l) => {
+      const m = med.get(l.zone + '|' + l.rooms)
+      if (dealById.has(l.id) && (l.seaView || l.feats.includes('Giardino')) && m && eurOf(l) < m) return 'gem'
+      // Auction lots carry ingestion dates (and their own 🔨 badge): the
+      // fresh pin is for genuinely new market listings.
+      if (l.date && l.date >= cutoff && !l.feats.includes('Asta')) return 'fresh'
+      return ''
+    }
+  }, [LISTINGS, dealById, LAST_UPDATED, db.gbpEur])
   const [syncOpen, setSyncOpen] = useState(false)
   const [pushState, setPushState] = useState('off')
   const [pushErr, setPushErr] = useState('')
@@ -949,6 +978,7 @@ export default function App({ initialDb }) {
           areaSync={areaSync}
           seen={seen}
           soldView={soldView}
+          pinClassOf={pinClassOf}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
           onAgentSearchHere={onAgentSearchHere}
