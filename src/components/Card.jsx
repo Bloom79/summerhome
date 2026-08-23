@@ -20,6 +20,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         {hasImgs
           ? <Gallery imgs={l.imgs} />
           : <div className="cimg-ph">📷</div>}
+        {l.imgs && l.imgs.length > 1 && <span className="photob">📷 {l.imgs.length}</span>}
         <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
         {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>

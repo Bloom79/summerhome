@@ -680,7 +680,12 @@ const enrichQueue = []
 for (const [url, cand] of scraped) {
   const old = prevByUrl.get(url)
   if (!old) { enrichQueue.push(cand); nextListings.push(cand); events.nuove.push(cand); continue }
-  const merged = { ...old, price: cand.price, imgs: cand.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths }
+  // Keep the RICHER gallery: the search-result candidate only ever carries
+  // ~6 photos, while a previously-enriched listing has up to 40 from its
+  // detail page. Without the size comparison every refresh downgraded old
+  // listings back to 6 photos (enrichment runs on NEW urls only) — the root
+  // cause of the recurring "too few images" complaint.
+  const merged = { ...old, price: cand.price, imgs: cand.imgs.length > old.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths }
   if (cand.price !== old.price)
     merged.hist = [...(old.hist || [{ d: old.date, p: old.price }]), { d: TODAY, p: cand.price }].slice(-10)
   if (cand.price < old.price) events.ribassi.push({ ...merged, oldPrice: old.price })
