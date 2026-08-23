@@ -5,6 +5,7 @@ import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
 import Filters from './components/Filters.jsx'
 import MapPanel from './components/MapPanel.jsx'
+import HomePanel from './components/HomePanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
@@ -139,6 +140,9 @@ export default function App({ initialDb }) {
   const [compareOpen, setCompareOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [dealsOpen, setDealsOpen] = useState(false)
+  // Landing "Novità" panel: shown once per app open (unless the user has no
+  // saved visit yet AND no data — then it still greets with today's homes).
+  const [homeOpen, setHomeOpen] = useState(() => { try { return sessionStorage.getItem('ct_home_seen') !== '1' } catch { return true } })
   // Daily bargain analysis (scripts/analyze-deals.mjs -> public/deals.json).
   const [deals, setDeals] = useState([])
   const [dealPages, setDealPages] = useState({})
@@ -305,8 +309,8 @@ export default function App({ initialDb }) {
     if (reducedOnly && !isReduced(l)) return false
     if (bothOnly && !bothLike(l)) return false
     if (filters.freshness) {
-      // 'visit' with no previous visit falls back to today's additions.
-      const cutoff = filters.freshness === 'visit' ? (lastVisit || LAST_UPDATED) : daysAgo(+filters.freshness)
+      // 'visit' with no previous visit falls back to the last week.
+      const cutoff = filters.freshness === 'visit' ? (lastVisit || daysAgo(7)) : daysAgo(+filters.freshness)
       if (!l.date || l.date < cutoff) return false
     }
     if (filters.zone && l.zone !== filters.zone) return false
@@ -890,6 +894,33 @@ export default function App({ initialDb }) {
   }, [selected, LISTINGS])
   const displayItems = soldView ? soldItems : items
 
+  // Home panel. The freshness dropdown drives the global filters.freshness,
+  // so the panel and the portal stay in lockstep. `homeNewAll` is the count
+  // of new houses under just freshness+zone (the "N nuove" headline), while
+  // `homeItems` is the fully-filtered set (adds the sea/garden/deals toggles)
+  // with sea-view and garden surfaced first.
+  // No saved visit yet → greet with the last week's homes, not just today's.
+  const homeCutoff = lastVisit || daysAgo(7)
+  const freshCutoff = filters.freshness === 'visit' ? homeCutoff
+    : filters.freshness ? daysAgo(+filters.freshness) : '0000-00-00'
+  const homeNewAll = useMemo(
+    () => LISTINGS.filter((l) => l.contract !== 'rent' && (!filters.zone || l.zone === filters.zone) && l.date && l.date >= freshCutoff),
+    [LISTINGS, filters.zone, freshCutoff])
+  const homeItems = useMemo(() => {
+    const rank = (l) => (l.seaView ? 2 : 0) + (l.feats.includes('Giardino') ? 1 : 0)
+    return [...criteriaItems].sort((a, b) => rank(b) - rank(a) || (b.date || '').localeCompare(a.date || ''))
+  }, [criteriaItems])
+  const closeHome = useCallback(() => {
+    setHomeOpen(false)
+    try { sessionStorage.setItem('ct_home_seen', '1') } catch { /* private mode */ }
+  }, [])
+  // On first open default the freshness macro to "since last visit" so the
+  // panel greets with genuinely new houses (without clobbering a saved one).
+  useEffect(() => {
+    if (homeOpen && !filters.freshness) setFilters((f) => ({ ...f, freshness: 'visit' }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '') + ' desk-' + deskView}>
       <Header
@@ -898,6 +929,8 @@ export default function App({ initialDb }) {
         onFlyTo={flyTo}
         onNearMe={onNearMe}
         onOpenStats={() => setStatsOpen(true)}
+        onOpenHome={() => setHomeOpen(true)}
+        newCount={homeNewAll.length}
         onToggleDeals={() => setDealsOnly((v) => !v)}
         dealsActive={dealsOnly}
         dealsCount={deals.length}
@@ -1086,6 +1119,32 @@ export default function App({ initialDb }) {
           onClose={() => setStatsOpen(false)}
         />
       )}
+
+      <HomePanel
+        open={homeOpen}
+        firstVisit={!lastVisit}
+        newCount={homeNewAll.length}
+        items={homeItems}
+        previewCount={homeItems.length}
+        zones={db.zones}
+        zoneVal={filters.zone}
+        onZone={(z) => setFilters((f) => ({ ...f, zone: z }))}
+        freshVal={filters.freshness}
+        onFresh={(v) => setFilters((f) => ({ ...f, freshness: v }))}
+        seaOnly={seaOnly} onSea={() => setSeaOnly((v) => !v)}
+        gardenOnly={gardenOnly} onGarden={() => setGardenOnly((v) => !v)}
+        dealsOnly={dealsOnly} onDeals={() => setDealsOnly((v) => !v)} dealsCount={deals.length}
+        gbpEur={db.gbpEur}
+        updated={LAST_UPDATED}
+        onOpenListing={(id) => { closeHome(); openDetail(id) }}
+        pushState={pushState}
+        onCreateAlert={() => {
+          saveAlert({ zone: filters.zone, priceMax: '', rooms: '', seaView: true, garden: true, ev: { nuove: true, ribassi: false, vendute: false, occasioni: true } })
+          closeHome()
+        }}
+        onEnter={() => { closeHome(); setView('list') }}
+        onClose={closeHome}
+      />
 
       {dealsOpen && (
         <DealsModal deals={deals} listings={LISTINGS} gbpEur={db.gbpEur} updated={LAST_UPDATED} favs={favs} onToggleFav={toggleFav} onOpen={openDetail} onClose={() => setDealsOpen(false)} />

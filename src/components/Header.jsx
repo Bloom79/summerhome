@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, onToggleDeals, dealsActive, dealsCount, onOpenSync, deskView, onDeskView, toast }) {
+export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, onOpenSync, deskView, onDeskView, toast }) {
   const { t, lang, setLang } = useI18n()
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -105,6 +105,7 @@ export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onO
           </div>
         )}
       </div>
+      <button className="hbtn hbnew" onClick={onOpenHome} title={t('home_title')}>✨{newCount > 0 && <span className="badge">{newCount}</span>}</button>
       <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
       <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
       {dealsCount > 0 && <button className={'hbtn' + (dealsActive ? ' hbon' : '')} onClick={onToggleDeals} title={t('deals_title')}>💎</button>}

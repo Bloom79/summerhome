@@ -447,3 +447,36 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .lreport .lrsm{font-size:.74rem;color:var(--muted);margin-bottom:4px}
 .lreport a{color:var(--brand);font-weight:700}
 .newb.aucb{background:#b45309}
+
+/* ---- Home / Novità landing panel ---- */
+#homewrap{position:fixed;inset:0;z-index:1400;background:rgba(15,40,45,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+#homepanel{background:var(--card);border-radius:18px;width:100%;max-width:560px;box-shadow:0 18px 50px rgba(0,0,0,.3);overflow:hidden;margin:auto}
+.homehead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 18px 8px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:#fff}
+.homehead h2{margin:0;font-size:1.35rem}
+.homesub{margin:4px 0 0;font-size:.84rem;opacity:.92;line-height:1.35}
+.homex{background:rgba(255,255,255,.18);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;flex:none}
+.homefilters{display:flex;gap:10px;padding:14px 18px 6px}
+.homefield{flex:1;display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.homefield select{font-size:.9rem;font-weight:600;color:var(--ink);padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.hometoggles{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 12px}
+.hometoggles button{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 13px;font-size:.82rem;font-weight:700;cursor:pointer}
+.hometoggles button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.homefeat{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 6px;max-height:46vh;overflow-y:auto}
+.homecard{text-align:left;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;padding:0;display:flex;flex-direction:column}
+.homecard:hover{border-color:var(--brand)}
+.hcimg{position:relative;aspect-ratio:3/2;background:#eef2f2}
+.hcimg img{width:100%;height:100%;object-fit:cover;display:block}
+.hcph{display:flex;align-items:center;justify-content:center;height:100%;font-size:1.8rem;opacity:.4}
+.hcbadges{position:absolute;top:6px;left:6px;display:flex;gap:4px}
+.hcb{background:rgba(0,0,0,.55);color:#fff;font-size:.72rem;border-radius:6px;padding:1px 5px}
+.hcprice{position:absolute;right:6px;bottom:6px;background:var(--brand-dark);color:#fff;font-size:.78rem;font-weight:800;padding:2px 8px;border-radius:999px}
+.hcbody{padding:7px 9px 9px}
+.hctitle{font-size:.8rem;font-weight:700;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hcmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px;font-size:.7rem;color:var(--muted)}
+.homeempty{padding:8px 18px 14px;color:var(--muted);font-size:.86rem}
+.homeactions{display:flex;gap:10px;padding:12px 18px 18px;flex-wrap:wrap}
+.homeenter{flex:1;min-width:180px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font-size:.95rem;font-weight:800;cursor:pointer}
+.homealert{background:#fff;border:1.5px solid var(--brand);color:var(--brand-dark);border-radius:12px;padding:13px 15px;font-size:.86rem;font-weight:700;cursor:pointer}
+.homealert:disabled{opacity:.55;cursor:default}
+.hbnew{position:relative}
+@media (max-width:560px){.homefeat{grid-template-columns:1fr}.homefilters{flex-direction:column}}
