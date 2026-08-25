@@ -72,6 +72,11 @@ const ANALYSIS_SCHEMA = {
       properties:{profitability:{type:'number'},feasibility_10k:{type:'number'},online_only:{type:'number'},solo_operability:{type:'number'},time_to_cash:{type:'number'},ai_leverage:{type:'number'},overall:{type:'number'}}},
     verdict: {type:'string', description:'3-6 sentences incl. how it fares vs the benchmark'},
     sources: {type:'array', items:{type:'string'}},
+    // Optional future-building fields — fill when the operator profile asks for staged/home-first planning.
+    phase0_home: {type:'object', properties:{cost_gbp:{type:'number'}, months:{type:'number'}, what_it_proves:{type:'string'}, home_legal:{type:'string', description:'can this phase legally run from a home (food reg, planning, etc.)'}}},
+    staging: {type:'string', description:'gated expansion path home → yard/container → grant → mature, with per-gate spend and abort criteria'},
+    mature_income_gbp: {type:'number', description:'realistic year 4-5 net at full build-out'},
+    ai_resilience: {type:'object', properties:{score:{type:'number', description:'0-10: how immune is this income to AI/robotics over 5-10 years'}, why:{type:'string'}}},
   }
 }
 
