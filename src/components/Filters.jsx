@@ -4,7 +4,7 @@ import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ zones, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
+export default function Filters({ zones, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, farmOnly, onToggleFarm, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -105,6 +105,7 @@ export default function Filters({ zones, zoneCounts, features, filters, onImmedi
         <button className={'chip' + (gardenOnly ? ' active' : '')} onClick={onToggleGarden}>{t('garden')}</button>
         <button className={'chip' + (beachOnly ? ' active' : '')} onClick={onToggleBeach}>{t('beach')}</button>
         <button className={'chip' + (auctionOnly ? ' active' : '')} onClick={onToggleAuction}>🔨 {t('auction_chip')}</button>
+        <button className={'chip' + (farmOnly ? ' active' : '')} onClick={onToggleFarm}>🌱 {t('farm_chip')}</button>
         {dealsCount > 0 && (
           <button className={'chip' + (dealsOnly ? ' active' : '')} onClick={onToggleDeals}>{t('deals_chip')} ({dealsCount})</button>
         )}

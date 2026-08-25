@@ -145,12 +145,19 @@ const BEACH = [
   /(?:\bon|onto|edge of|bordering|adjoining|beside|directly (?:on|above|overlooking)|(?:private|direct) access to) (?:the |[A-Z][a-z]+ )?(?:beach|shore|strand)\b/i,
   /steps? (?:from|to|away from) the (?:beach|shore|sea|strand|water)\b/i,
 ]
+// Smallholding tags — keep in lockstep with daily-refresh.mjs FARM.
+const FARM = {
+  Terreno: /\b\d+(?:\.\d+)?\s*acres?\b|\bpaddocks?\b|\bsmallholdings?\b|\bcrofts?\b|\bgrazing\b|\bacreage\b/i,
+  Annessi: /\bout-?houses?\b|\bout-?buildings?\b|\bsteadings?\b|\bbyres?\b|\bbarns?\b(?!\s+conversion)|\bstables?\b|\bbothy\b|\bworkshops?\b/i,
+  Serra: /\bpoly-?tunnels?\b|\bgreen-?houses?\b|\bglass-?houses?\b/i,
+  Acqua: /\bbore-?holes?\b|private water supply|\bwell water\b|\bnatural spring\b|(?:burn|stream|river)\s+(?:runs|running|borders?|bordering|frontage|boundary)|with (?:a |its own )?(?:burn|stream)\b/i,
+}
 const featsOf = (text) => {
   const f = []
   if (/\bgarages?\b/i.test(text)) f.push('Garage')
   if (GARDEN.some((r) => r.test(text))) f.push('Giardino')
   if (BEACH.some((r) => r.test(text))) f.push('Spiaggia')
-  if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
+  for (const [tag, re] of Object.entries(FARM)) if (re.test(text)) f.push(tag)
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
   if (/\bby (?:public |online |timed )?auction\b|auction (?:date|closes|closing|bidding|guide)|\bgoing to auction\b/i.test(text)) f.push('Asta')
   return f

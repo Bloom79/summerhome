@@ -81,12 +81,23 @@ const BEACH = [
   /(?:\bon|onto|edge of|bordering|adjoining|beside|directly (?:on|above|overlooking)|(?:private|direct) access to) (?:the |[A-Z][a-z]+ )?(?:beach|shore|strand)\b/i,
   /steps? (?:from|to|away from) the (?:beach|shore|sea|strand|water)\b/i,
 ]
+// Smallholding signals behind the 🌱 Coltivabile macro-filter: land you can
+// work, buildings you can work in, cover you can grow under, water you can
+// draw. Separate tags so each stays individually filterable. "barn" excludes
+// "barn conversion" (that's the house, not an outbuilding); water needs the
+// feature ON the property, not the Burnside up the road.
+const FARM = {
+  Terreno: /\b\d+(?:\.\d+)?\s*acres?\b|\bpaddocks?\b|\bsmallholdings?\b|\bcrofts?\b|\bgrazing\b|\bacreage\b/i,
+  Annessi: /\bout-?houses?\b|\bout-?buildings?\b|\bsteadings?\b|\bbyres?\b|\bbarns?\b(?!\s+conversion)|\bstables?\b|\bbothy\b|\bworkshops?\b/i,
+  Serra: /\bpoly-?tunnels?\b|\bgreen-?houses?\b|\bglass-?houses?\b/i,
+  Acqua: /\bbore-?holes?\b|private water supply|\bwell water\b|\bnatural spring\b|(?:burn|stream|river)\s+(?:runs|running|borders?|bordering|frontage|boundary)|with (?:a |its own )?(?:burn|stream)\b/i,
+}
 const featsOf = (text) => {
   const f = []
   if (/\bgarages?\b/i.test(text)) f.push('Garage')
   if (GARDEN.some((r) => r.test(text))) f.push('Giardino')
   if (BEACH.some((r) => r.test(text))) f.push('Spiaggia')
-  if (/\d+\s*acres|paddock|smallholding/i.test(text)) f.push('Terreno')
+  for (const [tag, re] of Object.entries(FARM)) if (re.test(text)) f.push(tag)
   if (/in need of (some )?(modernisation|renovation|refurbishment|upgrading|updating)|requir(es|ing) renovation|renovation project|fixer-upper|scope for (modernisation|improvement|renovation)/i.test(text)) f.push('Da ammodernare')
   // Portal listings sold via auction (FPA relists on OnTheMarket, agents
   // use "for sale by auction"): the guide price is a teaser, so the Asta
@@ -797,7 +808,7 @@ for (const l of nextListings) {
 }
 const zoneSet = new Set([...db.zones])
 for (const l of nextListings) if (!zoneSet.has(l.zone)) { db.zones.push(l.zone); zoneSet.add(l.zone) }
-if (!db.features.includes('Asta')) db.features.push('Asta')
+for (const f of ['Asta', 'Annessi', 'Serra', 'Acqua']) if (!db.features.includes(f)) db.features.push(f)
 // Indicative GBP→EUR rate for the price display (ECB via frankfurter.app).
 try {
   const fx = JSON.parse(await get('https://api.frankfurter.dev/v1/latest?base=GBP&symbols=EUR'))

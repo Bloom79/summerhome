@@ -13,6 +13,7 @@ const TYPES = {
 // Feature tag labels IT -> EN
 const FEATS = {
   'Garage': 'Garage', 'Giardino': 'Garden', 'Spiaggia': 'Beachfront', 'Asta': 'Auction', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
+  'Annessi': 'Outbuildings', 'Serra': 'Greenhouse', 'Acqua': 'Water source',
   'Vista mare': 'Sea view', 'Fronte porto': 'Harbour front', 'Vicino spiaggia': 'Near beach',
   'Vicino golf': 'Near golf', 'Centro storico': 'Historic centre',
 }
@@ -72,7 +73,7 @@ const STR = {
     auction_badge: 'Asta', st_auction: "All'asta il", st_auction_nd: 'Vendita',
     auction_analysis: "Analisi dell'asta",
     auction_note: "Il prezzo è la base d'asta, non il valore di mercato: in Scozia il realizzo tipico la supera del 20–50%. L'analisi live la confronta con i valori di zona e segnala rischi e costi specifici dell'asta.",
-    live_done: 'Analisi live pronta ✓', auction_chip: 'Aste',
+    live_done: 'Analisi live pronta ✓', auction_chip: 'Aste', farm_chip: 'Coltivabile',
     map_legend: '✨ nuova ≤3 gg · 💎 occasione con vista/giardino sotto media',
     deals_summary_btn: "Riepilogo e punteggi delle occasioni",
     home_title: 'Novità',
@@ -206,7 +207,7 @@ const STR = {
     auction_badge: 'Auction', st_auction: 'Auction on', st_auction_nd: 'Sale type',
     auction_analysis: 'Auction analysis',
     auction_note: 'The listed price is the auction guide, not market value: Scottish hammer prices typically exceed it by 20–50%. The live analysis compares it with zone values and flags auction-specific risks and costs.',
-    live_done: 'Live analysis ready ✓', auction_chip: 'Auctions',
+    live_done: 'Live analysis ready ✓', auction_chip: 'Auctions', farm_chip: 'Smallholding',
     map_legend: '✨ new ≤3 days · 💎 deal with view/garden below median',
     deals_summary_btn: 'Deals summary and scores',
     home_title: 'What’s new',
