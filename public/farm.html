@@ -134,6 +134,28 @@
   .budget input[type=checkbox]{width:1.05rem; height:1.05rem; accent-color:var(--green); margin-right:.55rem; vertical-align:-2px; cursor:pointer}
   .budget tr.done td{opacity:.5}
   .buyprog{font-family:var(--mono); font-size:.8rem; font-weight:600; color:var(--green-deep); margin:.45rem 0 0}
+
+  /* Redesign components */
+  .glance{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.6rem; margin:1.1rem 0 .4rem}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:.6rem .85rem; box-shadow:var(--shadow)}
+  .stat b{display:block; font-family:var(--mono); font-size:1.12rem; font-weight:600; color:var(--green-deep)}
+  .stat span{font-size:.76rem; color:var(--muted)}
+  .step{display:flex; gap:.9rem; margin-top:1rem}
+  .step .n{flex:0 0 2.1rem; height:2.1rem; border-radius:50%; background:var(--green-wash); border:1.5px solid var(--green); color:var(--green-deep); font-family:"Bricolage Grotesque",sans-serif; font-weight:800; font-size:1.02rem; display:flex; align-items:center; justify-content:center; margin-top:.2rem}
+  .step .b{flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:.85rem 1.05rem; box-shadow:var(--shadow); min-width:0}
+  .step h4{font-family:"Bricolage Grotesque",sans-serif; margin:0 0 .25rem; font-size:1.02rem}
+  .step p{font-size:.94rem; margin:.3rem 0; color:#3d4335}
+  .meta{display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.55rem}
+  .meta span{font-family:var(--mono); font-size:.7rem; background:var(--paper-2); border:1px solid var(--line-soft); border-radius:99px; padding:.16rem .6rem; color:#454b3b}
+  .meta span.hot{background:var(--crit-wash); border-color:var(--crit); color:var(--crit)}
+  dl.sda{display:grid; grid-template-columns:auto 1fr; gap:.3rem .7rem; font-size:.93rem; margin:.45rem 0 0}
+  dl.sda dt{font-family:var(--mono); font-size:.66rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--ochre); padding-top:.2rem; white-space:nowrap}
+  dl.sda dd{margin:0; color:#3d4335}
+  dl.sda dd b{color:var(--green-deep)}
+  ul.clean{margin:.5rem 0 0; padding-left:1.15rem; font-size:.94rem}
+  ul.clean li{margin:.4rem 0; color:#3d4335}
+  ul.clean b{color:var(--ink)}
+  .apppage h3{margin-top:2rem}
   #appnav button{font-family:"Bricolage Grotesque",sans-serif; font-weight:700; font-size:.95rem; padding:.45rem .9rem; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--muted); cursor:pointer}
   #appnav button.on{background:var(--green-wash); border-color:var(--green); color:var(--green-deep)}
   .apppage{display:none}
@@ -147,20 +169,18 @@
 
 <div class="wrap">
   <header>
-    <div class="kicker">Planner micro-farm fungina · Edimburgo · B2B, zero telefonate · agg. 26 ago 2026</div>
+    <div class="kicker">Progetto micro-farm · da Roma alla Scozia · agg. 26 agosto 2026</div>
     <h1>The £10k Container Start</h1>
-    <p class="lede">Funghi gourmet in un container su terreno in affitto — <b>oyster e lion's mane, 2,2 kWh/kg</b>, venduti su canali a cui ti iscrivi online: una mail al grossista, piattaforme pre-order e il tuo shop di essiccati. La Fase 1 prova il processo con £10k; la Fase 2 usa il <b>bando FFIS (80%, fino a £20k)</b> per scalare a un reddito vero. Ogni prezzo ha la fonte.</p>
+    
 
-    <div id="kpis">
-      <div class="kpi" id="k-min"><div class="kl">Minimo di cassa</div><div class="kv num" id="kv-min">—</div><div class="ks" id="ks-min"></div></div>
-      <div class="kpi" id="k-be"><div class="kl">Break-even</div><div class="kv num" id="kv-be">—</div><div class="ks">netto mobile 4 settimane ≥ 0</div></div>
-      <div class="kpi" id="k-end"><div class="kl">Cassa a settimana 52</div><div class="kv num" id="kv-end">—</div><div class="ks" id="ks-end"></div></div>
-      <div class="kpi" id="k-fix"><div class="kl">Costi fissi / mese</div><div class="kv num" id="kv-fix">—</div><div class="ks">affitto + corrente base + assicurazione + carburante</div></div>
-    </div>
-    <div style="margin-top:.6rem" id="verdict"></div>
-
-    <div class="statusbar"><span class="tag">Stato analisi · 26 ago 2026</span><br>
-      <b>71 opzioni analizzate su rubrica pesata unica</b> (60+ agenti, ~1.100 ricerche, verifiche avversariali). Vincitori: <b>fungi stack 7.9</b> · <b>aglio nero 7.35</b> (novità: retail UK ~£100/kg, pochissimi produttori) · hot honey 7.35 · multi-sito robotizzato 7.25 (unico percorso di scala sopravvissuto agli skeptic: ~£58k/anno Y5). Percorso: <b>fase-0 a Roma adesso</b> (build nelle pagine qui sopra, ~€600 totali, non commerciale) → container in Scozia → FFIS → scala. Due-diligence v3 sugli 8 nuovi: <b>nessuno batte lo stack</b> — il migliore (tronchetti shiitake, 6.05 verificato) è di fatto uno SKU dello stack; l'aglio nero scende a <b>side-SKU</b> (fit perfetto, ma pool artigianale UK ~£0.3-0.7M/anno): resta l'esperimento da €200 nella pagina Build. Dossier completo: <a href="https://claude.ai/code/artifact/7eef7f78-290c-42c6-b7ad-41e52022a394">Twenty Crops, One Verdict</a>. Matrice licenze Scozia: vedi la pagina 📜 — <b>per lo stack fungino il costo obbligatorio è £0</b>.
+    <div class="statusbar"><span class="tag">Dove siamo · 26 agosto 2026</span>
+      <div class="glance" style="margin:.6rem 0 .2rem">
+        <div class="stat"><b>71</b><span>opzioni analizzate e verificate</span></div>
+        <div class="stat"><b>1°</b><span>stack fungino, punteggio 7,9</span></div>
+        <div class="stat"><b>£0</b><span>licenze obbligatorie in Scozia</span></div>
+        <div class="stat"><b>€600</b><span>per iniziare a Roma, adesso</span></div>
+      </div>
+      <p style="margin:.4rem 0 0; font-size:.93rem">Il percorso: prova il processo a Roma con le pagine Build, poi container in Scozia, poi la scala. L'aglio nero è il secondo prodotto dello stesso brand. Il dossier completo delle analisi è in <a href="https://claude.ai/code/artifact/7eef7f78-290c-42c6-b7ad-41e52022a394">Twenty Crops, One Verdict</a>.</p>
     </div>
 
     <nav id="appnav">
@@ -173,6 +193,20 @@
   </header>
 
   <div id="page-plan" class="apppage on">
+
+  <section style="padding-top:1.2rem">
+    <div class="kicker">Il modello finanziario · Scozia, Fase 1 e 2</div>
+    <p class="lede">Funghi gourmet in un container su terreno in affitto — <b>oyster e lion's mane, 2,2 kWh/kg</b>, venduti su canali a cui ti iscrivi online: una mail al grossista, piattaforme pre-order e il tuo shop di essiccati. La Fase 1 prova il processo con £10k; la Fase 2 usa il <b>bando FFIS (80%, fino a £20k)</b> per scalare a un reddito vero. Ogni prezzo ha la fonte.</p>
+
+    <div id="kpis">
+      <div class="kpi" id="k-min"><div class="kl">Minimo di cassa</div><div class="kv num" id="kv-min">—</div><div class="ks" id="ks-min"></div></div>
+      <div class="kpi" id="k-be"><div class="kl">Break-even</div><div class="kv num" id="kv-be">—</div><div class="ks">netto mobile 4 settimane ≥ 0</div></div>
+      <div class="kpi" id="k-end"><div class="kl">Cassa a settimana 52</div><div class="kv num" id="kv-end">—</div><div class="ks" id="ks-end"></div></div>
+      <div class="kpi" id="k-fix"><div class="kl">Costi fissi / mese</div><div class="kv num" id="kv-fix">—</div><div class="ks">affitto + corrente base + assicurazione + carburante</div></div>
+    </div>
+    <div style="margin-top:.6rem" id="verdict"></div>
+  </section>
+
 
   <section>
     <div class="kicker">Step 1 · Terreno e container</div>
@@ -228,7 +262,13 @@
       <div class="ctl" id="kg2wrap"><label for="c-kg2">Fase 2 · kg/settimana <output id="o-kg2">80</output></label><input id="c-kg2" type="range" min="50" max="100" step="5" value="80"></div>
       <div class="blend" id="blend"></div>
     </div>
-    <p style="font-size:.88rem;color:var(--muted)">Basi: oyster £6,92/kg commodity, <b>£8–13/kg a grossisti e cucine</b>, £12–20/kg equivalente in pre-order; l'essiccato rende ~£18 per kg-fresco al netto delle fee; substrato ~£2,20 per kg di resa; energia 2,2 kWh/kg + ~10 kWh/giorno di clima base a 28p/kWh. Un 20ft si ferma a ~40 kg/settimana — il kit Fase 2 (seconda camera, substrato automatizzato) porta il tetto a ~100 kg.</p>
+    <p style="font-size:.88rem;color:var(--muted)">I numeri dietro gli slider, tutti verificati:</p>
+    <ul class="clean" style="font-size:.88rem; color:var(--muted)">
+      <li>Oyster fresco: £6,92 al kg come commodity, <b>£8-13 a grossisti e cucine</b>, fino a £20 in pre-order.</li>
+      <li>L'essiccato rende circa <b>£18 per kg fresco</b> dopo le commissioni.</li>
+      <li>Substrato: £2,20 per kg di resa. Energia: 2,2 kWh per kg, più 10 kWh al giorno di clima base.</li>
+      <li>Un container 20ft arriva a <b>40 kg a settimana</b>; il kit della Fase 2 porta il tetto a 100.</li>
+    </ul><p style="display:none"></p>
   </section>
 
   <section>
@@ -425,101 +465,147 @@
   <!-- ============ PAGE: BUILD FUNGHI (ROMA) ============ -->
   <div id="page-fungi" class="apppage">
     <section style="padding-top:1rem">
-      <div class="kicker">Fase-0 · Roma · ~€400-520 · 2-3 mesi · non commerciale</div>
-      <h2>Build: camera funghi in casa, con il tuo stack</h2>
-      <p class="lede" style="font-size:1rem">Obiettivo: dimostrare che il processo funziona nelle TUE mani (contaminazione &lt;15%, 2 flush puliti) e costruire il controller che poi migra in Scozia. Tutto in una cantina/stanza fresca. <b>Non si vende nulla da Roma senza SCIA</b>: si coltiva, si mangia, si regala, si documenta.</p>
+      <div class="kicker">Fase zero · a casa tua, a Roma</div>
+      <h2>Costruisci la camera dei funghi</h2>
+      <p class="lede" style="font-size:1rem">Prima di spendere una sterlina in Scozia, dimostri due cose in una stanza: che il processo funziona nelle tue mani, e che il controller che costruisci qui è quello che poi comanderà il container. Non si vende nulla da Roma: si coltiva, si assaggia, si documenta.</p>
+      <div class="glance">
+        <div class="stat"><b>€400</b><span>spesa totale</span></div>
+        <div class="stat"><b>3 mesi</b><span>durata della prova</span></div>
+        <div class="stat"><b>2 specie</b><span>prima oyster, poi lion's mane</span></div>
+        <div class="stat"><b>Legale</b><span>uso personale, nessun permesso</span></div>
+      </div>
 
-      <h3>🛒 Lista acquisti <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— spunta quello che hai già; si salva nel browser</span></h3>
+      <h3>La spesa</h3>
+      <p style="font-size:.9rem;color:var(--muted)">Spunta quello che hai già: la lista si salva nel browser.</p>
       <div class="budgetwrap"><table class="budget" data-list="fungi">
-        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo</th></tr></thead>
         <tbody>
-          <tr><td>Tenda grow 80×80×160 cm <a class="buy" href="https://www.amazon.it/s?k=grow+box+80x80x160" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">con oblò e passacavi</span></td><td class="amt">€70</td></tr>
-          <tr><td>Umidificatore a ultrasuoni 4-5 L <a class="buy" href="https://www.amazon.it/s?k=umidificatore+ultrasuoni+5+litri" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">uscita orientabile; meglio se con attacco per tubo</span></td><td class="amt">€35</td></tr>
-          <tr><td>Ventola inline 100 mm + ducting + filtro <a class="buy" href="https://www.amazon.it/s?k=ventola+inline+100mm+aspirazione" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">estrazione in alto; intake passivo in basso con garza filtrante</span></td><td class="amt">€40</td></tr>
-          <tr><td>Scaffalino 3-4 ripiani + bacinelle <a class="buy" href="https://www.amazon.it/s?k=scaffale+plastica+4+ripiani" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">plastica, lavabile con alcool</span></td><td class="amt">€30</td></tr>
-          <tr><td>4-6 blocchi pronti di oyster (poi lion's mane) <a class="buy" href="https://www.amazon.it/s?k=kit+coltivazione+funghi+pleurotus+substrato" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">o growshop IT/EU specializzati — prima impari a fruttificare, POI a inoculare</span></td><td class="amt">€80</td></tr>
-          <tr><td>Igiene: alcool isopropilico, guanti, FFP2, spruzzino <a class="buy" href="https://www.amazon.it/s?k=alcol+isopropilico+1+litro" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">flusso pulito→sporco, sempre</span></td><td class="amt">€20</td></tr>
-          <tr><td><b>Stack controllo</b>: Raspberry Pi (Zero 2 W o 4) o ESP32 <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+zero+2+w" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">quello che hai in cassetto va bene</span></td><td class="amt">€25-60</td></tr>
-          <tr><td>Sensore SHT31 (temp+RH) + SCD40 (CO₂) <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 SHT31</a> <a class="buy" href="https://www.amazon.it/s?k=scd40+sensore+co2" target="_blank" rel="noopener">🛒 SCD40</a><span class="why">I²C, librerie pronte</span></td><td class="amt">€35</td></tr>
-          <tr><td>Relay board 4 canali + prese <a class="buy" href="https://www.amazon.it/s?k=modulo+relay+4+canali+5v" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">canali: umidificatore, ventola, luce, riserva (frigo/riscaldatore)</span></td><td class="amt">€15</td></tr>
-          <tr><td>Camera (Pi cam o USB) + striscia LED 6500K su timer <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+camera+module" target="_blank" rel="noopener">🛒 camera</a> <a class="buy" href="https://www.amazon.it/s?k=striscia+led+6500k+12v" target="_blank" rel="noopener">🛒 LED</a><span class="why">vision: pinning, finestra di raccolta, muffe verdi</span></td><td class="amt">€30</td></tr>
-          <tr class="total"><td>Totale fase-0 funghi</td><td class="amt">~€400</td></tr>
+          <tr><td>Tenda grow 80×80×160 cm <a class="buy" href="https://www.amazon.it/s?k=grow+box+80x80x160" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">con oblò e aperture passacavi</span></td><td class="amt">€70</td></tr>
+          <tr><td>Umidificatore a ultrasuoni da 5 litri <a class="buy" href="https://www.amazon.it/s?k=umidificatore+ultrasuoni+5+litri" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">meglio se con attacco per tubo flessibile</span></td><td class="amt">€35</td></tr>
+          <tr><td>Ventola inline 100 mm con condotto e filtro <a class="buy" href="https://www.amazon.it/s?k=ventola+inline+100mm+aspirazione" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">estrae dall'alto; l'aria entra dal basso filtrata</span></td><td class="amt">€40</td></tr>
+          <tr><td>Scaffale a 4 ripiani e bacinelle <a class="buy" href="https://www.amazon.it/s?k=scaffale+plastica+4+ripiani" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">plastica: si lava con l'alcool</span></td><td class="amt">€30</td></tr>
+          <tr><td>Da 4 a 6 blocchi pronti di oyster <a class="buy" href="https://www.amazon.it/s?k=kit+coltivazione+funghi+pleurotus+substrato" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">substrato già inoculato: prima impari a far fruttificare, poi a inoculare</span></td><td class="amt">€80</td></tr>
+          <tr><td>Alcool isopropilico, guanti, mascherine FFP2, spruzzino <a class="buy" href="https://www.amazon.it/s?k=alcol+isopropilico+1+litro" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">l'igiene è un flusso: dal pulito verso lo sporco, sempre</span></td><td class="amt">€20</td></tr>
+          <tr><td>Raspberry Pi Zero 2 W, oppure un Pi 4 o ESP32 che hai già <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+zero+2+w" target="_blank" rel="noopener">🛒 Amazon</a></td><td class="amt">€25-60</td></tr>
+          <tr><td>Sensori: SHT31 per temperatura e umidità, SCD40 per la CO₂ <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 SHT31</a> <a class="buy" href="https://www.amazon.it/s?k=scd40+sensore+co2" target="_blank" rel="noopener">🛒 SCD40</a><span class="why">entrambi I²C, librerie pronte</span></td><td class="amt">€35</td></tr>
+          <tr><td>Scheda relay a 4 canali con prese <a class="buy" href="https://www.amazon.it/s?k=modulo+relay+4+canali+5v" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">comanda umidificatore, ventola, luce e una riserva</span></td><td class="amt">€15</td></tr>
+          <tr><td>Camera e striscia LED 6500K <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+camera+module" target="_blank" rel="noopener">🛒 camera</a> <a class="buy" href="https://www.amazon.it/s?k=striscia+led+6500k+12v" target="_blank" rel="noopener">🛒 LED</a><span class="why">per il time-lapse che vedi nella pagina AI</span></td><td class="amt">€30</td></tr>
+          <tr class="total"><td>Totale</td><td class="amt">€400 circa</td></tr>
         </tbody>
       </table></div>
-      <p style="font-size:.88rem;color:var(--muted)">Opzionale estate: mini-frigo usato o cantinetta vino modificata come cella di fruttificazione (~€60-90). A Roma da giugno a settembre le temperature interne superano i 25°C: o parti in autunno, o questa è la prima sfida vera del controller.</p>
+      <p style="font-size:.88rem;color:var(--muted)">Se parti in estate serve anche una cella fredda: un mini-frigo usato da modificare, 60-90 euro. Da ottobre ad aprile una stanza fresca basta.</p>
 
-      <h3>🔧 Montaggio</h3>
-      <div class="wk"><div class="tag">1</div><div><b>Posizione</b><p>Cantina, garage o stanza a nord: serve 14-20°C il più possibile stabile, niente sole diretto, presa elettrica, pavimento lavabile. La tenda contiene l'umidità: sotto metti un telo.</p></div></div>
-      <div class="wk"><div class="tag">2</div><div><b>Aria e acqua</b><p>Ventola di estrazione in alto (fori esistenti della tenda), intake passivo in basso col filtro. Umidificatore fuori dalla tenda col tubo dentro, o dentro sul fondo. La nebbia NON deve bagnare i blocchi direttamente.</p></div></div>
-      <div class="wk"><div class="tag">3</div><div><b>Sensori e camera</b><p>SHT31+SCD40 a metà altezza, lontani dal getto dell'umidificatore. Camera frontale che vede tutti i blocchi, LED 12h/giorno. Cablaggio fuori dalla zona umida, connettori sigillati.</p></div></div>
-      <div class="wk"><div class="tag">4</div><div><b>Loop di controllo</b><p>Regole: RH 85-92% (isteresi 3%), CO₂ &lt; 800-1000 ppm in fruttificazione (la ventola parte a soglia), cicli FAE ogni 2-4h comunque. Alert Telegram su: RH fuori range &gt;30 min, CO₂ alto, sensore muto. Log su file: è il dataset.</p></div></div>
-      <div class="wk"><div class="tag">5</div><div><b>Vision</b><p>Foto ogni 30 min. Modello locale (anche un classificatore semplice all'inizio): pinning sì/no, pin→raccolta (conta i giorni), verde=muffa→alert immediato. La finestra di raccolta è mezza giornata: questo è il pezzo che vale.</p></div></div>
+      <h3>Il montaggio, in cinque passi</h3>
+      <div class="step"><div class="n">1</div><div class="b"><h4>La posizione</h4><p>Cantina, garage o stanza esposta a nord: serve una base stabile tra 14 e 20 gradi, senza sole diretto. La tenda trattiene l'umidità: metti un telo sotto.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="b"><h4>Aria e acqua</h4><p>Ventola di estrazione in alto, ingresso passivo filtrato in basso. L'umidificatore sta fuori dalla tenda con il tubo dentro, oppure dentro sul fondo. La nebbia non deve mai bagnare i blocchi direttamente.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="b"><h4>Sensori e camera</h4><p>Sensori a metà altezza, lontani dal getto dell'umidificatore. Camera imbullonata che inquadra tutti i blocchi, LED acceso dodici ore al giorno. I connettori vanno sigillati: l'ambiente è saturo.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="b"><h4>Il loop di controllo</h4><p>Tre regole nel software: umidità tra 85 e 92 per cento, CO₂ sotto gli 800 ppm in fruttificazione, ricambio d'aria comunque ogni due-quattro ore. Ogni valore fuori soglia per più di mezz'ora manda un messaggio Telegram. Tutto finisce nel log: è il tuo dataset.</p><div class="meta"><span>RH 85-92%</span><span>CO₂ &lt; 800 ppm</span><span>alert su Telegram</span></div></div></div>
+      <div class="step"><div class="n">5</div><div class="b"><h4>La vision</h4><p>Una foto ogni mezz'ora, con il flash sincronizzato. All'inizio bastano regole semplici: il verde è muffa, le zone che accelerano sono sospette, i giorni dal pin dicono quando raccogliere. I dettagli sono nella pagina AI.</p></div></div>
 
-      <h3>📈 Processo e parametri</h3>
+      <h3>I parametri delle due specie</h3>
       <div class="tblwrap"><table class="parm">
-        <thead><tr><th>Specie</th><th>Fruttificazione</th><th>RH</th><th>CO₂</th><th>Tempi</th></tr></thead>
+        <thead><tr><th>Specie</th><th>Temperatura</th><th>Umidità</th><th>CO₂</th><th>Ritmo</th></tr></thead>
         <tbody>
-          <tr><td>Oyster (inizia qui: perdona tutto)</td><td>15-20°C, luce indiretta 12h</td><td>85-95%</td><td>&lt;800 ppm</td><td>pin 3-7 gg · raccolta 5-7 gg dopo · 2° flush dopo 7-14 gg</td></tr>
-          <tr><td>Lion's mane (dopo il 1° successo)</td><td>16-18°C</td><td>90-95%</td><td>&lt;700 ppm, FAE delicata</td><td>più lento: 2-3 settimane a flush</td></tr>
+          <tr><td><b>Oyster</b> — si parte da qui: perdona quasi tutto</td><td>15-20°C</td><td>85-95%</td><td>sotto 800 ppm</td><td>pin in 3-7 giorni, raccolta una settimana dopo, secondo flush entro due</td></tr>
+          <tr><td><b>Lion's mane</b> — dopo il primo successo</td><td>16-18°C</td><td>90-95%</td><td>sotto 700 ppm</td><td>più lento: due-tre settimane a flush</td></tr>
         </tbody>
       </table></div>
-      <p style="font-size:.92rem">Ritmo: taglia una X sul blocco → shock di induzione (calo temp + luce) → pin → raccogli PRIMA che i cappelli si appiattiscano (oyster) o che le spine ingialliscano (lion's mane) → pesa, fotografa, logga → 2° flush. Poi passa a substrato fatto in casa (pentola a pressione, paglia/pellet + soia) — è lì che si misura la contaminazione vera.</p>
+      <p style="font-size:.94rem">Il ciclo: taglia una X sul blocco, dai lo shock di induzione con un calo di temperatura, aspetta i pin, raccogli prima che i cappelli si appiattiscano. Pesa, fotografa, registra. Quando i blocchi comprati rendono bene, passa al substrato fatto da te con la pentola a pressione: è lì che si misura la contaminazione vera.</p>
 
-      <div class="call"><span class="tag">Cancello di uscita fase-0</span><p>Entro il mese 3: <b>contaminazione &lt;15%</b> sui blocchi fatti da te · 2 flush puliti per specie · qualità confrontabile con le foto dei produttori UK · controller che regge <b>7 giorni senza interventi manuali</b>. Passa → il progetto Scozia ha basi reali. Fallisce → hai speso €400 e hai la risposta.</p></div>
-      <div class="risk"><span class="trip">avvertenze</span><p>Spore in aria alla raccolta (FFP2, raccogli presto); mai vendere senza SCIA; d'estate senza cella frigo i risultati mentono — non giudicare il processo a 28°C.</p></div>
+      <div class="call"><span class="tag">Il cancello di uscita</span><p>Entro il terzo mese: contaminazione sotto il 15 per cento sui blocchi fatti da te, due flush puliti per specie, e il controller che regge una settimana intera senza il tuo intervento. Se passa, il progetto Scozia ha basi vere. Se fallisce, hai speso 400 euro per saperlo.</p></div>
+
+      <ul class="clean">
+        <li><b>Estate romana:</b> sopra i 25 gradi i risultati mentono. Parti in autunno, o prima costruisci la cella fredda.</li>
+        <li><b>Spore alla raccolta:</b> mascherina FFP2 e raccogli presto, prima della nevicata di spore.</li>
+        <li><b>Niente vendite da Roma:</b> servirebbe la SCIA. Regala, assaggia, documenta.</li>
+      </ul>
     </section>
   </div>
 
   <!-- ============ PAGE: AI & SENSORI ============ -->
   <div id="page-ai" class="apppage">
     <section style="padding-top:1rem">
-      <div class="kicker">Il layer che fa la differenza · sense → decide → act</div>
-      <h2>Sensori, camera e AI: i sette anelli chiusi</h2>
-      <p class="lede" style="font-size:1rem">Avere sensori non è un vantaggio: loggano e basta. Il vantaggio è <b>chiudere l'anello</b> — ogni misura deve produrre una decisione che cambia un numero del conto economico. Questi sono i sette anelli, in ordine di impatto, con l'hardware esatto e il guadagno atteso. Insieme trasformano l'economia di un principiante in quella di un buon operatore <b>6-12 mesi prima</b>, e a scala sono ciò che rende possibile il multi-sito a &lt;5 h/settimana per sito.</p>
+      <div class="kicker">Il vantaggio vero · sette anelli chiusi</div>
+      <h2>Dove sensori, camera e AI cambiano i numeri</h2>
+      <p class="lede" style="font-size:1rem">Un sensore che non cambia una decisione è un gadget. Il vantaggio nasce quando ogni misura chiude un anello: sente, decide, agisce. Questi sono i sette anelli in ordine di impatto. Insieme comprimono di sei-dodici mesi la curva che trasforma un principiante in un buon operatore, e a scala rendono possibile gestire un sito in meno di cinque ore a settimana.</p>
+      <div class="glance">
+        <div class="stat"><b>+25%</b><span>resa combinata degli anelli 1, 2 e 6</span></div>
+        <div class="stat"><b>+10-15%</b><span>prezzo dal raccolto nella finestra giusta</span></div>
+        <div class="stat"><b>€160</b><span>costo dei componenti aggiuntivi</span></div>
+        <div class="stat"><b>0 cloud</b><span>tutto gira in locale</span></div>
+      </div>
 
-      <div class="wk"><div class="tag">1</div><div><b>QC della pastorizzazione — l'anello più noioso e più redditizio</b><p><b>Sente:</b> 2-3 sonde DS18B20 <u>dentro la massa</u> del substrato (non nell'aria del fusto — errore da principiante: il centro della massa può stare 10°C sotto). <b>Decide:</b> la curva tempo-a-temperatura dice se il lotto ha davvero fatto ≥65°C a cuore per le ore richieste. <b>Cambia:</b> la contaminazione nasce a monte — la maggior parte dei grower "tira a indovinare" la pastorizzazione. Log = lotti puliti in partenza: <b>+5-8% di resa</b> e il grafico finisce dritto nell'HACCP per l'ispettore.</p></div></div>
+      <div class="step"><div class="n">1</div><div class="b"><h4>Controllo della pastorizzazione</h4>
+        <dl class="sda"><dt>Sente</dt><dd>due o tre sonde di temperatura <b>dentro la massa</b> del substrato. Nell'aria del fusto no: il centro può stare dieci gradi sotto.</dd>
+        <dt>Decide</dt><dd>la curva tempo-temperatura dice se il lotto ha davvero tenuto i 65 gradi a cuore per le ore necessarie.</dd>
+        <dt>Cambia</dt><dd>la contaminazione nasce quasi sempre a monte, dove gli altri tirano a indovinare. <b>Vale il 5-8 per cento di resa</b>, e il grafico finisce dritto nel dossier HACCP.</dd></dl></div></div>
 
-      <div class="wk"><div class="tag">2</div><div><b>Contaminazione precoce — time-lapse differencing, non "foto e speranza"</b><p><b>Sente:</b> camera fissa + <b>flash LED sincronizzato allo scatto</b> (relay: luce solo durante la foto → esposizione identica → i frame sono confrontabili; è l'80% della CV affidabile in una grow room). <b>Decide:</b> il Trichoderma all'inizio è bianco come il micelio — a colori non lo distingui. Ma cresce <u>più veloce e con pattern diverso</u>: il confronto tra frame (differencing) evidenzia le zone ad accelerazione anomala 1-2 giorni PRIMA della sporulazione verde. HSV threshold sul verde come seconda rete. <b>Cambia:</b> blocco rimosso prima che sporuli = la stanza si salva. Perdite tipiche <b>dal 10-15% al ~5%</b>.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="b"><h4>Contaminazione precoce dal time-lapse</h4>
+        <dl class="sda"><dt>Sente</dt><dd>camera fissa con flash acceso solo durante lo scatto: esposizione identica, fotogrammi confrontabili.</dd>
+        <dt>Decide</dt><dd>il Trichoderma appena nato è bianco come il micelio: a occhio non lo distingui. Ma cresce più veloce e con un pattern diverso — il confronto tra fotogrammi lo tradisce uno o due giorni prima che diventi verde.</dd>
+        <dt>Cambia</dt><dd>blocco rimosso prima della sporulazione, stanza salva. <b>Le perdite scendono dal 10-15 al 5 per cento.</b></dd></dl></div></div>
 
-      <div class="wk"><div class="tag">3</div><div><b>Calendario di produzione — il forecast che vende</b><p><b>Sente:</b> % di copertura bianca del micelio per blocco (dalla stessa camera: segmentazione semplice su immagini a luce costante). <b>Decide:</b> la curva di colonizzazione predice QUANDO ogni lotto è pronto a fruttificare → il sistema costruisce da solo il calendario sfalsato. <b>Cambia:</b> per un business B2B <b>l'affidabilità È il prodotto</b>: "10 kg ogni martedì, garantiti" vale più di qualsiasi foto. Meno feast-famine, meno invenduto (~−5% sprechi), contratti che si rinnovano.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="b"><h4>Il calendario che si scrive da solo</h4>
+        <dl class="sda"><dt>Sente</dt><dd>la percentuale di bianco su ogni blocco, dalla stessa camera.</dd>
+        <dt>Decide</dt><dd>la curva di colonizzazione predice quando ogni lotto sarà pronto a fruttificare, e il sistema costruisce il calendario sfalsato.</dd>
+        <dt>Cambia</dt><dd>per chi vende ai ristoranti <b>l'affidabilità è il prodotto</b>: dieci chili ogni martedì, promessi e mantenuti. Meno picchi, meno invenduto, contratti che si rinnovano.</dd></dl></div></div>
 
-      <div class="wk"><div class="tag">4</div><div><b>Diagnosi difetti ↔ storia del clima — la scorciatoia sugli anni di mestiere</b><p><b>Sente:</b> morfologia dal time-lapse + log clima continuo. <b>Decide:</b> ogni difetto ha una firma climatica: <u>gambi lunghi e cappelli piccoli = CO₂ alto</u> · <u>cappelli screpolati = RH bassa</u> · <u>gambi pelosi = poca FAE</u> · <u>macchie batteriche = condensa</u> (RH che attraversa il punto di rugiada sul fungo). Il sistema incrocia il difetto con il log e ti dice: "cappelli screpolati perché la RH è scesa a 78% per 3h alle 02:00 quando il serbatoio si è svuotato". <b>Cambia:</b> questo loop è ciò che un artigiano impara in anni di errori — tu lo compili in settimane. Quota di prima scelta in salita costante.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="b"><h4>Ogni difetto ha una firma climatica</h4>
+        <dl class="sda"><dt>Sente</dt><dd>la forma dei funghi dal time-lapse, incrociata con il log del clima.</dd>
+        <dt>Decide</dt><dd>gambi lunghi e cappelli piccoli significano CO₂ alta. Cappelli screpolati, umidità bassa. Macchie, condensa. Il sistema trova l'evento: "screpolature perché l'umidità è scesa al 78 per cento per tre ore alle due di notte, serbatoio vuoto".</dd>
+        <dt>Cambia</dt><dd>questo è l'anello che un artigiano impara in anni di errori. <b>Tu lo compili in settimane</b>, e la quota di prima scelta sale a ogni ciclo.</dd></dl></div></div>
 
-      <div class="wk"><div class="tag">5</div><div><b>Finestra di raccolta — le 12-24 ore che valgono il 10-15%</b><p><b>Sente:</b> tasso di crescita del corpo fruttifero dal time-lapse. <b>Decide:</b> oyster si raccoglie PRIMA che il bordo del cappello si appiattisca; lion's mane prima che le spine si allunghino/ingialliscano. Il modello proietta la crescita e manda la notifica: "raccogli domattina". <b>Cambia:</b> raccolto allo stadio giusto = più sodo, <b>+1-2 giorni di shelf life</b> (meno resi), niente nevicata di spore nella stanza (qualità aria + attrezzature), e il grado premium che i ristoranti ripagano: <b>+10-15% sul prezzo</b>.</p></div></div>
+      <div class="step"><div class="n">5</div><div class="b"><h4>La finestra di raccolta</h4>
+        <dl class="sda"><dt>Sente</dt><dd>la velocità di crescita del fungo, fotogramma su fotogramma.</dd>
+        <dt>Decide</dt><dd>l'oyster si raccoglie prima che il bordo si appiattisca, il lion's mane prima che le spine si allunghino. La finestra dura mezza giornata: il modello la proietta e ti avvisa la sera prima.</dd>
+        <dt>Cambia</dt><dd>raccolto allo stadio giusto: più sodo, uno-due giorni di durata in più, niente spore nell'aria. <b>È il grado che i ristoranti pagano il 10-15 per cento in più.</b></dd></dl></div></div>
 
-      <div class="wk"><div class="tag">6</div><div><b>Libro mastro delle rese — l'A/B testing che compone</b><p><b>Sente:</b> celle di carico HX711 sotto i ripiani (peso continuo = crescita + eventi idrici gratis) o pesata a fine raccolta legata al lotto. <b>Decide:</b> ogni lotto porta con sé ricetta substrato, fornitore spawn, parametri clima → dopo 20 lotti sai QUALE combinazione rende di più (lo spread tra ricette è 20-40% di efficienza biologica). <b>Cambia:</b> <b>+10-20% di resa nel primo anno</b> solo scegliendo coi dati. Questo dataset è anche il moat del futuro controller/consulenza: nessuno può copiartelo.</p></div></div>
+      <div class="step"><div class="n">6</div><div class="b"><h4>Il libro mastro delle rese</h4>
+        <dl class="sda"><dt>Sente</dt><dd>celle di carico sotto i ripiani, o la pesata di ogni raccolta legata al suo lotto.</dd>
+        <dt>Decide</dt><dd>ogni lotto porta con sé ricetta, fornitore dello spawn e clima. Dopo venti lotti sai quale combinazione rende di più: tra ricette ballano il 20-40 per cento di efficienza.</dd>
+        <dt>Cambia</dt><dd><b>Più 10-20 per cento di resa nel primo anno</b>, solo scegliendo con i dati. E questo archivio è il fossato: nessuno può copiartelo.</dd></dl></div></div>
 
-      <div class="wk"><div class="tag">7</div><div><b>La guardia notturna — l'anello che salva tutto il resto</b><p><b>Sente:</b> watchdog su ogni sensore (silenzio = allarme), galleggiante nel serbatoio dell'umidificatore (<u>il guasto reale n°1</u>), sensore allagamento a pavimento, reed switch sulla porta (correla aperture ↔ contaminazioni!), UPS/powerbank sul Pi con notifica di blackout. <b>Decide:</b> escalation: anomalia → retry → alert Telegram → (a scala) failover pompa/riscaldatore gemello. <b>Cambia:</b> una sola stanza salvata da un guasto notturno ripaga l'intero stack. Ed è ciò che rende vere le <b>≤20 h/settimana</b>: il raccolto sopravvive alla tua assenza, tu dormi e vai in vacanza.</p></div></div>
+      <div class="step"><div class="n">7</div><div class="b"><h4>La guardia notturna</h4>
+        <dl class="sda"><dt>Sente</dt><dd>galleggiante nel serbatoio (il guasto numero uno), sensore d'allagamento, contatto sulla porta, watchdog su ogni sensore, batteria tampone sul Pi.</dd>
+        <dt>Decide</dt><dd>anomalia, poi retry, poi messaggio. Il silenzio di un sensore è a sua volta un allarme.</dd>
+        <dt>Cambia</dt><dd>una sola stanza salvata ripaga l'intero impianto. Ed è quello che rende vere le venti ore a settimana: <b>il raccolto sopravvive alla tua assenza.</b></dd></dl></div></div>
 
-      <h3>🧄 Gli anelli specifici dell'aglio nero</h3>
-      <p style="font-size:.95rem"><b>Gradiente, non "una temperatura"</b>: 3 sonde (fondo/centro/cima) — una camera fai-da-te ha 5-10°C di gradiente, ed è il motivo dei batch incostanti; il PID regola sulla sonda di massa, il log mostra il gradiente da correggere con un deflettore. <b>Cella di carico sotto il vassoio</b>: la curva di perdita peso È la curva di cottura → sai quando è pronto <u>senza mai aprire</u> (ogni apertura = crollo termico + fuga d'aroma). <b>kWh per batch</b> dalla presa smart → costo/kg misurato, non stimato: la riga che convince il business plan. <b>Sperimentale ma da fare</b>: sensore gas BME688 (~€20) sullo sfiato — i volatili di Maillard cambiano con lo stadio: se la firma è leggibile, hai un "naso" che nessun produttore al mondo sta usando.</p>
+      <h3>Gli anelli dell'aglio nero</h3>
+      <ul class="clean">
+        <li><b>Tre sonde, non una.</b> Una camera fai-da-te ha 5-10 gradi di gradiente tra fondo e cima: è il motivo dei batch incostanti. Il PID regola sulla sonda centrale, il log mostra il gradiente da correggere.</li>
+        <li><b>La bilancia sotto il vassoio.</b> La curva di perdita di peso è la curva di cottura: sai quando è pronto senza mai aprire. Ogni apertura costa un crollo termico e una fuga d'aroma.</li>
+        <li><b>L'energia misurata.</b> La presa smart trasforma "costo stimato" in <b>kWh per chilo, misurati</b>: la riga che regge il business plan.</li>
+        <li><b>Il naso sperimentale.</b> Un sensore gas BME688 sullo sfiato: i volatili della reazione di Maillard cambiano con lo stadio. Se la firma è leggibile, hai uno strumento che nessun produttore sta usando.</li>
+      </ul>
 
-      <h3>⚙️ I dettagli da professionista (dove i principianti sbagliano)</h3>
-      <div class="risk"><span class="trip">CO₂ · SCD40</span><p><b>Disattiva l'auto-calibrazione (ASC)</b>: assume che la stanza veda 400 ppm una volta a settimana — una fruiting room non li vede mai, e il sensore deriva verso il basso mentendo. Calibrazione manuale all'aperto una volta al mese; sensore ad altezza chioma, non a soffitto.</p></div>
-      <div class="risk"><span class="trip">umidità · 90%+ RH</span><p>I sensori RH capacitivi <b>derivano in ambiente saturo</b> e la condensa li acceca. Tre contromisure: schermo aspirato (ventolina 40mm che tira aria sul sensore — evita il bias da bagnato), <b>salt test mensile</b> (NaCl saturo = 75,3% RH di riferimento: costa un barattolo di sale), e dove possibile il riscaldatore integrato dell'SHT (cicli anti-condensa). <b>Due sensori per zona, allarme se divergono</b>: il drift silenzioso è il killer classico.</p></div>
-      <div class="risk"><span class="trip">camera · CV</span><p>La CV affidabile nasce dall'<b>illuminazione costante</b>: LED dedicato acceso via relay SOLO durante lo scatto, esposizione manuale fissa, camera imbullonata. Senza questo, ogni confronto tra frame misura la luce, non il fungo. Obiettivo protetto dalla nebbia (tettuccio + idrofobico), pulizia nel ciclo settimanale.</p></div>
-      <div class="risk"><span class="trip">modelli · in ordine giusto</span><p>Non partire dal deep learning: <b>settimane 1-8 = CV classica</b> (HSV per il verde, frame differencing per l'anomalia, copertura % per la colonizzazione) — funziona subito e genera il dataset etichettato. <b>Dopo 200-300 foto etichettate</b>: fine-tuning di un classificatore piccolo (MobileNet) sul Pi. <b>LLM con vision</b> (locale o API) per la "visita del micologo" settimanale: legge foto + log e scrive la diagnosi. Ogni livello produce i dati per il successivo.</p></div>
+      <h3>I dettagli che separano il professionista</h3>
+      <ul class="clean">
+        <li><b>CO₂:</b> spegni l'auto-calibrazione del SCD40. Presume che la stanza veda aria fresca ogni settimana; una fruiting room non la vede mai, e il sensore deriva mentendo. Calibrazione manuale all'aperto, una volta al mese.</li>
+        <li><b>Umidità:</b> in ambiente saturo i sensori derivano e la condensa li acceca. Tre rimedi: una ventolina che aspira aria sul sensore, il test del sale ogni mese (salamoia satura = 75,3 per cento esatto, costo un euro), e due sensori per zona con allarme se divergono.</li>
+        <li><b>Camera:</b> l'illuminazione costante è l'80 per cento della computer vision in una grow room. Flash dedicato solo allo scatto, esposizione fissa, obiettivo protetto dalla nebbia.</li>
+        <li><b>Modelli, nell'ordine giusto:</b> prime otto settimane con regole classiche — soglia sul verde, differenza tra fotogrammi, percentuale di copertura. Funzionano subito e producono il dataset. Dopo duecento foto etichettate, un classificatore piccolo sul Pi. L'LLM con vision fa la visita del micologo: legge foto e log una volta a settimana e scrive la diagnosi.</li>
+      </ul>
 
-      <h3>🛒 Lista acquisti — upgrade AI/sensori <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— oltre allo stack base già nelle pagine Build</span></h3>
+      <h3>La spesa aggiuntiva</h3>
       <div class="budgetwrap"><table class="budget" data-list="ai">
-        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo</th></tr></thead>
         <tbody>
-          <tr><td>Kit celle di carico 4×50 kg + HX711 (×2) <a class="buy" href="https://www.amazon.it/s?k=cella+di+carico+50kg+hx711" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">peso continuo ripiani (funghi) + vassoio (aglio): anelli 6 e cottura</span></td><td class="amt">€24</td></tr>
-          <tr><td>5× sonde DS18B20 impermeabili <a class="buy" href="https://www.amazon.it/s?k=ds18b20+impermeabile+5+pezzi" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">massa substrato (pastorizzazione) + 3 zone camera aglio</span></td><td class="amt">€12</td></tr>
-          <tr><td>2° sensore RH/temp per zona (SHT31/35) <a class="buy" href="https://www.amazon.it/s?k=sht35+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">ridondanza + allarme divergenza: il drift non ti mente più</span></td><td class="amt">€18</td></tr>
-          <tr><td>2× prese smart con misura energia (Shelly Plug S / Tapo P110) <a class="buy" href="https://www.amazon.it/s?k=shelly+plug+s" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">kWh per batch e per dispositivo → costo/kg vero; API locale</span></td><td class="amt">€28</td></tr>
-          <tr><td>Galleggiante serbatoio + sensore allagamento <a class="buy" href="https://www.amazon.it/s?k=sensore+livello+acqua+galleggiante" target="_blank" rel="noopener">🛒 livello</a> <a class="buy" href="https://www.amazon.it/s?k=sensore+allagamento+acqua" target="_blank" rel="noopener">🛒 allagamento</a><span class="why">il guasto n°1 (umidificatore a secco) e il n°2 (perdite)</span></td><td class="amt">€18</td></tr>
-          <tr><td>Reed switch porta + ventolina 40 mm (schermo aspirato) <a class="buy" href="https://www.amazon.it/s?k=reed+switch+porta+magnetico" target="_blank" rel="noopener">🛒 reed</a> <a class="buy" href="https://www.amazon.it/s?k=ventola+40mm+5v" target="_blank" rel="noopener">🛒 ventola</a><span class="why">correlazione aperture↔contaminazioni · RH senza bias da condensa</span></td><td class="amt">€14</td></tr>
-          <tr><td>Powerbank-UPS per Raspberry (pass-through) <a class="buy" href="https://www.amazon.it/s?k=ups+raspberry+pi+powerbank" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">blackout: il Pi resta su e ti avvisa; il clima no, ma tu lo SAI</span></td><td class="amt">€25</td></tr>
-          <tr><td>BME688 (gas/VOC) — sperimentale <a class="buy" href="https://www.amazon.it/s?k=bme688+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">il "naso" sullo sfiato dell'aglio nero: firma dei volatili per stadio</span></td><td class="amt">€22</td></tr>
-          <tr><td>Sale fino (calibrazione RH al 75,3%)<span class="why">salt test mensile in barattolo chiuso — il trucco da laboratorio a €1</span></td><td class="amt">€1</td></tr>
-          <tr class="total"><td>Totale upgrade (opzionale: Coral USB per CV veloce, ~€70)</td><td class="amt">~€160</td></tr>
+          <tr><td>Due kit celle di carico con HX711 <a class="buy" href="https://www.amazon.it/s?k=cella+di+carico+50kg+hx711" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">peso continuo dei ripiani e del vassoio dell'aglio</span></td><td class="amt">€24</td></tr>
+          <tr><td>Cinque sonde DS18B20 impermeabili <a class="buy" href="https://www.amazon.it/s?k=ds18b20+impermeabile+5+pezzi" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">massa del substrato e le tre zone della camera aglio</span></td><td class="amt">€12</td></tr>
+          <tr><td>Secondo sensore di umidità per zona <a class="buy" href="https://www.amazon.it/s?k=sht35+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">ridondanza: il drift non ti mente più</span></td><td class="amt">€18</td></tr>
+          <tr><td>Due prese smart con misura dei consumi <a class="buy" href="https://www.amazon.it/s?k=shelly+plug+s" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">energia per batch e per dispositivo, con API locale</span></td><td class="amt">€28</td></tr>
+          <tr><td>Galleggiante per il serbatoio e sensore d'allagamento <a class="buy" href="https://www.amazon.it/s?k=sensore+livello+acqua+galleggiante" target="_blank" rel="noopener">🛒 livello</a> <a class="buy" href="https://www.amazon.it/s?k=sensore+allagamento+acqua" target="_blank" rel="noopener">🛒 allagamento</a><span class="why">i due guasti reali più frequenti</span></td><td class="amt">€18</td></tr>
+          <tr><td>Contatto magnetico per la porta e ventolina 40 mm <a class="buy" href="https://www.amazon.it/s?k=reed+switch+porta+magnetico" target="_blank" rel="noopener">🛒 contatto</a> <a class="buy" href="https://www.amazon.it/s?k=ventola+40mm+5v" target="_blank" rel="noopener">🛒 ventola</a><span class="why">correlare le aperture alle contaminazioni; schermo aspirato per l'umidità</span></td><td class="amt">€14</td></tr>
+          <tr><td>Batteria tampone per il Raspberry <a class="buy" href="https://www.amazon.it/s?k=ups+raspberry+pi+powerbank" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">nel blackout il clima si ferma, ma tu lo vieni a sapere</span></td><td class="amt">€25</td></tr>
+          <tr><td>Sensore gas BME688, sperimentale <a class="buy" href="https://www.amazon.it/s?k=bme688+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">il naso sullo sfiato dell'aglio nero</span></td><td class="amt">€22</td></tr>
+          <tr><td>Sale fino per la calibrazione<span class="why">salamoia satura in barattolo chiuso: riferimento da laboratorio</span></td><td class="amt">€1</td></tr>
+          <tr class="total"><td>Totale</td><td class="amt">€160 circa</td></tr>
         </tbody>
       </table></div>
 
-      <h3>🗺 Architettura — local-first, l'anti-farmhand</h3>
+      <h3>L'architettura</h3>
       <figure style="margin:.8rem 0 0">
-        <svg viewBox="0 0 720 210" width="100%" role="img" aria-label="Architettura: sensori e camera entrano nel Raspberry Pi via MQTT; il Pi comanda i relay e produce log; sopra, il layer LLM genera diagnosi, journal, contenuti e documenti; gli alert arrivano a Telegram. Tutto locale, nessun cloud obbligatorio.">
+        <svg viewBox="0 0 720 210" width="100%" role="img" aria-label="Architettura: sensori e camera entrano nel Raspberry Pi; il Pi comanda i relay e produce i log; il layer LLM genera diagnosi, journal e documenti; gli avvisi arrivano su Telegram. Tutto locale, nessun cloud obbligatorio.">
           <g fill="#fbf9f2" stroke="#ddd5c2">
             <rect x="10" y="20" width="150" height="80" rx="10"/>
             <rect x="10" y="115" width="150" height="60" rx="10"/>
@@ -530,25 +616,25 @@
           </g>
           <g style="font-size:11.5px" fill="#23281d">
             <text x="20" y="40" style="font-weight:600">Sensori</text>
-            <text x="20" y="56">RH ×2 · CO₂ · DS18B20 ×5</text>
-            <text x="20" y="70">celle di carico · reed · livello</text>
-            <text x="20" y="84">prese smart (kWh)</text>
-            <text x="20" y="135" style="font-weight:600">Camera + flash</text>
+            <text x="20" y="56">umidità ×2 · CO₂ · sonde ×5</text>
+            <text x="20" y="70">bilance · porta · livello acqua</text>
+            <text x="20" y="84">prese smart</text>
+            <text x="20" y="135" style="font-weight:600">Camera con flash</text>
             <text x="20" y="151">scatto sincronizzato</text>
-            <text x="20" y="165">time-lapse comparabile</text>
-            <text x="250" y="76" style="font-weight:600">Raspberry Pi (locale)</text>
-            <text x="250" y="92">MQTT · loop controllo · CV</text>
-            <text x="250" y="106">→ relay: umid · ventola · luce</text>
-            <text x="250" y="120">→ log batch (il dataset)</text>
-            <text x="250" y="134">watchdog + failsafe</text>
+            <text x="20" y="165">time-lapse confrontabile</text>
+            <text x="250" y="76" style="font-weight:600">Raspberry Pi, locale</text>
+            <text x="250" y="92">loop di controllo e vision</text>
+            <text x="250" y="106">comanda umidità, aria, luce</text>
+            <text x="250" y="120">scrive il log di ogni lotto</text>
+            <text x="250" y="134">watchdog e failsafe</text>
             <text x="510" y="32" style="font-weight:600">Layer LLM</text>
-            <text x="510" y="48">diagnosi difetti↔clima · journal</text>
-            <text x="510" y="62">HACCP · etichette · contenuti</text>
-            <text x="510" y="102" style="font-weight:600">Telefono (Telegram)</text>
-            <text x="510" y="118">alert · "raccogli domattina"</text>
+            <text x="510" y="48">diagnosi difetti e clima</text>
+            <text x="510" y="62">journal, HACCP, contenuti</text>
+            <text x="510" y="102" style="font-weight:600">Il tuo telefono</text>
+            <text x="510" y="118">avvisi · "raccogli domattina"</text>
             <text x="510" y="132">report settimanale</text>
             <text x="510" y="172" style="font-weight:600">Nessun cloud obbligatorio</text>
-            <text x="510" y="188">tutto gira anche offline</text>
+            <text x="510" y="188">tutto funziona anche offline</text>
           </g>
           <g stroke="#6d7160" stroke-width="1.5" fill="none">
             <path d="M160 60 H240"/><path d="M160 145 C200 145 200 110 240 110"/>
@@ -556,121 +642,141 @@
           </g>
           <g fill="#6d7160"><path d="M240 60 l-8 -4 v8 Z"/><path d="M240 110 l-8 -4 v8 Z"/><path d="M500 80 l-8 -4 v8 Z"/><path d="M500 110 l-8 -4 v8 Z"/></g>
         </svg>
-        <figcaption style="font-size:.85rem;color:var(--muted);margin-top:.4rem">Il principio anti-farmhand: quando Freight Farms è morta, i cloud dei clienti si sono spenti. Qui tutto gira in locale; il cloud è opzionale — ed è esattamente lo stack che un giorno puoi vendere agli altri grower.</figcaption>
+        <figcaption style="font-size:.85rem;color:var(--muted);margin-top:.4rem">Quando Freight Farms è fallita, i cloud dei clienti si sono spenti dall'oggi al domani. Qui tutto gira in locale: il cloud è un optional. Ed è esattamente lo stack che un giorno puoi vendere agli altri coltivatori.</figcaption>
       </figure>
 
-      <h3>📓 Il copilota di batch — inizia dal giorno 1 a Roma</h3>
-      <p style="font-size:.95rem">Il valore composto nasce dal log strutturato. Ogni lotto, un record; l'LLM legge questo + le foto e scrive la diagnosi settimanale. Schema minimo:</p>
-      <div class="tblwrap"><pre style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding: .8rem 1rem;font-size:.75rem;overflow-x:auto">{
- "lotto": "F-2026-014", "specie": "lion's mane", "ricetta": "masters-mix-A",
- "spawn": {"fornitore": "…", "lotto": "…"},
- "pastorizzazione": {"curva": "log/F014-past.csv", "ore_sopra_65C": 9.5},
- "inoculo": "2026-09-12", "colonizzazione_pct": [5,18,41,77,100],
- "fruiting": {"inizio": "2026-10-01", "setpoint": {"T": 17, "RH": 90, "CO2": 700}},
- "eventi": ["2026-10-04 02:10 RH 78% x3h — serbatoio vuoto"],
- "raccolti": [{"data": "2026-10-09", "g": 480, "grado": "A"}],
- "difetti": ["cappelli leggermente screpolati flush 1"],
- "kwh": 14.2, "note_llm": "→ anticipare rabbocco; ridurre FAE notturna"
+      <h3>Il diario di lotto</h3>
+      <p style="font-size:.94rem">Il valore composto nasce dal registro. Un record per lotto; l'LLM lo legge insieme alle foto e scrive la diagnosi della settimana.</p>
+      <div class="tblwrap"><pre style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;font-size:.75rem;overflow-x:auto">{
+ "lotto": "F-2026-014",  "specie": "lion's mane",  "ricetta": "masters-mix-A",
+ "spawn": { "fornitore": "…", "lotto": "…" },
+ "pastorizzazione": { "curva": "log/F014.csv", "ore_sopra_65": 9.5 },
+ "colonizzazione_pct": [5, 18, 41, 77, 100],
+ "fruiting": { "inizio": "2026-10-01", "T": 17, "RH": 90, "CO2": 700 },
+ "eventi": ["04/10 02:10 umidità 78% per 3 ore, serbatoio vuoto"],
+ "raccolti": [{ "data": "2026-10-09", "grammi": 480, "grado": "A" }],
+ "kwh": 14.2,
+ "diagnosi": "anticipare il rabbocco; ridurre il ricambio notturno"
 }</pre></div>
-      <div class="call"><span class="tag">La regola che tiene tutto insieme</span><p>Ogni sensore che aggiungi deve rispondere a UNA domanda: <b>"quale decisione cambia?"</b> Se la risposta è "nessuna, ma è bello vederlo su un grafico", non comprarlo. I sette anelli sopra passano tutti il test — ed è per questo che ~€160 di componenti spostano percentuali a due cifre del conto economico.</p></div>
+      <div class="call"><span class="tag">La regola che tiene insieme tutto</span><p>Ogni sensore deve rispondere a una domanda sola: quale decisione cambia? Se la risposta è "nessuna, ma è bello vederlo su un grafico", non comprarlo. I sette anelli passano tutti il test: per questo 160 euro di componenti spostano percentuali a due cifre del conto economico.</p></div>
     </section>
   </div>
 
   <!-- ============ PAGE: LICENZE SCOZIA ============ -->
   <div id="page-licenze" class="apppage">
     <section style="padding-top:1rem">
-      <div class="kicker">Matrice licenze · Scozia · 9 agenti su fonti ufficiali + cross-check indipendente · 26 ago 2026</div>
+      <div class="kicker">Matrice normativa · Scozia · fonti ufficiali, con controverifica</div>
       <h2>Cosa serve per vendere, prodotto per prodotto</h2>
-      <p class="lede" style="font-size:1rem">Ricerca su gov.scot, foodstandards.gov.scot, APHA, SASA e i council di Edimburgo/Midlothian. Le due catene più rischiose (mangimi e animali vivi) sono state ri-verificate da un secondo specialista indipendente. Sintesi: <b>per lo stack fungino il costo obbligatorio è £0</b>.</p>
+      <p class="lede" style="font-size:1rem">Nove ricerche dedicate su gov.scot, Food Standards Scotland, APHA, SASA e i council di Edimburgo e Midlothian; le due catene più delicate sono state riverificate da un secondo specialista indipendente. La notizia principale: per lo stack fungino non esiste alcuna licenza da comprare.</p>
+      <div class="glance">
+        <div class="stat"><b>£0</b><span>costi obbligatori per lo stack fungino</span></div>
+        <div class="stat"><b>28 giorni</b><span>preavviso di registrazione, l'unico vero vincolo</span></div>
+        <div class="stat"><b>£250-600</b><span>per l'aglio nero, laboratorio incluso</span></div>
+        <div class="stat"><b>0 blocchi</b><span>nessun prodotto dello stack è vietato da casa</span></div>
+      </div>
 
-      <h3>🍄 Stack fungino (fresco · essiccato · polvere · kit) — costo obbligatorio £0, difficoltà 1/5</h3>
+      <h3>🍄 Lo stack fungino: fresco, essiccato, polvere, kit</h3>
       <div class="tblwrap"><table class="parm">
-        <thead><tr><th>Requisito</th><th>Autorità</th><th>Costo</th><th>Tempi</th></tr></thead>
+        <thead><tr><th>Cosa serve</th><th>Chi la rilascia</th><th>Costo</th><th>Tempi</th></tr></thead>
         <tbody>
-          <tr><td><b>Registrazione food business</b> (copre coltivare, essiccare, macinare, vendere online) — casa domestica esplicitamente registrabile</td><td>Council (Edimburgo/Midlothian), regime FSS</td><td>Gratis (vietato farla pagare)</td><td>≥28 gg prima della prima vendita; ispezione EHO a seguire</td></tr>
-          <tr><td><b>Sistema HACCP documentato</b> — per essiccare/macinare sei "manufacturer", non più primary producer</td><td>Reg 852/2004, EHO</td><td>Gratis (CookSafe FSS / MyHACCP)</td><td>1-3 giorni, pronto PRIMA della visita</td></tr>
-          <tr><td>Certificato igiene REHIS Elementary — <b>non obbligatorio per legge</b>, ma è ciò che EHO e buyer si aspettano</td><td>REHIS</td><td>£60-110, 1 giorno</td><td>consigliato pre-ispezione</td></tr>
-          <tr><td>Kit di coltivazione: NESSUNA registrazione food (non sono alimenti) — solo sicurezza generale prodotto</td><td>GPSR 2005</td><td>£0</td><td>—</td></tr>
-          <tr><td>HMRC sole trader</td><td>HMRC</td><td>Gratis</td><td>entro 5 ott anno fiscale successivo</td></tr>
+          <tr><td><b>Registrazione food business</b>, copre coltivare, essiccare, macinare e vendere online. La cucina di casa è esplicitamente ammessa.</td><td>Council di Edimburgo o Midlothian</td><td>Gratis: è illegale farla pagare</td><td>28 giorni prima della prima vendita</td></tr>
+          <tr><td><b>Sistema HACCP scritto.</b> Quando essicchi o macini sei un produttore, non più un coltivatore: servono punti critici documentati.</td><td>Lo scrivi tu con il template CookSafe</td><td>Gratis</td><td>pronto prima dell'ispezione</td></tr>
+          <tr><td>Certificato d'igiene. Per legge non è obbligatorio, ma ispettori e buyer lo chiedono tutti.</td><td>Corso REHIS o equivalente online</td><td>£20-110</td><td>mezza giornata</td></tr>
+          <tr><td>I kit di coltivazione non sono alimenti: nessuna registrazione, solo sicurezza generale del prodotto.</td><td>—</td><td>Nulla</td><td>—</td></tr>
+          <tr><td>Partita da sole trader.</td><td>HMRC</td><td>Gratis</td><td>entro il 5 ottobre successivo</td></tr>
         </tbody>
       </table></div>
-      <div class="risk"><span class="trip">trappole verificate</span><p><b>1)</b> La polvere di MICELIO è novel food non autorizzato = illegale (solo fruiting body!). <b>2)</b> Zero health claim: l'ASA ha già bandito "focus/memoria/stress" sui funghi. <b>3)</b> In Scozia l'EHO vuole <b>CookSafe</b>, non il pacco SFBB inglese — errore classico. <b>4)</b> Il rating è FHIS Pass/Improvement Required, non le stelle inglesi. <b>5)</b> Vendere polvere come "ingrediente culinario" (non "integratore") evita tutte le regole supplement.</p></div>
+      <ul class="clean">
+        <li><b>La trappola più grave:</b> la polvere di micelio è un novel food non autorizzato, cioè illegale. Solo corpo fruttifero, sempre.</li>
+        <li><b>Niente promesse di salute in etichetta:</b> l'autorità pubblicitaria ha già sanzionato "memoria", "concentrazione" e simili sui funghi.</li>
+        <li><b>Il template giusto è CookSafe</b>, quello scozzese. Scaricare il pacchetto inglese SFBB è l'errore classico che gli ispettori segnalano.</li>
+        <li>Venduta come <b>ingrediente da cucina</b> e non come integratore, la polvere evita per intero le regole sui supplementi.</li>
+      </ul>
 
-      <h3>🧄 Aglio nero — guida operativa completa (~£250-600, 4-8 settimane, difficoltà 2,5/5)</h3>
-      <p style="font-size:.95rem"><b>La notizia buona, verificata:</b> per vendere aglio nero in Scozia <b>non esiste NESSUNA licenza</b> — niente approvazione locali (solo prodotti animali), niente passaporto piante (è cibo processato, non pianta viva), niente novel food (è cottura lenta di un alimento comune, già venduto ovunque — tieni una nota di un pagina nel dossier che lo motiva). Servono solo: registrazione gratuita + un HACCP fatto bene + prove di laboratorio da £100-300. Ecco cosa fare, in ordine:</p>
+      <h3>🧄 Aglio nero: la guida operativa</h3>
+      <p style="font-size:.95rem">Nessuna licenza esiste per questo prodotto: niente approvazione dei locali, che riguarda solo i prodotti animali; niente passaporto fitosanitario, perché è cibo processato; niente novel food, perché è cottura lenta di un alimento comune già venduto ovunque. Restano una registrazione gratuita, un dossier fatto bene e qualche analisi di laboratorio. In ordine:</p>
 
-      <div class="wk"><div class="tag">0</div><div><b>Scegli le forme di prodotto — decide tutto il resto</b><p><b>Bulbi interi, spicchi sbucciati, polvere = facili</b> (bassa attività dell'acqua, shelf-stable per natura). <b>Pasta = il caso difficile</b>: aggiungere acqua alza l'aw — se supera 0,85 il prodotto NON è più vendibile a temperatura ambiente senza altre prove. Parti da bulbi + polvere; la pasta al secondo anno. <b>MAI sott'olio</b>: aglio in olio è IL prodotto da botulino, la prima cosa che l'ispettore va a cercare.</p></div></div>
-      <div class="wk reg"><div class="tag">1</div><div><b>Giorno 1: registrazione (gratis) + HMRC</b><p>Modulo online <a href="https://www.edinburgh.gov.uk/registerfoodbusiness">registerfoodbusiness di Edimburgo</a> (o Midlothian): gratuita, non può essere rifiutata, va fatta <b>≥28 giorni prima della prima vendita</b> — vendere prima è il reato che i council perseguono davvero. La cucina di casa è esplicitamente registrabile. Stesso giorno: <a href="https://www.gov.uk/set-up-sole-trader">sole trader HMRC</a> (obbligo sopra £1.000/anno di incassi).</p></div></div>
-      <div class="wk"><div class="tag">2</div><div><b>Scrivi l'HACCP con CookSafe — il cuore del dossier</b><p>Usa <a href="https://www.foodstandards.gov.scot/business-guidance/running-a-food-business/publications/cooksafe-guide">CookSafe</a> (il template scozzese — NON il pacco inglese SFBB). Per l'aglio nero deve dire: pericolo = <i>C. botulinum</i> (aglio + caldo + camera potenzialmente anaerobica); punti critici = <b>temperatura camera ≥60°C con log continuo</b> (il tuo Pi lo fa già), <b>ventilazione della camera documentata</b> (mai sigillata per 60-90 giorni), <b>aw del prodotto finito misurata</b>. Allega la <a href="https://ncceh.ca/resources">review di sicurezza NCCEH 2023 sul black garlic</a> e i tuoi log. <b>Perché tanto zelo: l'EHO non ha mai visto l'aglio nero</b> — chi si presenta senza dossier viene bloccato o sovra-classificato; chi arriva col dossier passa. 1-2 settimane di lavoro, £0.</p></div></div>
-      <div class="wk"><div class="tag">3</div><div><b>Corso igiene Level 2 (£15-30 online, mezza giornata)</b><p>Non obbligatorio per legge (verificato) — ma ogni EHO lo chiede e ogni buyer lo pretende. A £20 è la credibilità più economica che puoi comprare. Versione REHIS se vuoi quella "scozzese doc".</p></div></div>
-      <div class="wk"><div class="tag">4</div><div><b>Primi lotti: misura, non pagare troppo</b><p>Su ogni forma di prodotto: <b>aw e pH in laboratorio (£30-100 a campione)</b> o aw-meter a noleggio. Con quei numeri + la letteratura imposti il <b>best before</b> (prodotto ambient = best before, mai use-by) usando la <a href="https://www.foodstandards.gov.scot/self-assessment-resources/safe-shelf-life">guida FSS safe shelf life</a>. ⚠️ I laboratori proporranno <b>challenge test da £1.500-3.000: NON servono</b> per un prodotto low-aw validato — aw/pH + letteratura bastano (guida FSA/Campden BRI). Tieni campioni e registri di lotto.</p></div></div>
-      <div class="wk"><div class="tag">5</div><div><b>Etichetta a norma — la checklist</b><p>Nome: <b>"Aged black garlic"</b> — MAI "fermented" (è cottura, non fermentazione: descrizione ingannevole, Art 7 FIC) e <b>zero claim salute</b> (pressione, antiossidanti… sono i due motivi per cui i concorrenti ti segnalano). Poi: best before + lotto · peso netto in g · <b>nome e indirizzo postale tuo su ogni vasetto</b> (valuta un servizio di registered address: quello di casa finisce anche sulla pagina Etsy) · origine dell'aglio se il brand è scozzese ma l'aglio è spagnolo (Art 26) · aglio NON è tra i 14 allergeni (verificato). Vendita a distanza: <b>tutte le info etichetta visibili sul listing PRIMA dell'acquisto</b> (tranne il best before).</p></div></div>
-      <div class="wk"><div class="tag">6</div><div><b>Assicurazione e ispezione</b><p>RC prodotto+pubblica £60-150/anno (non obbligatoria, essenziale — e avvisa l'assicurazione di casa: è il mancato avviso che annulla la polizza, non il council). L'ispezione EHO arriva senza preavviso dopo la registrazione: guardano lavamani, superfici pulibili, separazione casa/lavoro, animali fuori durante la produzione, i tuoi registri. Esito scozzese: Pass / Improvement Required.</p></div></div>
-      <div class="wk"><div class="tag">7</div><div><b>Canali, in ordine di attrito</b><p><b>Subito</b>: Etsy + sito proprio (nessun requisito extra oltre l'etichetta). <b>Dopo</b>: Amazon Grocery è categoria gated — chiedono registrazione council + foto etichette; serve <b>GTIN GS1 a tuo nome</b> (~£120/anno — i barcode ricomprati su eBay vengono soppressi) + nutrition declaration; FBA vuole ≥105 giorni di shelf-life residua in ingresso.</p></div></div>
+      <div class="step"><div class="n">1</div><div class="b"><h4>Scegli le forme, perché decidono tutto</h4><p>Bulbi interi, spicchi e polvere sono naturalmente stabili a temperatura ambiente. La pasta no: l'acqua aggiunta alza l'attività dell'acqua e sopra la soglia il prodotto non è più vendibile senza catena del freddo. E mai, mai sott'olio: l'aglio in olio è il prodotto da botulino per definizione.</p><div class="meta"><span>facili: bulbi, spicchi, polvere</span><span class="hot">difficile: pasta</span><span class="hot">vietato di fatto: sott'olio</span></div></div></div>
+      <div class="step"><div class="n">2</div><div class="b"><h4>Il primo giorno: registrazione e partita</h4><p>Modulo online del council, gratuito e non rifiutabile, da inviare almeno ventotto giorni prima della prima vendita: vendere prima è il reato che i council perseguono davvero. Lo stesso giorno apri la posizione sole trader.</p><div class="meta"><span><a href="https://www.edinburgh.gov.uk/registerfoodbusiness" target="_blank" rel="noopener">modulo di Edimburgo</a></span><span><a href="https://www.gov.uk/set-up-sole-trader" target="_blank" rel="noopener">HMRC</a></span><span>costo zero</span></div></div></div>
+      <div class="step"><div class="n">3</div><div class="b"><h4>Il dossier HACCP, il cuore di tutto</h4><p>L'ispettore non ha mai visto l'aglio nero: chi arriva senza documenti viene bloccato, chi arriva col dossier passa. Il tuo deve nominare il botulino come pericolo, fissare i punti critici — temperatura sempre sopra i sessanta gradi con log continuo, camera ventilata e mai sigillata, attività dell'acqua misurata sul prodotto finito — e allegare la revisione di sicurezza NCCEH del 2023 insieme ai log del tuo Pi.</p><div class="meta"><span><a href="https://www.foodstandards.gov.scot/business-guidance/running-a-food-business/publications/cooksafe-guide" target="_blank" rel="noopener">template CookSafe</a></span><span>una-due settimane</span><span>costo zero</span></div></div></div>
+      <div class="step"><div class="n">4</div><div class="b"><h4>Il corso d'igiene</h4><p>Non obbligatorio per legge, richiesto da chiunque conti: venti euro online, mezza giornata, ed è la credibilità più economica che puoi comprare.</p></div></div>
+      <div class="step"><div class="n">5</div><div class="b"><h4>Le analisi giuste, senza farsi spennare</h4><p>Su ogni forma di prodotto misuri attività dell'acqua e pH in laboratorio, trenta-cento sterline a campione, e con quei numeri fissi la data di scadenza secondo la guida ufficiale. I laboratori proporranno challenge test da millecinquecento sterline in su: per un prodotto secco validato non servono, lo dice la stessa guida dell'autorità.</p><div class="meta"><span><a href="https://www.foodstandards.gov.scot/self-assessment-resources/safe-shelf-life" target="_blank" rel="noopener">guida shelf life FSS</a></span><span>£100-300 totali</span></div></div></div>
+      <div class="step"><div class="n">6</div><div class="b"><h4>L'etichetta</h4><p>Si chiama "aged black garlic": mai "fermented", perché è cottura e la descrizione ingannevole è sanzionabile. Niente promesse su pressione o antiossidanti: sono i due motivi per cui i concorrenti segnalano. Servono data di scadenza, numero di lotto, peso netto, nome e indirizzo postale — valuta un indirizzo di servizio, quello di casa finisce su ogni vasetto — e l'origine dell'aglio se il brand è scozzese ma l'aglio non lo è. Nella vendita online tutte le informazioni vanno mostrate sulla pagina prima dell'acquisto.</p></div></div>
+      <div class="step"><div class="n">7</div><div class="b"><h4>Assicurazione e ispezione</h4><p>La responsabilità civile costa sessanta-centocinquanta sterline l'anno: non è obbligatoria ma è essenziale, e avvisa anche l'assicurazione di casa, perché è il mancato avviso che annulla le polizze. L'ispettore arriva senza preavviso: guarda lavamani, superfici, separazione tra casa e lavoro, animali fuori dalla produzione e i tuoi registri.</p></div></div>
+      <div class="step"><div class="n">8</div><div class="b"><h4>I canali, in ordine di attrito</h4><p>Etsy e sito proprio subito, senza requisiti extra. Amazon dopo: la categoria alimentare è ad accesso controllato, chiede la registrazione del council, foto delle etichette e un codice a barre GS1 intestato a te — i codici ricomprati vengono soppressi.</p><div class="meta"><span>subito: Etsy e sito</span><span>poi: Amazon, GS1 £120 l'anno</span></div></div></div>
 
-      <div class="risk"><span class="trip">soglie che cambiano le regole</span><p>Primo dipendente → employers' liability £5M obbligatoria · trasloco su yard/container → NUOVA registrazione (per-locale) + planning · ≥5 kg scarti alimentari/settimana a Edimburgo → raccolta commerciale separata · £90k fatturato → VAT (ma il cibo è zero-rated: può convenire) · vendere ai supermercati → serve SALSA (~£700/anno + audit) <b>e la cucina di casa non lo passa</b>: è quello il vero trigger del trasloco.</p></div>
+      <ul class="clean">
+        <li><b>Le soglie che cambiano le regole:</b> il primo dipendente rende obbligatoria l'assicurazione datore di lavoro; il trasloco sullo yard richiede una nuova registrazione e il planning; a novantamila sterline scatta l'IVA, ma il cibo è ad aliquota zero; per entrare nei supermercati serve la certificazione SALSA, e una cucina domestica non la passa — è quello il vero momento del trasloco.</li>
+      </ul>
 
-      <h3>🍯 Hot honey — £0-300, 4-6 settimane, difficoltà 2/5</h3>
-      <div class="risk"><span class="trip">la trappola che Trading Standards persegue davvero</span><p>Non puoi chiamarlo solo <b>"Honey"</b>: le Honey (Scotland) Regulations 2015 riservano il nome al miele puro — serve un nome tipo "chilli-infused honey [preparation]". E niente peperoncini FRESCHI (acqua → rischio botulino): solo secchi o validazione di laboratorio.</p></div>
+      <h3>Gli altri prodotti, in breve</h3>
+      <ul class="clean">
+        <li><b>🍯 Hot honey.</b> Registrazione gratuita e poco altro, ma il nome è la trappola vera: le regole sul miele riservano la parola "honey" al miele puro — serve un nome come "chilli infused honey preparation". E solo peperoncini secchi: quelli freschi portano acqua, e l'acqua porta il rischio botulino.</li>
+        <li><b>🐕 Snack per cani.</b> È diritto dei mangimi: servono due approvazioni prima della prima vendita — la registrazione feed direttamente con Food Standards Scotland e l'approvazione APHA dei locali. La casa è approvabile solo con una cucina separata da quella di famiglia; i tempi vanno da due a sei mesi.</li>
+        <li><b>🦐 Gamberetti vivi.</b> Sorpresa verificata due volte: in Scozia gli invertebrati sono fuori dalla licenza di vendita animali. Serve però la conferma scritta, gratuita, dell'ispettorato di salute acquatica. I problemi veri sono i corrieri, perché solo Royal Mail accetta certi invertebrati, e i marketplace, perché Etsy e Amazon vietano gli animali vivi.</li>
+        <li><b>🌷 Tuberi e piante per posta.</b> Registrazione come operatore professionale, gratuita, più l'autorizzazione ai passaporti fitosanitari con ispezione annuale da centoventi a duecentocinquanta sterline. Anche "vendo solo su Etsy" conta come attività professionale. I tronchetti di betulla e quercia invece non richiedono alcun passaporto.</li>
+        <li><b>🔥 Kindling e ☕ caffè.</b> Il kindling in Scozia non richiede alcuna licenza; la certificazione Ready to Burn è legge solo in Inghilterra. La torrefazione domestica richiede la sola registrazione food gratuita.</li>
+      </ul>
 
-      <h3>🐕 Dog treats — la catena più pesante: 2 sign-off PRIMA della prima vendita</h3>
-      <p style="font-size:.95rem"><b>1)</b> Registrazione feed business direttamente con FSS (feed@fss.scot, gratis — dal 2021 NON passa dal council: trappola "porta sbagliata"). <b>2)</b> <b>Approvazione APHA del locale</b> (ABP Cat 3): la casa È approvabile ma solo con separazione rigorosa dalla cucina di famiglia — una cucina condivisa fallisce l'ispezione ABPR04. Tempi 2-6 mesi. Cross-check: il costo "gratis in Scozia" non è confermato (in Inghilterra ~£1.984); il registro trasportatore invece NON serve per i propri prodotti. Amazon Pet Food è categoria gated.</p>
-
-      <h3>🦐 Gamberetti vivi — sorpresa: zero licenze obbligatorie</h3>
-      <p style="font-size:.95rem">Verificato due volte: in Scozia gli invertebrati sono FUORI dalla licenza di vendita animali (s.16 AHW(S)A 2006 definisce "animal" = vertebrato). Correzione dal cross-check: serve la <b>conferma scritta FHI/APB</b> (gratuita) per l'acquacoltura ornamentale. Le trappole vere sono i corrieri (solo Royal Mail ammette certi invertebrati elencati; Evri/DPD/Parcelforce vietano tutto) e i marketplace (Etsy e Amazon vietano animali vivi; eBay permette).</p>
-
-      <h3>🌷 Tuberi, piante, tronchetti — passaporti SASA</h3>
-      <p style="font-size:.95rem">Vendita a distanza di piante/tuberi = registrazione operatore professionale (gratis) + <b>autorizzazione a emettere plant passport</b> (ispezione ~£120-250/anno) via SASA — anche "solo Etsy" conta come professionale. <b>I tronchetti di betulla/quercia NON richiedono passaporto</b> (solo conifere e castagno). Trappola: spegni "ships to: UK" per la Northern Ireland (regime EU, serve NIPHL).</p>
-
-      <h3>🔥 Kindling &amp; ☕ caffè — quasi zero barriere</h3>
-      <p style="font-size:.95rem">Kindling: <b>nessuna licenza in Scozia</b> (Ready to Burn è legge solo in Inghilterra — £122+£385/anno solo se vendi là); Trading Standards testa l'umidità dichiarata: tieni i log del misuratore. Caffè: solo registrazione food gratuita + etichette; niente permesso emissioni a scala domestica.</p>
-
-      <div class="call"><span class="tag">Il quadro</span><p>La gerarchia normativa conferma il ranking commerciale: <b>lo stack fungino è il percorso a costo zero e attrito minimo</b>; aglio nero e hot honey aggiungono solo la validazione di laboratorio; i dog treats richiedono un locale dedicato e 2-6 mesi di APHA; tutto il resto sta in mezzo. Nessun blocco reale su nessuno dei prodotti dello stack.</p></div>
+      <div class="call"><span class="tag">Il quadro</span><p>La gerarchia normativa conferma quella commerciale: lo stack fungino è il percorso a costo zero e attrito minimo, l'aglio nero aggiunge solo le analisi di laboratorio, e tutto il resto costa di più in permessi di quanto renda in margine.</p></div>
     </section>
   </div>
 
   <!-- ============ PAGE: BUILD AGLIO NERO (ROMA) ============ -->
   <div id="page-garlic" class="apppage">
     <section style="padding-top:1rem">
-      <div class="kicker">Fase-0 · Roma · ~€150-250 · 3-9 settimane a batch · non commerciale</div>
-      <h2>Build: camera di fermentazione per aglio nero</h2>
-      <p class="lede" style="font-size:1rem">Il candidato n°2 del ranking (7.35): retail UK ~£100/kg, una manciata di produttori, e il processo è <b>al 100% controllo di temperatura e umidità per 60-90 giorni</b> — zero biologia viva, solo ingegneria. Il dataset dei parametri che costruisci qui È il vantaggio competitivo.</p>
+      <div class="kicker">Fase zero · a casa tua, a Roma</div>
+      <h2>Costruisci la camera dell'aglio nero</h2>
+      <p class="lede" style="font-size:1rem">Il secondo prodotto del brand, e il più adatto a un ingegnere: sessanta-novanta giorni di temperatura e umidità costanti, zero biologia viva, solo controllo. Nel Regno Unito si vende a circa cento sterline al chilo e i produttori si contano su una mano. Il dataset di parametri che costruisci qui è il vantaggio che nessuno può copiarti.</p>
+      <div class="glance">
+        <div class="stat"><b>€180</b><span>spesa totale</span></div>
+        <div class="stat"><b>3-6 sett.</b><span>per batch, a seconda del profilo</span></div>
+        <div class="stat"><b>3 batch</b><span>il piano sperimentale minimo</span></div>
+        <div class="stat"><b>£100/kg</b><span>il prezzo di riferimento sul mercato UK</span></div>
+      </div>
 
-      <h3>🛒 Lista acquisti <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— spunta quello che hai già; si salva nel browser</span></h3>
+      <h3>La spesa</h3>
+      <p style="font-size:.9rem;color:var(--muted)">Spunta quello che hai già: la lista si salva nel browser.</p>
       <div class="budgetwrap"><table class="budget" data-list="garlic">
-        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo</th></tr></thead>
         <tbody>
-          <tr><td>Camera: mini-frigo dismesso O box EPP coibentato 40-60 L <a class="buy" href="https://www.subito.it/annunci-italia/vendita/usato/?q=mini+frigo" target="_blank" rel="noopener">🛒 Subito</a> <a class="buy" href="https://www.amazon.it/s?k=box+termico+polistirolo+60+litri" target="_blank" rel="noopener">🛒 box EPP</a><span class="why">il frigo morto è perfetto: coibentato, richiudibile, spesso gratis</span></td><td class="amt">€0-60</td></tr>
-          <tr><td>Riscaldatore: cavo/tappetino da rettilario 50-100 W o PTC <a class="buy" href="https://www.amazon.it/s?k=tappetino+riscaldante+rettili+50w" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">mai resistenze nude vicino a plastica</span></td><td class="amt">€25</td></tr>
-          <tr><td>Controllo: Inkbird ITC-306T o Pi/ESP32 + SSR 25A + DS18B20 <a class="buy" href="https://www.amazon.it/s?k=inkbird+itc-306t" target="_blank" rel="noopener">🛒 Inkbird</a> <a class="buy" href="https://www.amazon.it/s?k=rele+stato+solido+ssr+25a" target="_blank" rel="noopener">🛒 SSR</a> <a class="buy" href="https://www.amazon.it/s?k=ds18b20+sonda+impermeabile" target="_blank" rel="noopener">🛒 sonda</a><span class="why">la via Pi ti dà log + profili programmabili — il dataset</span></td><td class="amt">€25-40</td></tr>
-          <tr><td>SHT31 per RH + ciotola d'acqua/spugna <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">RH 70-85%; l'acqua nella camera basta quasi sempre</span></td><td class="amt">€12</td></tr>
-          <tr><td>Termofusibile + presa con contatore kWh <a class="buy" href="https://www.amazon.it/s?k=fusibile+termico+ripristinabile" target="_blank" rel="noopener">🛒 fusibile</a> <a class="buy" href="https://www.amazon.it/s?k=presa+contatore+consumo+energia" target="_blank" rel="noopener">🛒 contatore</a><span class="why">sicurezza elettrica + misura del costo energetico reale per kg</span></td><td class="amt">€20</td></tr>
-          <tr><td>Filtro a carboni attivi sullo sfiato <a class="buy" href="https://www.amazon.it/s?k=filtro+carboni+attivi+100mm" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">i primi 3-7 giorni l'odore è FORTE — questo è il fix</span></td><td class="amt">€18</td></tr>
-          <tr><td>Aglio: 2 kg standard + 1-2 kg premium (Voghiera DOP / rosso di Sulmona) <a class="buy" href="https://www.amazon.it/s?k=aglio+di+voghiera+dop" target="_blank" rel="noopener">🛒 Voghiera</a><span class="why">batch comparativo: il premium giustifica il prezzo premium? (meglio ancora: mercato)</span></td><td class="amt">€25-40</td></tr>
-          <tr><td>Barattoli vetro, carta forno/foil, guanti <a class="buy" href="https://www.amazon.it/s?k=barattoli+vetro+ermetici" target="_blank" rel="noopener">🛒 Amazon</a></td><td class="amt">€15</td></tr>
-          <tr class="total"><td>Totale fase-0 aglio nero</td><td class="amt">~€160-220</td></tr>
+          <tr><td>Un mini-frigo dismesso, oppure un box coibentato da 40-60 litri <a class="buy" href="https://www.subito.it/annunci-italia/vendita/usato/?q=mini+frigo" target="_blank" rel="noopener">🛒 Subito</a> <a class="buy" href="https://www.amazon.it/s?k=box+termico+polistirolo+60+litri" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">il frigo morto è perfetto: coibentato, richiudibile, spesso gratis</span></td><td class="amt">€0-60</td></tr>
+          <tr><td>Tappetino riscaldante da rettilario, 50-100 watt <a class="buy" href="https://www.amazon.it/s?k=tappetino+riscaldante+rettili+50w" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">mai resistenze nude vicino alla plastica</span></td><td class="amt">€25</td></tr>
+          <tr><td>Controllo: un Inkbird ITC-306T, oppure il Pi con relè a stato solido e sonda <a class="buy" href="https://www.amazon.it/s?k=inkbird+itc-306t" target="_blank" rel="noopener">🛒 Inkbird</a> <a class="buy" href="https://www.amazon.it/s?k=rele+stato+solido+ssr+25a" target="_blank" rel="noopener">🛒 SSR</a> <a class="buy" href="https://www.amazon.it/s?k=ds18b20+sonda+impermeabile" target="_blank" rel="noopener">🛒 sonda</a><span class="why">la via Pi ti dà log e profili programmabili: il dataset</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>Sensore di umidità e una ciotola d'acqua <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">serve il 70-85 per cento: l'acqua nella camera basta quasi sempre</span></td><td class="amt">€12</td></tr>
+          <tr><td>Termofusibile di sicurezza e presa con contatore <a class="buy" href="https://www.amazon.it/s?k=fusibile+termico+ripristinabile" target="_blank" rel="noopener">🛒 fusibile</a> <a class="buy" href="https://www.amazon.it/s?k=presa+contatore+consumo+energia" target="_blank" rel="noopener">🛒 contatore</a><span class="why">sicurezza elettrica, e il costo energetico misurato per chilo</span></td><td class="amt">€20</td></tr>
+          <tr><td>Filtro a carboni attivi per lo sfiato <a class="buy" href="https://www.amazon.it/s?k=filtro+carboni+attivi+100mm" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">la prima settimana l'odore è fortissimo: questo è il rimedio</span></td><td class="amt">€18</td></tr>
+          <tr><td>Aglio: due chili standard e uno-due premium, Voghiera o Sulmona <a class="buy" href="https://www.amazon.it/s?k=aglio+di+voghiera+dop" target="_blank" rel="noopener">🛒 Voghiera</a><span class="why">il confronto che dice se il premium vale il prezzo</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>Barattoli di vetro, carta forno, guanti <a class="buy" href="https://www.amazon.it/s?k=barattoli+vetro+ermetici" target="_blank" rel="noopener">🛒 Amazon</a></td><td class="amt">€15</td></tr>
+          <tr class="total"><td>Totale</td><td class="amt">€160-220</td></tr>
         </tbody>
       </table></div>
 
-      <h3>🔧 Montaggio</h3>
-      <div class="wk"><div class="tag">1</div><div><b>Camera</b><p>Svuota il frigo, togli il compressore se vuoi (o lascialo spento), fora un passacavo in basso e uno sfiato piccolo in alto (col filtro a carboni). Sigilla col silicone.</p></div></div>
-      <div class="wk"><div class="tag">2</div><div><b>Riscaldamento</b><p>Tappetino sul fondo, griglia sopra (l'aglio non tocca il calore diretto), sonda al centro TRA le teste, non in aria libera. Taratura: overshoot &lt;2°C — con SSR e PID su Pi ci arrivi in una serata.</p></div></div>
-      <div class="wk"><div class="tag">3</div><div><b>Umidità e carico</b><p>Ciotola d'acqua sul fondo. Teste INTERE, non sbucciate. Test in parallelo: metà avvolte singolarmente (foil/carta), metà sfuse in barattolo aperto — annota quale viene meglio.</p></div></div>
-      <div class="wk"><div class="tag">4</div><div><b>Software</b><p>Log continuo T/RH/kWh, alert se la temperatura esce di ±3°C, foto settimanale della testa campione. Profili programmabili: è quello che i produttori col rice cooker non hanno.</p></div></div>
+      <h3>Il montaggio, in quattro passi</h3>
+      <div class="step"><div class="n">1</div><div class="b"><h4>La camera</h4><p>Svuota il frigo e lascia spento il compressore. Un foro passacavi in basso, uno sfiato piccolo in alto con il filtro a carboni, silicone a sigillare.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="b"><h4>Il calore</h4><p>Tappetino sul fondo con una griglia sopra: l'aglio non deve toccare il calore diretto. La sonda va al centro, tra le teste, non nell'aria. Con relè a stato solido e PID tieni l'oscillazione sotto i due gradi in una serata di taratura.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="b"><h4>Umidità e carico</h4><p>Una ciotola d'acqua sul fondo regola quasi da sola. Teste intere, mai sbucciate. Fai il test in parallelo: metà avvolte una a una nella carta, metà sfuse in barattolo aperto, e annota quale viene meglio.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="b"><h4>Il software</h4><p>Log continuo di temperatura, umidità e consumi; un avviso se la temperatura esce di tre gradi; una foto a settimana alla testa campione. I profili programmabili sono ciò che i produttori con la rice cooker non avranno mai.</p></div></div>
 
-      <h3>📈 Processo e dataset</h3>
+      <h3>Il piano sperimentale</h3>
       <div class="tblwrap"><table class="parm">
-        <thead><tr><th>Batch</th><th>Temp</th><th>RH</th><th>Durata attesa</th><th>Cosa testa</th></tr></thead>
+        <thead><tr><th>Batch</th><th>Temperatura</th><th>Durata attesa</th><th>Cosa risponde</th></tr></thead>
         <tbody>
-          <tr><td>A — baseline</td><td>65°C costanti</td><td>~80%</td><td>21-30 gg</td><td>la ricetta standard</td></tr>
-          <tr><td>B — lento/dolce</td><td>60°C</td><td>~80%</td><td>35-45 gg</td><td>più dolce e morbido? vale l'energia in più?</td></tr>
-          <tr><td>C — premium</td><td>come il migliore di A/B</td><td>—</td><td>—</td><td>Voghiera DOP vs standard: differenza percepibile?</td></tr>
+          <tr><td>A, la base</td><td>65 gradi costanti</td><td>3-4 settimane</td><td>la ricetta standard funziona nelle tue mani?</td></tr>
+          <tr><td>B, lento e dolce</td><td>60 gradi</td><td>5-6 settimane</td><td>più morbido e dolce: vale l'energia in più?</td></tr>
+          <tr><td>C, il premium</td><td>come il migliore dei due</td><td>—</td><td>il Voghiera DOP si sente davvero rispetto allo standard?</td></tr>
         </tbody>
       </table></div>
-      <p style="font-size:.92rem">Pronto quando: spicchi neri lucidi, morbidi tipo datteri, dolce-balsamico senza pungenza. Poi 1-2 settimane di asciugatura a temperatura ambiente ventilata. Check settimanale su UNA testa campione, le altre non si aprono.</p>
+      <p style="font-size:.94rem">È pronto quando gli spicchi sono neri, lucidi, morbidi come datteri, dolci e balsamici senza pungenza. Poi una-due settimane di asciugatura all'aria. Il controllo si fa su una sola testa campione a settimana: le altre restano chiuse.</p>
 
-      <div class="call"><span class="tag">Cancello di uscita fase-0</span><p>Qualità ≥ del riferimento comprato (ordina un vasetto da £5/50g da un produttore UK come benchmark) · resa % pesata · <b>kWh/kg misurati</b> (il contatore) → costo/kg totale vs retail £100/kg. Se il margine regge e la qualità c'è, l'aglio nero entra nello stack accanto ai funghi: <b>stessa cucina, stesso brand, zero deperibilità</b>.</p></div>
-      <div class="risk"><span class="trip">avvertenze</span><p>Odore forte i primi giorni (filtro + cantina/balcone) · consumo stimato 1-2 kWh/giorno: misuralo, è una riga del business plan · sicurezza: termofusibile sempre, mai lasciare resistenze non protette · non vendere da Roma senza SCIA.</p></div>
+      <div class="call"><span class="tag">Il cancello di uscita</span><p>Ordina un vasetto da un produttore britannico come riferimento, cinque sterline. Se la tua qualità lo pareggia, la resa in peso è nota e i kilowattora per chilo sono misurati dal contatore, allora conosci il tuo costo per chilo contro un prezzo di mercato di cento sterline: se il margine regge, l'aglio nero entra nello stack accanto ai funghi. Stessa cucina, stesso brand, nessuna scadenza corta.</p></div>
+
+      <ul class="clean">
+        <li><b>L'odore</b> è intenso i primi giorni: filtro a carboni, e la camera in cantina o sul balcone.</li>
+        <li><b>Il consumo</b> è circa uno-due kilowattora al giorno: misuralo, è una riga del business plan.</li>
+        <li><b>La sicurezza:</b> termofusibile sempre, mai resistenze scoperte.</li>
+        <li><b>Niente vendite da Roma</b> senza SCIA: si produce, si assaggia, si documenta.</li>
+      </ul>
     </section>
   </div>
 </div>
