@@ -1,0 +1,1007 @@
+<title>The £10k Container Start</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#f6f2e8; --paper-2:#efe9d9; --card:#fbf9f2;
+    --ink:#23281d; --muted:#6d7160; --line:#ddd5c2; --line-soft:#e8e1d0;
+    --green:#4f6a37; --green-deep:#3a5127; --green-wash:#e9eede;
+    --ochre:#a96e1f; --ochre-wash:#f3e7d0; --plum:#6b4a6b; --blue:#3a5a6b;
+    --rev:#5b7d33; --cost:#7a4a8f;
+    --ok:#3e6b2f; --warn:#a96e1f; --crit:#a33d33; --crit-wash:#f0ddda;
+    --shadow:0 1px 2px rgba(35,40,29,.06), 0 4px 14px rgba(35,40,29,.05);
+    --mono:"Spline Sans Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:"Newsreader",Georgia,serif; font-size:1.04rem; line-height:1.5}
+  .wrap{max-width:1020px; margin:0 auto; padding:2.2rem 1.2rem 4rem}
+  h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif; line-height:1.12; text-wrap:balance; margin:0}
+  h1{font-size:clamp(2rem,5.5vw,3rem); font-weight:800}
+  h2{font-size:1.45rem; font-weight:700; margin-bottom:.35rem}
+  h3{font-size:1.06rem; font-weight:700; margin:1.25rem 0 .6rem}
+  p{margin:.5rem 0}
+  a{color:var(--blue)}
+  section{padding:1.9rem 0 0}
+  .kicker{font-family:var(--mono); font-size:.72rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--ochre); display:flex; align-items:center; gap:.55rem; margin-bottom:.4rem}
+  .kicker::before{content:""; width:1.3rem; height:2px; background:var(--ochre)}
+  .lede{font-size:1.1rem; color:#3d4335; max-width:62ch}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+  /* KPI strip */
+  #kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.7rem; margin-top:1.4rem}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:.7rem .85rem; box-shadow:var(--shadow)}
+  .kpi .kl{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+  .kpi .kv{font-family:var(--mono); font-size:1.32rem; font-weight:600; margin-top:.15rem}
+  .kpi .ks{font-size:.85rem; color:var(--muted)}
+  .kpi.bad .kv{color:var(--crit)}
+  .kpi.good .kv{color:var(--ok)}
+  .pill{display:inline-flex; align-items:center; gap:.3rem; font-family:var(--mono); font-size:.72rem; font-weight:600; padding:.14rem .55rem; border-radius:99px}
+  .pill.ok{background:var(--green-wash); color:var(--ok)}
+  .pill.warn{background:var(--ochre-wash); color:#7c5116}
+  .pill.crit{background:var(--crit-wash); color:var(--crit)}
+
+  /* Option cards (radio) */
+  .opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:.8rem; margin-top:.8rem}
+  .optcard{position:relative; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:.9rem 1rem; box-shadow:var(--shadow); cursor:pointer; transition:border-color .12s}
+  .optcard:hover{border-color:var(--green)}
+  .optcard.sel{border-color:var(--green); background:var(--green-wash)}
+  .optcard input{position:absolute; opacity:0; pointer-events:none}
+  .optcard .ot{display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; font-family:"Bricolage Grotesque",sans-serif; font-weight:700}
+  .optcard .op{font-family:var(--mono); font-size:.86rem; color:var(--green-deep); white-space:nowrap}
+  .optcard p{font-size:.92rem; color:#454b3b; margin:.35rem 0}
+  .optcard .om{display:flex; gap:1rem; font-family:var(--mono); font-size:.78rem; color:var(--muted); border-top:1px dashed var(--line); padding-top:.45rem; margin-top:.5rem}
+  .optcard .om b{color:var(--ink); font-weight:600}
+  .optcard .src{font-size:.8rem; color:var(--muted)}
+  .optcard:focus-within{outline:2px solid var(--green); outline-offset:2px}
+
+  /* Sliders */
+  .ctrls{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:.75rem 1.3rem; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem; box-shadow:var(--shadow); margin-top:.8rem}
+  .ctl label{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:.76rem; letter-spacing:.04em; text-transform:uppercase; color:var(--muted)}
+  .ctl label output{font-size:.95rem; font-weight:600; color:var(--ink); text-transform:none; letter-spacing:0}
+  .ctl input[type=range]{width:100%; accent-color:var(--green); margin:.35rem 0 0; height:1.2rem}
+  .ctl input:focus-visible{outline:2px solid var(--green); outline-offset:2px}
+  .ctl.chk{display:flex; align-items:center; gap:.6rem}
+  .ctl.chk label{text-transform:none; letter-spacing:0; font-size:.85rem; color:var(--ink); cursor:pointer}
+  .ctl.chk input{width:1.15rem; height:1.15rem; accent-color:var(--green); cursor:pointer}
+  .blend{grid-column:1/-1; font-family:var(--mono); font-size:.82rem; color:var(--muted); border-top:1px dashed var(--line); padding-top:.55rem}
+  .blend b{color:var(--green-deep)}
+
+  /* Charts */
+  .chartcard{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem .8rem; box-shadow:var(--shadow); margin-top:1rem; position:relative}
+  .chartcard h3{margin:0 0 .2rem}
+  .chartcard .csub{font-size:.88rem; color:var(--muted); margin:0 0 .5rem}
+  .legend{display:flex; flex-wrap:wrap; gap:.6rem 1.1rem; font-family:var(--mono); font-size:.76rem; color:#454b3b; margin:.2rem 0 .4rem}
+  .legend i{display:inline-block; width:.85rem; height:.55rem; border-radius:3px; margin-right:.35rem; vertical-align:baseline}
+  svg text{font-family:var(--mono); font-size:10.5px; fill:var(--muted)}
+  svg .axis{stroke:var(--line); stroke-width:1}
+  svg .grid{stroke:var(--line-soft); stroke-width:1}
+  #tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:.74rem; line-height:1.45; padding:.4rem .55rem; border-radius:8px; opacity:0; transition:opacity .1s; z-index:5; white-space:nowrap}
+  .tbtn{font-family:var(--mono); font-size:.72rem; padding:.25rem .6rem; border:1px solid var(--line); background:var(--paper); color:var(--muted); border-radius:8px; cursor:pointer; position:absolute; top:1rem; right:1.1rem}
+  .tbtn:hover{color:var(--ink); border-color:var(--muted)}
+  .dtable{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.78rem; margin-top:.5rem}
+  .dtable th,.dtable td{text-align:right; padding:.3rem .5rem; border-bottom:1px solid var(--line-soft); font-variant-numeric:tabular-nums}
+  .dtable th{color:var(--muted); font-weight:500; text-transform:uppercase; font-size:.66rem; letter-spacing:.08em}
+  .dtable td:first-child,.dtable th:first-child{text-align:left}
+  .dtable td.best{color:var(--ok); font-weight:600}
+  .tblwrap{overflow-x:auto}
+
+  /* Budget table */
+  .budget{width:100%; border-collapse:collapse; margin-top:.7rem; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+  .budget th,.budget td{padding:.55rem .85rem; border-bottom:1px solid var(--line-soft); text-align:left; font-size:.95rem}
+  .budget th{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); background:var(--paper-2)}
+  .budget td.amt{font-family:var(--mono); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .budget td .why{display:block; font-size:.82rem; color:var(--muted)}
+  .budget tr.total td{font-weight:700; background:var(--green-wash); border-bottom:none}
+  .budget tr.total td.amt{font-family:var(--mono); font-size:1.05rem}
+  .budgetwrap{overflow-x:auto}
+
+  /* Channels */
+  .chan{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; margin-top:.8rem}
+  .chcard{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--green); border-radius:12px; padding:.85rem 1rem; box-shadow:var(--shadow)}
+  .chcard b{font-family:"Bricolage Grotesque",sans-serif}
+  .chcard p{font-size:.92rem; color:#454b3b}
+  .chcard .cnum{font-family:var(--mono); font-size:1.35rem; font-weight:600; color:var(--green-deep)}
+  .chcard .cnum small{font-size:.8rem; color:var(--muted); font-weight:400}
+  .chcard .who{font-size:.83rem; color:var(--muted); border-top:1px dashed var(--line); margin-top:.5rem; padding-top:.4rem}
+
+  /* Launch plan */
+  .wk{display:flex; gap:.9rem; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:.7rem .9rem; box-shadow:var(--shadow); margin-top:.6rem}
+  .wk .tag{font-family:var(--mono); font-size:.7rem; font-weight:600; color:var(--green-deep); background:var(--green-wash); border-radius:8px; padding:.25rem .5rem; height:fit-content; white-space:nowrap}
+  .wk p{font-size:.93rem; margin:.15rem 0 0; color:#454b3b}
+  .wk b{font-family:"Bricolage Grotesque",sans-serif; font-size:.98rem}
+  .wk.reg{border-left:3px solid var(--ochre)}
+
+  .call{border-radius:12px; padding:.95rem 1.15rem; margin:1.1rem 0 0; border:1px solid var(--green); background:var(--green-wash)}
+  .call.blue{border-color:var(--blue); background:color-mix(in srgb,var(--blue) 10%,var(--card))}
+  .call .tag{font-family:var(--mono); font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--green-deep)}
+  .call p{margin:.3rem 0 0; font-size:.97rem}
+
+  /* Risks */
+  .risk{display:grid; grid-template-columns:auto 1fr; gap:.6rem .8rem; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:.7rem .9rem; margin-top:.6rem; box-shadow:var(--shadow); align-items:baseline}
+  .risk .trip{font-family:var(--mono); font-size:.78rem; color:var(--crit); white-space:nowrap}
+  .risk p{margin:0; font-size:.93rem}
+
+  .srcs{font-size:.85rem; color:var(--muted); border-top:1px solid var(--line); margin-top:2.5rem; padding-top:1rem}
+  .srcs li{margin:.25rem 0}
+  footer{font-size:.82rem; color:var(--muted); margin-top:1.5rem}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+
+  /* App pages */
+  #appnav{display:flex; gap:.5rem; flex-wrap:wrap; margin:1.4rem 0 0; border-bottom:2px solid var(--line); padding-bottom:.6rem}
+  #appnav button{font-family:"Bricolage Grotesque",sans-serif; font-weight:700; font-size:.95rem; padding:.45rem .9rem; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--muted); cursor:pointer}
+  #appnav button.on{background:var(--green-wash); border-color:var(--green); color:var(--green-deep)}
+  .apppage{display:none}
+  .apppage.on{display:block}
+  .statusbar{background:var(--card); border:1.5px solid var(--blue); border-radius:12px; padding:.85rem 1.05rem; margin-top:1.1rem; font-size:.95rem}
+  .statusbar .tag{font-family:var(--mono); font-size:.66rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--blue)}
+  .parm{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.8rem; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:.6rem}
+  .parm th,.parm td{padding:.45rem .6rem; border-bottom:1px solid var(--line-soft); text-align:left}
+  .parm th{font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); background:var(--paper-2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Fungi micro-farm planner · Edinburgh · B2B, no cold calls · refreshed 23 Aug 2026</div>
+    <h1>The £10k Container Start</h1>
+    <p class="lede">Gourmet mushrooms in a container on rented ground — <b>oyster &amp; lion's mane, 2.2 kWh/kg</b>, sold through channels you sign up to online: a wholesaler email, pre-order platforms, and your own dried-goods shop. Phase 1 proves the process on £10k; Phase 2 uses the <b>FFIS grant (80%, up to £20k)</b> to scale to a real income. Every price is sourced.</p>
+
+    <div id="kpis">
+      <div class="kpi" id="k-min"><div class="kl">Lowest cash point</div><div class="kv num" id="kv-min">—</div><div class="ks" id="ks-min"></div></div>
+      <div class="kpi" id="k-be"><div class="kl">Break-even</div><div class="kv num" id="kv-be">—</div><div class="ks">4-week rolling net ≥ 0</div></div>
+      <div class="kpi" id="k-end"><div class="kl">Cash at week 52</div><div class="kv num" id="kv-end">—</div><div class="ks" id="ks-end"></div></div>
+      <div class="kpi" id="k-fix"><div class="kl">Fixed costs / month</div><div class="kv num" id="kv-fix">—</div><div class="ks">rent + base power + insurance + fuel</div></div>
+    </div>
+    <div style="margin-top:.6rem" id="verdict"></div>
+
+    <div class="statusbar"><span class="tag">Stato analisi · 26 ago 2026</span><br>
+      <b>71 opzioni analizzate su rubrica pesata unica</b> (60+ agenti, ~1.100 ricerche, verifiche avversariali). Vincitori: <b>fungi stack 7.9</b> · <b>aglio nero 7.35</b> (novità: retail UK ~£100/kg, pochissimi produttori) · hot honey 7.35 · multi-sito robotizzato 7.25 (unico percorso di scala sopravvissuto agli skeptic: ~£58k/anno Y5). Percorso: <b>fase-0 a Roma adesso</b> (build nelle pagine qui sopra, ~€600 totali, non commerciale) → container in Scozia → FFIS → scala. Due-diligence v3 sugli 8 nuovi: <b>nessuno batte lo stack</b> — il migliore (tronchetti shiitake, 6.05 verificato) è di fatto uno SKU dello stack; l'aglio nero scende a <b>side-SKU</b> (fit perfetto, ma pool artigianale UK ~£0.3-0.7M/anno): resta l'esperimento da €200 nella pagina Build. Dossier completo: <a href="https://claude.ai/code/artifact/7eef7f78-290c-42c6-b7ad-41e52022a394">Twenty Crops, One Verdict</a>. Matrice licenze Scozia: vedi la pagina 📜 — <b>per lo stack fungino il costo obbligatorio è £0</b>.
+    </div>
+
+    <nav id="appnav">
+      <button class="on" data-page="plan">📋 Piano Scozia</button>
+      <button data-page="fungi">🍄 Build Funghi · Roma</button>
+      <button data-page="garlic">🧄 Build Aglio Nero · Roma</button>
+      <button data-page="licenze">📜 Licenze Scozia</button>
+    </nav>
+  </header>
+
+  <div id="page-plan" class="apppage on">
+
+  <section>
+    <div class="kicker">Step 1 · Ground &amp; box</div>
+    <h2>Pick a real place — these are live ads</h2>
+    <p>Fetched from Gumtree and CS Containers on 23 Aug 2026. Neither yard ad states a power feed — <b>that is question #1 on the phone</b> (the only two calls in this whole plan); the model assumes mains power is available.</p>
+    <div class="opts" id="optgrid" role="radiogroup" aria-label="Ground and container option">
+      <label class="optcard" data-opt="bundle">
+        <input type="radio" name="opt" value="bundle">
+        <div class="ot"><span>Bonnyrigg bundle</span><span class="op">£640/mo all-in</span></div>
+        <p>100 m² secure yard (palisade, CCTV, 24/7) at £490/mo — and the landlord supplies a <b>new 20ft container for £150/mo</b>. Zero container capex.</p>
+        <div class="om"><span>upfront <b class="num">£640</b></span><span>monthly <b class="num">£640</b></span></div>
+        <div class="src"><a href="https://www.gumtree.com/p/commercial-property-to-rent/yard-space-for-let/1489251804">Gumtree 1489251804</a> · ~8 mi from Edinburgh</div>
+      </label>
+      <label class="optcard" data-opt="buy">
+        <input type="radio" name="opt" value="buy">
+        <div class="ot"><span>Dalkeith yard + buy 20ft</span><span class="op">£360/mo + £1,730</span></div>
+        <p>4.5 × 12.5 m fenced yard, Easthouses Ind. Est. EH22 4DJ (CCTV, floodlights, WC). Buy a 20ft from CS Containers, £1,550 + ~£180 HIAB delivery from Grangemouth.</p>
+        <div class="om"><span>upfront <b class="num">£2,530</b></span><span>monthly <b class="num">£360</b></span></div>
+        <div class="src"><a href="https://www.gumtree.com/p/commercial-property-to-rent/industrial-storage-yard-/1515712592">Gumtree 1515712592</a> · <a href="https://cscontainers.co.uk/locations/central-scotland/">cscontainers.co.uk</a></div>
+      </label>
+      <label class="optcard sel" data-opt="hire">
+        <input type="radio" name="opt" value="hire" checked>
+        <div class="ot"><span>Dalkeith yard + hire 20ft</span><span class="op">£360/mo + £17/wk</span></div>
+        <p>Same Dalkeith yard, container hired at £17/week instead of bought — smallest upfront, easiest to walk away from if Phase 1 fails. <b>Wins the comparison below on most rows.</b></p>
+        <div class="om"><span>upfront <b class="num">£800</b></span><span>monthly <b class="num">£434</b></span></div>
+        <div class="src">Yard deposit £800 · hire from <a href="https://cscontainers.co.uk/locations/central-scotland/">CS Containers</a></div>
+      </label>
+    </div>
+
+    <div class="chartcard" id="cmpcard">
+      <h3>Same dials, three grounds</h3>
+      <p class="csub">Your production plan from Step 2, applied to each option — the gap between the lines is what the choice costs or saves over a year.</p>
+      <div class="legend">
+        <span><i style="background:#5b7d33"></i>Bonnyrigg bundle</span>
+        <span><i style="background:#7a4a8f"></i>Dalkeith + buy</span>
+        <span><i style="background:#2e79c9"></i>Dalkeith + hire</span>
+      </div>
+      <svg id="cmpsvg" viewBox="0 0 720 240" width="100%" role="img" aria-label="Cash balance over 52 weeks for the three yard options, overlaid"></svg>
+      <div class="tblwrap"><table class="dtable" id="cmptbl"></table></div>
+      <p class="csub" style="margin-top:.5rem" id="cmpnote"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">Step 2 · Production &amp; channel mix</div>
+    <h2>Set the dials — the model recomputes live</h2>
+    <div class="ctrls">
+      <div class="ctl"><label for="c-kg">Phase 1 · kg / week <output id="o-kg">30</output></label><input id="c-kg" type="range" min="10" max="40" step="2" value="30"></div>
+      <div class="ctl"><label for="c-pre">Pre-order share <output id="o-pre">40%</output></label><input id="c-pre" type="range" min="0" max="60" step="5" value="40"></div>
+      <div class="ctl"><label for="c-dry">Dried &amp; kits share <output id="o-dry">20%</output></label><input id="c-dry" type="range" min="0" max="30" step="5" value="20"></div>
+      <div class="ctl"><label for="c-pws">Wholesale price / kg <output id="o-pws">£8</output></label><input id="c-pws" type="range" min="6" max="10" step="0.5" value="8"></div>
+      <div class="ctl chk"><input id="c-ffis" type="checkbox" checked><label for="c-ffis"><b>Phase 2 — FFIS grant</b>: apply winter 2026, ~£5k of your cash buys ~£25k of kit at 80% intervention; capacity kit lands week 32</label></div>
+      <div class="ctl" id="kg2wrap"><label for="c-kg2">Phase 2 · kg / week <output id="o-kg2">80</output></label><input id="c-kg2" type="range" min="50" max="100" step="5" value="80"></div>
+      <div class="blend" id="blend"></div>
+    </div>
+    <p style="font-size:.88rem;color:var(--muted)">Grounding: oyster mushrooms £6.92/kg commodity, <b>£8–13/kg to wholesalers &amp; kitchens</b>, £12–20/kg equivalent at pre-order retail; dried nets ~£18 per fresh-kg after fees; substrate ~£2.20 per kg of yield; energy 2.2 kWh/kg + ~10 kWh/day base climate at 28p/kWh. A 20ft container tops out around 40 kg/week — Phase 2 kit (second fruiting room, automated substrate) lifts the ceiling to ~100 kg.</p>
+  </section>
+
+  <section>
+    <div class="kicker">The cash line</div>
+    <h2>52 weeks, week by week</h2>
+    <div class="chartcard" id="cashcard">
+      <h3>Cash in the bank</h3>
+      <p class="csub">Starts at £10,000 minus upfront costs. First revenue week 6: food-business registration needs <b>28 days before trading</b>, and the first fruiting cycle takes ~4 weeks — the two clocks run in parallel.</p>
+      <button class="tbtn" id="btn-table" aria-pressed="false">table</button>
+      <svg id="cashsvg" viewBox="0 0 720 250" width="100%" role="img" aria-label="Weekly cash balance over 52 weeks"></svg>
+      <div id="tip"></div>
+      <div class="tblwrap" id="tblwrap" hidden></div>
+    </div>
+    <div class="chartcard" id="railcard">
+      <h3>Year-1 milestones</h3>
+      <p class="csub">Computed from the dials above — move a slider and the diamonds move.</p>
+      <svg id="railsvg" viewBox="0 0 720 132" width="100%" role="img" aria-label="Timeline of year-one milestones: launch, first harvest, break-even, phase 2 kit, phase 2 at full rate, stake recovered"></svg>
+    </div>
+    <div class="chartcard" id="plcard">
+      <h3>Monthly revenue vs costs</h3>
+      <p class="csub">Costs include rent, power, substrate, packaging, fuel, insurance — everything in the model.</p>
+      <div class="legend"><span><i style="background:var(--rev)"></i>Revenue</span><span><i style="background:var(--cost)"></i>Costs</span></div>
+      <svg id="plsvg" viewBox="0 0 720 230" width="100%" role="img" aria-label="Monthly revenue and costs"></svg>
+    </div>
+    <div class="chartcard" id="cdcard">
+      <h3>Operating costs, itemised</h3>
+      <p class="csub">Where the money actually goes each month. The single-month spike is your ~£5k share of the Phase 2 FFIS kit, spent only when that box is ticked.</p>
+      <div class="legend" id="cdlegend">
+        <span><i style="background:#7a4a8f"></i>Rent &amp; container</span>
+        <span><i style="background:#c17f24"></i>Electricity</span>
+        <span><i style="background:#2e79c9"></i>Delivery, packaging, insurance</span>
+        <span><i style="background:#5b7d33"></i>Substrate</span>
+        <span><i style="background:#b0446a"></i>One-off / FFIS share</span>
+      </div>
+      <svg id="cdsvg" viewBox="0 0 720 250" width="100%" role="img" aria-label="Monthly operating costs stacked by category: rent and container, electricity, delivery and overheads, substrate, one-off kit"></svg>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">Step 3 · The £10,000</div>
+    <h2>Where every pound goes</h2>
+    <div class="budgetwrap"><table class="budget" id="budget">
+      <thead><tr><th>Line</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p style="font-size:.88rem;color:var(--muted)">The Phase 2 FFIS share (~£5,000) is not in this table — it is paid out of trading cash at week 32, and the cash-floor tile above already accounts for it.</p>
+  </section>
+
+  <section>
+    <div class="kicker">Step 4 · Channels</div>
+    <h2>Where it sells — every sign-up is online</h2>
+    <p>No cold calls anywhere in this funnel: two platform registrations, one Facebook post, one email with a price list. At the current dials the split is:</p>
+    <div class="chan">
+      <div class="chcard"><div class="cnum num" id="ch-ws">—</div><b>Wholesale — one email</b><p>Edinburgh produce wholesalers buy fixed weekly volume and re-sell to the restaurants for you: <a href="https://markmurphyltd.co.uk/">Mark Murphy (Dole)</a> and <a href="https://www.georgeanderson.co.uk/fresh-produce">George Anderson &amp; Sons</a> (Tranent). <a href="https://natoora.com/en-GB/pro/">Natoora</a> (newbusiness@) already works with 600 small growers. Veg boxes too: <a href="https://www.eastcoastorganics.co.uk/">East Coast Organics</a>, 10 mi away.</p><div class="who">Send: price list + photos + delivery days. They answer by email.</div></div>
+      <div class="chcard"><div class="cnum num" id="ch-pre">—</div><b>Pre-order platforms — sign-up forms</b><p><a href="https://openfoodnetwork.org.uk/producers/signup">Open Food Network</a> (self-serve shop + hubs), <a href="https://www.neighbourfood.ie/producers">NeighbourFood</a> Scotland (customers pre-order, you deliver only what's sold — <b>80% stays with you</b>), <a href="https://www.facebook.com/groups/328909419813578/">REKO Ring Edinburgh</a> (post the offer, collect once). <a href="https://www.bowhousefife.com/food-weekends/">Bowhouse</a> monthly by email.</p><div class="who">Zero unsold stock: everything is paid before you pick it.</div></div>
+      <div class="chcard"><div class="cnum num" id="ch-dry">—</div><b>Dried &amp; grow kits — your own shop</b><p>Dried lion's mane &amp; oyster, powders, ready-to-fruit kits on <a href="https://www.etsy.com/uk/market/mushroom_grow_kit">Etsy</a>/eBay or your own site. Edible-variety kits are fully legal; normal food-safety rules apply. No shelf-life pressure, national market, engineer's product.</p><div class="who">Absorbs surplus: 1 kg fresh → ~100 g dried, nets ~£18/fresh-kg.</div></div>
+    </div>
+    <div class="call blue"><span class="tag">Why B2B-first</span><p>Wholesale fills the baseline at £8/kg with one relationship; pre-order and dried lift the blended price without a shop counter. Fresh local mushrooms have a 3-day shelf life — <b>that is the moat</b>: no import competes, and no AI delivers a lion's mane picked this morning.</p></div>
+  </section>
+
+  <section>
+    <div class="kicker">Step 5 · Launch clock</div>
+    <h2>8 weeks, with the legal clock built in</h2>
+    <figure style="margin:1rem 0 0">
+      <div class="chartcard" style="margin-top:0">
+        <h3>Launch Gantt</h3>
+        <p class="csub">Green bars = work · <span style="color:var(--ochre)">orange bar</span> = the 28-day food-registration clock · ◆ = milestone. Registration and the first grow cycle run in parallel — first harvest lands the week selling becomes legal.</p>
+        <svg viewBox="0 0 720 262" width="100%" role="img" aria-label="Eight-week launch plan: sign the yard week 1, the 28-day registration clock runs to week 5, fit-out and first inoculation overlap it, online channel sign-ups weeks 2 to 4, first harvest and deliveries week 6, dried range live weeks 6 to 8, scale and FFIS file from week 6.">
+          <g stroke="#ddd5c2" stroke-width="1">
+            <line x1="175" y1="30" x2="175" y2="242"/><line x1="234" y1="30" x2="234" y2="242"/>
+            <line x1="293" y1="30" x2="293" y2="242"/><line x1="352" y1="30" x2="352" y2="242"/>
+            <line x1="411" y1="30" x2="411" y2="242"/><line x1="470" y1="30" x2="470" y2="242"/>
+            <line x1="529" y1="30" x2="529" y2="242"/><line x1="588" y1="30" x2="588" y2="242"/>
+            <line x1="647" y1="30" x2="647" y2="242"/><line x1="706" y1="30" x2="706" y2="242"/>
+          </g>
+          <g text-anchor="middle" style="font-size:10.5px">
+            <text x="204" y="22">w1</text><text x="263" y="22">w2</text><text x="322" y="22">w3</text>
+            <text x="381" y="22">w4</text><text x="440" y="22">w5</text><text x="499" y="22">w6</text>
+            <text x="558" y="22">w7</text><text x="617" y="22">w8</text><text x="676" y="22">w9+</text>
+          </g>
+          <g text-anchor="end" style="font-size:11px" fill="#23281d">
+            <text x="166" y="47">Call + sign the yard</text>
+            <text x="166" y="70">Food-biz registration</text>
+            <text x="166" y="93">HMRC · certs · insurance</text>
+            <text x="166" y="116">Box in · fit-out · controller</text>
+            <text x="166" y="139">Channel sign-ups (online)</text>
+            <text x="166" y="162">First inoculation cycles</text>
+            <text x="166" y="185">First harvest + deliveries</text>
+            <text x="166" y="208">Dried range live (Etsy)</text>
+            <text x="166" y="231">Scale + FFIS file</text>
+          </g>
+          <g>
+            <rect x="175" y="39" width="45" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="175" y="62" width="236" height="10" rx="4" fill="#a96e1f"/>
+            <rect x="204" y="85" width="75" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="204" y="108" width="118" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="234" y="131" width="147" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="263" y="154" width="207" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="470" y="200" width="118" height="10" rx="4" fill="#5b7d33"/>
+            <rect x="499" y="223" width="181" height="10" rx="4" fill="#5b7d33"/>
+          </g>
+          <path d="M411 62 l7 5 -7 5 -7 -5 Z" fill="#a96e1f"/>
+          <text x="420" y="59" style="font-size:10.5px" fill="#7c5116">legal to sell</text>
+          <path d="M476 185 l7 5 -7 5 -7 -5 Z" fill="#23281d"/>
+          <text x="488" y="193" style="font-size:10.5px" fill="#23281d">◀ first harvest = first delivery</text>
+          <path d="M686 223 l8 5 -8 5 Z" fill="#5b7d33"/>
+        </svg>
+      </div>
+      <figcaption style="font-size:.85rem;color:var(--muted);margin-top:.4rem">Two clocks in parallel: the council's 28 days and the fungus's ~4-week first cycle. Register and inoculate in week 1–2 and neither delays the other.</figcaption>
+    </figure>
+
+    <div class="wk reg"><div class="tag">Wk 1</div><div><b>The only two phone calls + start the 28-day clock</b><p>Call Dalkeith (ad 1515712592) and Bonnyrigg (ad 1489251804): confirm a mains power feed and food use. Same day: <b>register the food business with Midlothian Council</b> (free, required ≥28 days before first sale) and register as sole trader with HMRC.</p></div></div>
+    <div class="wk"><div class="tag">Wk 1–2</div><div><b>Box on the ground + the controller</b><p>Sign the yard; container arrives in 3–5 days (CS Containers HIAB). Insulate, shelve, fit humidifier/fogger, fresh-air fan with filter, heater — all driven by your own Pi + sensors (CO₂, RH, temp) and two cameras running a local vision model: harvest-readiness and mould alerts to your phone, fully offline. This is your edge; most growers run on guesswork.</p></div></div>
+    <div class="wk"><div class="tag">Wk 2</div><div><b>Paperwork + channel sign-ups, all online</b><p>Level 2 Food Hygiene (~£20 online), Safer Food Better Business pack (free), liability insurance (~£15/mo). Register on <a href="https://openfoodnetwork.org.uk/producers/signup">Open Food Network</a> and <a href="https://www.neighbourfood.ie/producers">NeighbourFood</a>; draft the one-email price list for the wholesalers.</p></div></div>
+    <div class="wk"><div class="tag">Wk 2–3</div><div><b>First inoculation</b><p>Pasteurise substrate, inoculate the first batch of blocks (oyster first — most forgiving), start the second batch a week later so harvests stagger. Log everything in the controller.</p></div></div>
+    <div class="wk"><div class="tag">Wk 6</div><div><b>First harvest = first deliveries</b><p>Both clocks done. Send the price-list email to Mark Murphy / George Anderson / Natoora / East Coast Organics; open the first NeighbourFood market listing; post the first REKO offer.</p></div></div>
+    <div class="wk"><div class="tag">Wk 6–8</div><div><b>Dried range + scale</b><p>Dehydrate surplus, list dried lion's mane and grow kits on Etsy. Ramp to the Phase 1 dial. Start the <b>FFIS file</b> — up to £20k at 80% for new entrants, Round 2 opens winter 2026 — for the Phase 2 kit: second fruiting room, automated substrate line, climate hardware.</p></div></div>
+
+    <figure style="margin:1.4rem 0 0">
+      <div class="chartcard" style="margin-top:0">
+        <h3>The weekly rhythm, once running</h3>
+        <p class="csub">One person, ~15 h/week in Phase 1. The sensors watch the room so you don't have to.</p>
+        <svg viewBox="0 0 720 140" width="100%" role="img" aria-label="Weekly operating loop: mix and inoculate blocks Monday, automated sensor checks daily, harvest and deliver Tuesday and Friday, dry surplus and pack kits Sunday.">
+          <g stroke="#ddd5c2" stroke-width="1">
+            <line x1="170" y1="26" x2="170" y2="124"/><line x1="248" y1="26" x2="248" y2="124"/>
+            <line x1="326" y1="26" x2="326" y2="124"/><line x1="404" y1="26" x2="404" y2="124"/>
+            <line x1="482" y1="26" x2="482" y2="124"/><line x1="560" y1="26" x2="560" y2="124"/>
+            <line x1="638" y1="26" x2="638" y2="124"/><line x1="716" y1="26" x2="716" y2="124"/>
+          </g>
+          <g text-anchor="middle" style="font-size:10.5px">
+            <text x="209" y="18">Mon</text><text x="287" y="18">Tue</text><text x="365" y="18">Wed</text>
+            <text x="443" y="18">Thu</text><text x="521" y="18">Fri</text><text x="599" y="18">Sat</text>
+            <text x="677" y="18">Sun</text>
+          </g>
+          <g text-anchor="end" style="font-size:11px" fill="#23281d">
+            <text x="160" y="44">Mix + inoculate blocks</text>
+            <text x="160" y="70">Sensors watch (alerts only)</text>
+            <text x="160" y="96">Harvest → deliver / drop-off</text>
+            <text x="160" y="122">Dry surplus · pack kits</text>
+          </g>
+          <circle cx="209" cy="40" r="6" fill="#5b7d33"/>
+          <rect x="178" y="62" width="530" height="8" rx="4" fill="#5b7d33" opacity=".45"/>
+          <circle cx="287" cy="92" r="6" fill="#5b7d33"/>
+          <circle cx="521" cy="92" r="6" fill="#5b7d33"/>
+          <circle cx="677" cy="118" r="6" fill="#a96e1f"/>
+          <path d="M287 92 h220" stroke="#5b7d33" stroke-width="1" stroke-dasharray="3 3" fill="none"/>
+          <text x="404" y="87" text-anchor="middle" style="font-size:10.5px">picked the morning of delivery — nothing sits</text>
+        </svg>
+      </div>
+      <figcaption style="font-size:.85rem;color:var(--muted);margin-top:.4rem">Tue/Fri runs serve the wholesaler and the pre-order collection points in one loop; Sunday's drying absorbs whatever didn't sell fresh — the buffer the tripwires count on.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="kicker">Post-mortem</div>
+    <h2>Why they failed — and the countermeasure built into this plan</h2>
+    <p class="lede" style="font-size:1rem">Container and vertical farms have been dying since 2023 — including a <b>mushroom</b> company. Each card is a real corpse, what actually killed it, and the concrete counter this plan takes. Not slogans: dials, layout rules and tripwires below.</p>
+    <div class="risk"><span class="trip">Freight Farms · 2025</span><p><b>Sold $150k containers to buyers who couldn't profit.</b> Their own numbers needed 15–25 h/wk of customer labour to beat supermarket lettuce; the market of "people who want a farm" outgrew "people who can run one profitably". Growth stalled, SPAC died, Chapter 7 with $7M liabilities. <b>→ Here:</b> nothing is sold to anyone until <i>your own</i> logged P&amp;L proves the buyer's economics — and the ticket is a £400 controller, not a $150k box.</p></div>
+    <div class="risk"><span class="trip">Farmhand cloud · 2025</span><p><b>When the company died, every customer's farm went dark.</b> Cloud dosing, climate and history vanished overnight; spare parts stopped; growers now swap fixes on Reddit. <b>→ Here:</b> the controller is <b>local-first</b> — on-device AI, works offline forever, standard parts (Pi, relays, off-the-shelf sensors), no subscription needed to keep growing. Thousands of orphaned Freight Farmers are the demonstrated market for exactly this.</p></div>
+    <div class="risk"><span class="trip">Smallhold · 2024</span><p><b>Mushrooms didn't save them.</b> VC-scale facilities + national retail at wholesale prices = commodity revenue on artisan costs: COGS ×3 in a year, −$14.7M. They re-emerged as a <i>partner-farm network</i> — decentralised production under one brand. <b>→ Here:</b> stay owner-scale on rented ground; if this ever scales, it scales the Smallhold-2.0 way (other farms run your spec and controller), never by building a facility.</p></div>
+    <div class="risk"><span class="trip">Energy wall · 2023–25</span><p><b>Electricity was 40–60% of opex for the lettuce cohort</b> (Bowery £700M burned, AeroFarms, AppHarvest, Jones Food UK). Viability needs 11–15 kWh/kg; most ran worse. <b>→ Here:</b> fungi need ~2.2 kWh/kg and no grow lights — but it's one factor, not absolution: the itemised cost chart above keeps the electricity share visible so drift gets caught.</p></div>
+    <div class="risk"><span class="trip">Micro-farm burnout</span><p><b>Small mushroom farms rarely go bankrupt — the owner breaks.</b> Harvest windows are half a day; contamination spreads when flow runs dirty→clean; substrate supply bottlenecks. <b>→ Here:</b> one-way clean→dirty layout from day 1, staggered batches, and the local-AI cameras below turn the crop's calendar into phone alerts instead of constant presence.</p></div>
+    <div class="risk"><span class="trip">Price erosion</span><p><b>Oyster growing has low barriers</b> — everyone watches the same courses, local gluts crash prices, and Edinburgh already has Rhyze, Some Funguys, Mycobee. <b>→ Here:</b> blended-price tripwire below; lion's mane weighted in the mix (harder to grow = higher barrier, better price); the dried/kit channel absorbs any glut instead of dumping it fresh.</p></div>
+    <div class="call"><span class="tag">The local-AI edge — 2026, not sci-fi</span><p>Two cameras per fruiting room + a small vision model running <b>on the Pi itself</b> (edge models handle this today): detects pinning, flags <b>harvest-ready blocks within the half-day window</b>, and catches green mould at first pixel — the two things that actually kill micro-farms. All offline, no cloud to die, ~£120 of hardware already in the fit-out budget. This is the moat: any grower can buy a humidifier; almost none can build this — and it's the product you eventually sell to the Freight Farms orphans.</p></div>
+  </section>
+
+  <section>
+    <div class="kicker">Tripwires</div>
+    <h2>When to change course — decided now, not in a panic</h2>
+    <div class="risk"><span class="trip">cash &lt; £1,000</span><p><b>Stop buying, sell down.</b> If the bank line touches £1,000, freeze all kit purchases and run harvest-to-order only. The model shows your current floor in the first tile above.</p></div>
+    <div class="risk"><span class="trip">contamination &gt; 15%</span><p><b>Process problem — stop scaling.</b> Green mould above 15% of blocks means the pasteurisation or air handling is wrong. Fix the process on small batches before inoculating another full run; the controller logs tell you which variable drifted.</p></div>
+    <div class="risk"><span class="trip">wholesale uptake &lt; 50% @ wk 12</span><p><b>Shift the mix.</b> If the wholesaler takes less than half your volume, push the dried/kit share up (the dials above show what that does to the blended price) and add a second pre-order platform before growing more.</p></div>
+    <div class="risk"><span class="trip">no power on the yard</span><p><b>Walk away.</b> A generator adds ~£40–60/week and kills the margin. Only take ground with a mains feed — there are more yards every week (8 live within 30 mi today).</p></div>
+    <div class="risk"><span class="trip">blended price &lt; £9/kg for 4 wks</span><p><b>Local glut — stop selling fresh into it.</b> Shift the dials: dried/kit share up, lion's mane share up, fresh oyster volume down. The blended-price line in Step 2 shows the current number; below £9 the fresh channel is subsidising someone else's hobby.</p></div>
+    <div class="risk"><span class="trip">2 weeks &gt; 25 h</span><p><b>Burnout is a failure mode, not a virtue.</b> If two consecutive weeks pass 25 hours, cut fresh volume 30% and let the cameras and staggered batches catch up — the plan only works if it still works in month 10.</p></div>
+  </section>
+
+  <div class="srcs">
+    <b>Sources (all checked 23 Aug 2026)</b>
+    <ul>
+      <li>Yard listings: Gumtree ads <a href="https://www.gumtree.com/p/commercial-property-to-rent/yard-space-for-let/1489251804">1489251804</a> (Bonnyrigg, £490/mo + £150/mo new 20ft container) and <a href="https://www.gumtree.com/p/commercial-property-to-rent/industrial-storage-yard-/1515712592">1515712592</a> (Dalkeith EH22 4DJ, £360/mo, £800 deposit) — both live.</li>
+      <li>Container prices: <a href="https://cscontainers.co.uk/locations/central-scotland/">CS Containers, Central Scotland</a> — 20ft from £1,550, hire from £17/wk, HIAB delivery 3–5 days from Grangemouth.</li>
+      <li>Channels: <a href="https://openfoodnetwork.org.uk/producers/signup">Open Food Network producer sign-up</a> · <a href="https://www.neighbourfood.ie/producers">NeighbourFood producers</a> (Scottish rollout by Forth Environment Link, producer keeps ~80%) · <a href="https://www.facebook.com/groups/328909419813578/">Local Abundance REKO Ring Edinburgh</a> · <a href="https://www.bowhousefife.com/food-weekends/">Bowhouse Market Weekends</a> (market@bowhousefife.com) · wholesalers <a href="https://markmurphyltd.co.uk/">Mark Murphy</a>, <a href="https://www.georgeanderson.co.uk/fresh-produce">George Anderson &amp; Sons</a>, <a href="https://natoora.com/en-GB/pro/">Natoora</a> · <a href="https://www.eastcoastorganics.co.uk/">East Coast Organics</a> veg boxes.</li>
+      <li>Produce prices: oyster £6.92/kg commodity, £9–13/kg restaurant/wholesale, £12–20/kg market equivalent; yellow oyster to £22/kg; dried gourmet mushrooms retail £8–15 per 50 g online (edible grow kits are <a href="https://www.capandculture.co.uk/mushroom-growing-and-microscopy-guides/are-magic-mushroom-grow-kits-legal-uk/">legal in the UK</a>).</li>
+      <li>Energy: mushrooms ~2.2 kWh/kg vs 40–350 kWh/kg for lit vertical farming — the structural reason fungi beat hydroponic greens in Scotland; GB price cap ≈ 28p/kWh (2026).</li>
+      <li>Rules: food business registration with the local council is free and required at least 28 days before trading (food.gov.uk / FSS); Safer Food Better Business; Level 2 hygiene certificate.</li>
+      <li>Grant: FFIS (gov.scot) — up to £20k, 80% intervention for new entrants, Round 2 winter 2026.</li>
+      <li>Post-mortems: <a href="https://www.bostonglobe.com/2025/05/12/business/freight-farms-shuts-down-files-bankruptcy/">Freight Farms Chapter 7</a> ($7M liabilities, $600k assets; failed SPAC, missed installs) and <a href="https://www.hortidaily.com/article/9728356/freight-farms-files-for-chapter-7-bankruptcy-leaving-growers-disconnected/">growers left disconnected</a> (farmhand cloud + parts gone) · <a href="https://agfundernews.com/mushroom-vertical-farming-company-smallhold-files-for-bankruptcy-firm-in-worse-financial-shape-than-previously-disclosed">Smallhold Chapter 11</a> (COGS ×3, −$14.7M) and its <a href="https://www.businesswire.com/news/home/20240909075971/en/Smallhold-Emerges-from-Bankruptcy-and-Debuts-Resilient-Partner-Farm-Network">partner-farm re-emergence</a> · <a href="https://www.verticalfarmdaily.com/article/9537965/lessons-from-vertical-farming-bankruptcies-layoffs-and-closures-in-2023/">2023 sector lessons</a> (Bowery, AeroFarms, AppHarvest) · <a href="https://energy-solutions.co/articles/sub/vertical-farming-energy-optimization-market-intelligence-2027">energy: 40–60% of opex, 11–15 kWh/kg viability</a> · <a href="https://adamcohen.substack.com/p/farm-design-for-mushrooms">mushroom farm design: harvest windows, one-way flow, substrate bottlenecks</a> · <a href="https://www.databridgemarketresearch.com/reports/global-oyster-mushroom-cultivation-market">oyster oversupply/glut risk</a>.</li>
+    </ul>
+  </div>
+  <footer>Model: 52 weekly steps · first revenue week 6 (28-day registration ∥ 4-week first cycle) · ramp to Phase 1 target by week 14 · Phase 2 kit −£5,000 at week 32, capacity ramps weeks 36→44 · 10% harvest waste built in · pre-order channel capped at 20 kg/wk · deposit returned at exit (not modelled as income).</footer>
+  </div><!-- /page-plan -->
+
+  <!-- ============ PAGE: BUILD FUNGHI (ROMA) ============ -->
+  <div id="page-fungi" class="apppage">
+    <section style="padding-top:1rem">
+      <div class="kicker">Fase-0 · Roma · ~€400-520 · 2-3 mesi · non commerciale</div>
+      <h2>Build: camera funghi in casa, con il tuo stack</h2>
+      <p class="lede" style="font-size:1rem">Obiettivo: dimostrare che il processo funziona nelle TUE mani (contaminazione &lt;15%, 2 flush puliti) e costruire il controller che poi migra in Scozia. Tutto in una cantina/stanza fresca. <b>Non si vende nulla da Roma senza SCIA</b>: si coltiva, si mangia, si regala, si documenta.</p>
+
+      <h3>🛒 Lista acquisti</h3>
+      <div class="budgetwrap"><table class="budget">
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <tbody>
+          <tr><td>Tenda grow 80×80×160 cm<span class="why">amazon.it / growshop — con oblò e passacavi</span></td><td class="amt">€70</td></tr>
+          <tr><td>Umidificatore a ultrasuoni 4-5 L<span class="why">uscita orientabile; meglio se con attacco per tubo</span></td><td class="amt">€35</td></tr>
+          <tr><td>Ventola inline 100 mm + ducting + filtro antipolvere<span class="why">estrazione in alto; intake passivo in basso con garza filtrante</span></td><td class="amt">€40</td></tr>
+          <tr><td>Scaffalino 3-4 ripiani + bacinelle<span class="why">plastica, lavabile con alcool</span></td><td class="amt">€30</td></tr>
+          <tr><td>4-6 blocchi pronti di oyster (poi lion's mane)<span class="why">fornitori IT/EU di substrato inoculato — prima impari a fruttificare, POI a inoculare</span></td><td class="amt">€80</td></tr>
+          <tr><td>Igiene: alcool isopropilico, guanti, FFP2, spruzzino<span class="why">flusso pulito→sporco, sempre</span></td><td class="amt">€20</td></tr>
+          <tr><td><b>Stack controllo</b>: Raspberry Pi (Zero 2 W o 4) o ESP32<span class="why">quello che hai in cassetto va bene</span></td><td class="amt">€25-60</td></tr>
+          <tr><td>Sensore SHT31 (temp+RH) + SCD40 (CO₂)<span class="why">I²C, librerie pronte</span></td><td class="amt">€35</td></tr>
+          <tr><td>Relay board 4 canali + prese<span class="why">canali: umidificatore, ventola, luce, riserva (frigo/riscaldatore)</span></td><td class="amt">€15</td></tr>
+          <tr><td>Camera (Pi cam o USB) + striscia LED 6500K su timer<span class="why">vision: pinning, finestra di raccolta, muffe verdi</span></td><td class="amt">€30</td></tr>
+          <tr class="total"><td>Totale fase-0 funghi</td><td class="amt">~€400</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:.88rem;color:var(--muted)">Opzionale estate: mini-frigo usato o cantinetta vino modificata come cella di fruttificazione (~€60-90). A Roma da giugno a settembre le temperature interne superano i 25°C: o parti in autunno, o questa è la prima sfida vera del controller.</p>
+
+      <h3>🔧 Montaggio</h3>
+      <div class="wk"><div class="tag">1</div><div><b>Posizione</b><p>Cantina, garage o stanza a nord: serve 14-20°C il più possibile stabile, niente sole diretto, presa elettrica, pavimento lavabile. La tenda contiene l'umidità: sotto metti un telo.</p></div></div>
+      <div class="wk"><div class="tag">2</div><div><b>Aria e acqua</b><p>Ventola di estrazione in alto (fori esistenti della tenda), intake passivo in basso col filtro. Umidificatore fuori dalla tenda col tubo dentro, o dentro sul fondo. La nebbia NON deve bagnare i blocchi direttamente.</p></div></div>
+      <div class="wk"><div class="tag">3</div><div><b>Sensori e camera</b><p>SHT31+SCD40 a metà altezza, lontani dal getto dell'umidificatore. Camera frontale che vede tutti i blocchi, LED 12h/giorno. Cablaggio fuori dalla zona umida, connettori sigillati.</p></div></div>
+      <div class="wk"><div class="tag">4</div><div><b>Loop di controllo</b><p>Regole: RH 85-92% (isteresi 3%), CO₂ &lt; 800-1000 ppm in fruttificazione (la ventola parte a soglia), cicli FAE ogni 2-4h comunque. Alert Telegram su: RH fuori range &gt;30 min, CO₂ alto, sensore muto. Log su file: è il dataset.</p></div></div>
+      <div class="wk"><div class="tag">5</div><div><b>Vision</b><p>Foto ogni 30 min. Modello locale (anche un classificatore semplice all'inizio): pinning sì/no, pin→raccolta (conta i giorni), verde=muffa→alert immediato. La finestra di raccolta è mezza giornata: questo è il pezzo che vale.</p></div></div>
+
+      <h3>📈 Processo e parametri</h3>
+      <div class="tblwrap"><table class="parm">
+        <thead><tr><th>Specie</th><th>Fruttificazione</th><th>RH</th><th>CO₂</th><th>Tempi</th></tr></thead>
+        <tbody>
+          <tr><td>Oyster (inizia qui: perdona tutto)</td><td>15-20°C, luce indiretta 12h</td><td>85-95%</td><td>&lt;800 ppm</td><td>pin 3-7 gg · raccolta 5-7 gg dopo · 2° flush dopo 7-14 gg</td></tr>
+          <tr><td>Lion's mane (dopo il 1° successo)</td><td>16-18°C</td><td>90-95%</td><td>&lt;700 ppm, FAE delicata</td><td>più lento: 2-3 settimane a flush</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:.92rem">Ritmo: taglia una X sul blocco → shock di induzione (calo temp + luce) → pin → raccogli PRIMA che i cappelli si appiattiscano (oyster) o che le spine ingialliscano (lion's mane) → pesa, fotografa, logga → 2° flush. Poi passa a substrato fatto in casa (pentola a pressione, paglia/pellet + soia) — è lì che si misura la contaminazione vera.</p>
+
+      <div class="call"><span class="tag">Cancello di uscita fase-0</span><p>Entro il mese 3: <b>contaminazione &lt;15%</b> sui blocchi fatti da te · 2 flush puliti per specie · qualità confrontabile con le foto dei produttori UK · controller che regge <b>7 giorni senza interventi manuali</b>. Passa → il progetto Scozia ha basi reali. Fallisce → hai speso €400 e hai la risposta.</p></div>
+      <div class="risk"><span class="trip">avvertenze</span><p>Spore in aria alla raccolta (FFP2, raccogli presto); mai vendere senza SCIA; d'estate senza cella frigo i risultati mentono — non giudicare il processo a 28°C.</p></div>
+    </section>
+  </div>
+
+  <!-- ============ PAGE: LICENZE SCOZIA ============ -->
+  <div id="page-licenze" class="apppage">
+    <section style="padding-top:1rem">
+      <div class="kicker">Matrice licenze · Scozia · 9 agenti su fonti ufficiali + cross-check indipendente · 26 ago 2026</div>
+      <h2>Cosa serve per vendere, prodotto per prodotto</h2>
+      <p class="lede" style="font-size:1rem">Ricerca su gov.scot, foodstandards.gov.scot, APHA, SASA e i council di Edimburgo/Midlothian. Le due catene più rischiose (mangimi e animali vivi) sono state ri-verificate da un secondo specialista indipendente. Sintesi: <b>per lo stack fungino il costo obbligatorio è £0</b>.</p>
+
+      <h3>🍄 Stack fungino (fresco · essiccato · polvere · kit) — costo obbligatorio £0, difficoltà 1/5</h3>
+      <div class="tblwrap"><table class="parm">
+        <thead><tr><th>Requisito</th><th>Autorità</th><th>Costo</th><th>Tempi</th></tr></thead>
+        <tbody>
+          <tr><td><b>Registrazione food business</b> (copre coltivare, essiccare, macinare, vendere online) — casa domestica esplicitamente registrabile</td><td>Council (Edimburgo/Midlothian), regime FSS</td><td>Gratis (vietato farla pagare)</td><td>≥28 gg prima della prima vendita; ispezione EHO a seguire</td></tr>
+          <tr><td><b>Sistema HACCP documentato</b> — per essiccare/macinare sei "manufacturer", non più primary producer</td><td>Reg 852/2004, EHO</td><td>Gratis (CookSafe FSS / MyHACCP)</td><td>1-3 giorni, pronto PRIMA della visita</td></tr>
+          <tr><td>Certificato igiene REHIS Elementary — <b>non obbligatorio per legge</b>, ma è ciò che EHO e buyer si aspettano</td><td>REHIS</td><td>£60-110, 1 giorno</td><td>consigliato pre-ispezione</td></tr>
+          <tr><td>Kit di coltivazione: NESSUNA registrazione food (non sono alimenti) — solo sicurezza generale prodotto</td><td>GPSR 2005</td><td>£0</td><td>—</td></tr>
+          <tr><td>HMRC sole trader</td><td>HMRC</td><td>Gratis</td><td>entro 5 ott anno fiscale successivo</td></tr>
+        </tbody>
+      </table></div>
+      <div class="risk"><span class="trip">trappole verificate</span><p><b>1)</b> La polvere di MICELIO è novel food non autorizzato = illegale (solo fruiting body!). <b>2)</b> Zero health claim: l'ASA ha già bandito "focus/memoria/stress" sui funghi. <b>3)</b> In Scozia l'EHO vuole <b>CookSafe</b>, non il pacco SFBB inglese — errore classico. <b>4)</b> Il rating è FHIS Pass/Improvement Required, non le stelle inglesi. <b>5)</b> Vendere polvere come "ingrediente culinario" (non "integratore") evita tutte le regole supplement.</p></div>
+
+      <h3>🧄 Aglio nero — ~£250-600, 4-8 settimane, difficoltà 2/5</h3>
+      <p style="font-size:.95rem">Registrazione council gratis + HACCP + <b>validazione shelf-life</b> (aw/pH, £100-300 di laboratorio: è la voce vera) + assicurazione £60-150. GS1/barcode (~£120) solo quando entra Amazon.</p>
+      <div class="risk"><span class="trip">trappole verificate</span><p><b>1)</b> L'EHO non ha mai visto l'aglio nero: portagli TU la documentazione del processo o rischi stalli. <b>2)</b> La PASTA è l'outlier normativo (aw più alta) — parti da bulbi interi e polvere. <b>3)</b> MAI sott'olio senza acidificazione validata (botulino). <b>4)</b> Camera sigillata può andare anaerobica nel run di 60-90 giorni — documenta la ventilazione.</p></div>
+
+      <h3>🍯 Hot honey — £0-300, 4-6 settimane, difficoltà 2/5</h3>
+      <div class="risk"><span class="trip">la trappola che Trading Standards persegue davvero</span><p>Non puoi chiamarlo solo <b>"Honey"</b>: le Honey (Scotland) Regulations 2015 riservano il nome al miele puro — serve un nome tipo "chilli-infused honey [preparation]". E niente peperoncini FRESCHI (acqua → rischio botulino): solo secchi o validazione di laboratorio.</p></div>
+
+      <h3>🐕 Dog treats — la catena più pesante: 2 sign-off PRIMA della prima vendita</h3>
+      <p style="font-size:.95rem"><b>1)</b> Registrazione feed business direttamente con FSS (feed@fss.scot, gratis — dal 2021 NON passa dal council: trappola "porta sbagliata"). <b>2)</b> <b>Approvazione APHA del locale</b> (ABP Cat 3): la casa È approvabile ma solo con separazione rigorosa dalla cucina di famiglia — una cucina condivisa fallisce l'ispezione ABPR04. Tempi 2-6 mesi. Cross-check: il costo "gratis in Scozia" non è confermato (in Inghilterra ~£1.984); il registro trasportatore invece NON serve per i propri prodotti. Amazon Pet Food è categoria gated.</p>
+
+      <h3>🦐 Gamberetti vivi — sorpresa: zero licenze obbligatorie</h3>
+      <p style="font-size:.95rem">Verificato due volte: in Scozia gli invertebrati sono FUORI dalla licenza di vendita animali (s.16 AHW(S)A 2006 definisce "animal" = vertebrato). Correzione dal cross-check: serve la <b>conferma scritta FHI/APB</b> (gratuita) per l'acquacoltura ornamentale. Le trappole vere sono i corrieri (solo Royal Mail ammette certi invertebrati elencati; Evri/DPD/Parcelforce vietano tutto) e i marketplace (Etsy e Amazon vietano animali vivi; eBay permette).</p>
+
+      <h3>🌷 Tuberi, piante, tronchetti — passaporti SASA</h3>
+      <p style="font-size:.95rem">Vendita a distanza di piante/tuberi = registrazione operatore professionale (gratis) + <b>autorizzazione a emettere plant passport</b> (ispezione ~£120-250/anno) via SASA — anche "solo Etsy" conta come professionale. <b>I tronchetti di betulla/quercia NON richiedono passaporto</b> (solo conifere e castagno). Trappola: spegni "ships to: UK" per la Northern Ireland (regime EU, serve NIPHL).</p>
+
+      <h3>🔥 Kindling &amp; ☕ caffè — quasi zero barriere</h3>
+      <p style="font-size:.95rem">Kindling: <b>nessuna licenza in Scozia</b> (Ready to Burn è legge solo in Inghilterra — £122+£385/anno solo se vendi là); Trading Standards testa l'umidità dichiarata: tieni i log del misuratore. Caffè: solo registrazione food gratuita + etichette; niente permesso emissioni a scala domestica.</p>
+
+      <div class="call"><span class="tag">Il quadro</span><p>La gerarchia normativa conferma il ranking commerciale: <b>lo stack fungino è il percorso a costo zero e attrito minimo</b>; aglio nero e hot honey aggiungono solo la validazione di laboratorio; i dog treats richiedono un locale dedicato e 2-6 mesi di APHA; tutto il resto sta in mezzo. Nessun blocco reale su nessuno dei prodotti dello stack.</p></div>
+    </section>
+  </div>
+
+  <!-- ============ PAGE: BUILD AGLIO NERO (ROMA) ============ -->
+  <div id="page-garlic" class="apppage">
+    <section style="padding-top:1rem">
+      <div class="kicker">Fase-0 · Roma · ~€150-250 · 3-9 settimane a batch · non commerciale</div>
+      <h2>Build: camera di fermentazione per aglio nero</h2>
+      <p class="lede" style="font-size:1rem">Il candidato n°2 del ranking (7.35): retail UK ~£100/kg, una manciata di produttori, e il processo è <b>al 100% controllo di temperatura e umidità per 60-90 giorni</b> — zero biologia viva, solo ingegneria. Il dataset dei parametri che costruisci qui È il vantaggio competitivo.</p>
+
+      <h3>🛒 Lista acquisti</h3>
+      <div class="budgetwrap"><table class="budget">
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <tbody>
+          <tr><td>Camera: mini-frigo dismesso O box EPP coibentato 40-60 L<span class="why">il frigo morto è perfetto: coibentato, richiudibile, gratis su subito.it</span></td><td class="amt">€0-60</td></tr>
+          <tr><td>Riscaldatore: cavo/tappetino da rettilario 50-100 W o PTC<span class="why">mai resistenze nude vicino a plastica</span></td><td class="amt">€25</td></tr>
+          <tr><td>Controllo: Inkbird ITC-306T (semplice) o Pi/ESP32 + SSR 25A + DS18B20<span class="why">la via Pi ti dà log + profili di temperatura programmabili — il dataset</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>SHT31 per RH + ciotola d'acqua/spugna<span class="why">RH 70-85%; l'acqua nella camera basta quasi sempre</span></td><td class="amt">€12</td></tr>
+          <tr><td>Termofusibile di sicurezza + presa con contatore kWh<span class="why">sicurezza elettrica + misura del costo energetico reale per kg</span></td><td class="amt">€20</td></tr>
+          <tr><td>Filtro a carboni attivi sullo sfiato<span class="why">i primi 3-7 giorni l'odore è FORTE — questo è il fix</span></td><td class="amt">€18</td></tr>
+          <tr><td>Aglio: 2 kg standard + 1-2 kg premium (Voghiera DOP / rosso di Sulmona)<span class="why">batch comparativo: il premium giustifica il prezzo premium?</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>Barattoli vetro, carta forno/foil per test avvolgimento, guanti</td><td class="amt">€15</td></tr>
+          <tr class="total"><td>Totale fase-0 aglio nero</td><td class="amt">~€160-220</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>🔧 Montaggio</h3>
+      <div class="wk"><div class="tag">1</div><div><b>Camera</b><p>Svuota il frigo, togli il compressore se vuoi (o lascialo spento), fora un passacavo in basso e uno sfiato piccolo in alto (col filtro a carboni). Sigilla col silicone.</p></div></div>
+      <div class="wk"><div class="tag">2</div><div><b>Riscaldamento</b><p>Tappetino sul fondo, griglia sopra (l'aglio non tocca il calore diretto), sonda al centro TRA le teste, non in aria libera. Taratura: overshoot &lt;2°C — con SSR e PID su Pi ci arrivi in una serata.</p></div></div>
+      <div class="wk"><div class="tag">3</div><div><b>Umidità e carico</b><p>Ciotola d'acqua sul fondo. Teste INTERE, non sbucciate. Test in parallelo: metà avvolte singolarmente (foil/carta), metà sfuse in barattolo aperto — annota quale viene meglio.</p></div></div>
+      <div class="wk"><div class="tag">4</div><div><b>Software</b><p>Log continuo T/RH/kWh, alert se la temperatura esce di ±3°C, foto settimanale della testa campione. Profili programmabili: è quello che i produttori col rice cooker non hanno.</p></div></div>
+
+      <h3>📈 Processo e dataset</h3>
+      <div class="tblwrap"><table class="parm">
+        <thead><tr><th>Batch</th><th>Temp</th><th>RH</th><th>Durata attesa</th><th>Cosa testa</th></tr></thead>
+        <tbody>
+          <tr><td>A — baseline</td><td>65°C costanti</td><td>~80%</td><td>21-30 gg</td><td>la ricetta standard</td></tr>
+          <tr><td>B — lento/dolce</td><td>60°C</td><td>~80%</td><td>35-45 gg</td><td>più dolce e morbido? vale l'energia in più?</td></tr>
+          <tr><td>C — premium</td><td>come il migliore di A/B</td><td>—</td><td>—</td><td>Voghiera DOP vs standard: differenza percepibile?</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:.92rem">Pronto quando: spicchi neri lucidi, morbidi tipo datteri, dolce-balsamico senza pungenza. Poi 1-2 settimane di asciugatura a temperatura ambiente ventilata. Check settimanale su UNA testa campione, le altre non si aprono.</p>
+
+      <div class="call"><span class="tag">Cancello di uscita fase-0</span><p>Qualità ≥ del riferimento comprato (ordina un vasetto da £5/50g da un produttore UK come benchmark) · resa % pesata · <b>kWh/kg misurati</b> (il contatore) → costo/kg totale vs retail £100/kg. Se il margine regge e la qualità c'è, l'aglio nero entra nello stack accanto ai funghi: <b>stessa cucina, stesso brand, zero deperibilità</b>.</p></div>
+      <div class="risk"><span class="trip">avvertenze</span><p>Odore forte i primi giorni (filtro + cantina/balcone) · consumo stimato 1-2 kWh/giorno: misuralo, è una riga del business plan · sicurezza: termofusibile sempre, mai lasciare resistenze non protette · non vendere da Roma senza SCIA.</p></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const fmt = n => '£' + Math.round(n).toLocaleString('en-GB');
+  const fmtK = n => (n<0?'-':'') + '£' + (Math.abs(n)>=1000 ? (Math.abs(n)/1000).toFixed(1).replace(/\.0$/,'') + 'k' : Math.round(Math.abs(n)));
+
+  const OPTIONS = {
+    bundle: { rent:640, hireWk:0, capexBox:0,    deposit:640, name:'Bonnyrigg bundle' },
+    buy:    { rent:360, hireWk:0, capexBox:1730, deposit:800, name:'Dalkeith + buy' },
+    hire:   { rent:360, hireWk:17, capexBox:0,   deposit:800, name:'Dalkeith + hire' },
+  };
+  const FITOUT=1600, FUNGIKIT=900, SUB0=400, DRYER=150, COMPLY=400;
+  const SUBKG=2.2, PACKKG=0.30, DRYPACK=0.5, FUELWK=25, INSMO=15, ELEC=0.28, BASEKWH=10, KWHKG=2.2;
+  const P_PRE=13, P_DRY=18, PRECAP=20, FFIS_SHARE=5000, WASTE=1.1;
+
+  const state = { opt:'hire', kg:30, pre:40, dry:20, pws:8, ffis:true, kg2:80 };
+
+  function split(kgEff){
+    const preKg = Math.min(kgEff*state.pre/100, PRECAP);
+    const dryKg = kgEff*state.dry/100;
+    const wsKg = Math.max(0, kgEff - preKg - dryKg);
+    return {preKg, dryKg, wsKg, rev: wsKg*state.pws + preKg*P_PRE + dryKg*P_DRY};
+  }
+
+  function run(optKey){
+    const o = OPTIONS[optKey || state.opt];
+    const capex0 = o.capexBox + o.deposit + FITOUT + FUNGIKIT + SUB0 + DRYER + COMPLY;
+    let cash = 10000 - capex0;
+    const weeks = [];
+    const rentWk = o.rent*12/52 + o.hireWk;
+    for (let w=1; w<=52; w++){
+      // pipeline: inoculate from wk3 (substrate spend), first harvest wk6, full Phase 1 by wk14
+      let kgEff = 0, grownKg = 0;
+      if (w>=3 && w<6) grownKg = state.kg*0.6*WASTE;              // blocks colonising, nothing sold yet
+      if (w>=6){
+        const frac = Math.min(1, 0.25 + 0.75*(w-6)/8);
+        kgEff = state.kg*frac;
+      }
+      let kit = 0;
+      if (state.ffis){
+        if (w===32) kit = FFIS_SHARE;
+        if (w>=36) kgEff = Math.max(kgEff, state.kg + (state.kg2-state.kg)*Math.min(1,(w-36)/8));
+      }
+      if (w>=6) grownKg = kgEff*WASTE;
+      const s = split(kgEff);
+      const cRent = rentWk;
+      const cElec = (BASEKWH*7 + KWHKG*kgEff)*ELEC;
+      const cInput = grownKg*SUBKG;
+      const cLogi = (s.wsKg+s.preKg)*PACKKG + s.dryKg*DRYPACK + (w>=6?FUELWK:0) + INSMO*12/52;
+      const cost = cRent + cElec + cInput + cLogi + kit;
+      cash += s.rev - cost;
+      weeks.push({w, rev:s.rev, cost, net:s.rev-cost, cash, cRent, cElec, cInput, cLogi, cKit:kit});
+    }
+    let minW = weeks[0];
+    for (const x of weeks) if (x.cash < minW.cash) minW = x;
+    let be = null;
+    for (let i=3;i<52;i++){
+      const roll = weeks[i].net+weeks[i-1].net+weeks[i-2].net+weeks[i-3].net;
+      if (roll>0){ be = weeks[i].w; break; }
+    }
+    let stakeBack = null;
+    for (const x of weeks) if (x.w>=6 && x.cash>=10000){ stakeBack = x.w; break; }
+    const fixedMo = o.rent + o.hireWk*52/12 + BASEKWH*30.4*ELEC + INSMO + FUELWK*52/12;
+    const months = [];
+    for (let m=0;m<12;m++){
+      const ws = weeks.slice(Math.round(m*52/12), Math.round((m+1)*52/12));
+      const sum = k => ws.reduce((s,x)=>s+x[k],0);
+      months.push({ m:m+1, rev:sum('rev'), cost:sum('cost'), cash:ws[ws.length-1].cash,
+        cRent:sum('cRent'), cElec:sum('cElec'), cInput:sum('cInput'), cLogi:sum('cLogi'), cKit:sum('cKit') });
+    }
+    return {weeks, months, minW, be, stakeBack, fixedMo, capex0, o};
+  }
+
+  // ---------- KPI strip ----------
+  function renderKPIs(r){
+    $('kv-min').textContent = fmt(r.minW.cash);
+    $('ks-min').textContent = 'week ' + r.minW.w + ' — the floor before sales carry you';
+    $('k-min').className = 'kpi ' + (r.minW.cash < 500 ? 'bad' : r.minW.cash < 1500 ? '' : 'good');
+    $('kv-be').textContent = r.be ? 'week ' + r.be : 'never';
+    $('k-be').className = 'kpi ' + (r.be ? (r.be<=14?'good':'') : 'bad');
+    const end = r.weeks[51].cash;
+    $('kv-end').textContent = fmt(end);
+    $('ks-end').textContent = end>10000 ? 'you made back the stake + ' + fmt(end-10000) : 'still ' + fmt(10000-end) + ' below the stake';
+    $('k-end').className = 'kpi ' + (end>10000?'good':'');
+    $('kv-fix').textContent = fmt(r.fixedMo);
+    const v = $('verdict');
+    const p2 = state.ffis ? split(state.kg2) : null;
+    const runRate = p2 ? Math.round((p2.rev - (OPTIONS[state.opt].rent*12/52 + OPTIONS[state.opt].hireWk + (BASEKWH*7+KWHKG*state.kg2)*ELEC + state.kg2*WASTE*SUBKG + (p2.wsKg+p2.preKg)*PACKKG + p2.dryKg*DRYPACK + FUELWK + INSMO*12/52))*52) : null;
+    if (r.minW.cash < 0) v.innerHTML = '<span class="pill crit">✖ plan fails — cash goes negative week ' + r.minW.w + '. Lower Phase 1 kg or pick the cheaper yard.</span>';
+    else if (r.minW.cash < 1000) v.innerHTML = '<span class="pill warn">▲ thin — floor under £1,000. One bad month breaks it.</span>';
+    else v.innerHTML = '<span class="pill ok">✔ plan holds — floor ' + fmt(r.minW.cash) + ', break-even ' + (r.be?'week '+r.be:'—') + (runRate ? ', Phase 2 run-rate ≈ ' + fmt(runRate) + '/yr net' : '') + '.</span>';
+  }
+
+  // ---------- svg helpers ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(n, at){ const e = document.createElementNS(NS,n); for (const k in at) e.setAttribute(k, at[k]); return e; }
+  const PADL=46, PADR=14, PADT=14, PADB=26;
+
+  // ---------- 3-option comparison ----------
+  const CMP = [
+    {key:'bundle', c:'#5b7d33', short:'Bonnyrigg bundle'},
+    {key:'buy',    c:'#7a4a8f', short:'Dalkeith + buy'},
+    {key:'hire',   c:'#2e79c9', short:'Dalkeith + hire'},
+  ];
+  function renderCompare(cmp){
+    const svg = $('cmpsvg'); svg.innerHTML='';
+    const W=720, H=240, iw=W-PADL-PADR, ih=H-PADT-PADB;
+    const all = CMP.flatMap(d => cmp[d.key].weeks.map(x=>x.cash));
+    const ymax = Math.max(10000, ...all)*1.06, ymin = Math.min(0, ...all)*1.15 - 200;
+    const X = w => PADL + (w-1)/51*iw;
+    const Y = v => PADT + (ymax-v)/(ymax-ymin)*ih;
+    const step = ymax-ymin > 16000 ? 5000 : 2500;
+    for (let v=Math.ceil(ymin/step)*step; v<=ymax; v+=step){
+      svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(v),y2:Y(v),class:'grid'}));
+      const t = el('text',{x:PADL-6,y:Y(v)+3.5,'text-anchor':'end'}); t.textContent=fmtK(v); svg.appendChild(t);
+    }
+    if (ymin<0) svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(0),y2:Y(0),stroke:'#a33d33','stroke-width':1,'stroke-dasharray':'4 3'}));
+    for (let w=1;w<=52;w+=8){ const t = el('text',{x:X(w),y:H-8,'text-anchor':'middle'}); t.textContent='w'+w; svg.appendChild(t); }
+    svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:PADT+ih,y2:PADT+ih,class:'axis'}));
+    CMP.forEach(d=>{
+      const ys = cmp[d.key].weeks.map(x=>x.cash);
+      let p = 'M'+X(1)+','+Y(ys[0]);
+      for (let i=1;i<52;i++) p += ' L'+X(i+1)+','+Y(ys[i]);
+      const sel = d.key===state.opt;
+      svg.appendChild(el('path',{d:p, fill:'none', stroke:d.c,'stroke-width':sel?2.5:1.7,'stroke-linejoin':'round', opacity:sel?1:.75}));
+    });
+    const ends = CMP.map(d=>({d, y:Y(cmp[d.key].weeks[51].cash), v:cmp[d.key].weeks[51].cash})).sort((a,b)=>a.y-b.y);
+    for (let i=1;i<ends.length;i++) if (ends[i].y - ends[i-1].y < 13) ends[i].y = ends[i-1].y + 13;
+    ends.forEach(e=>{
+      const t = el('text',{x:W-PADR-2,y:e.y+3.5,'text-anchor':'end',style:'font-weight:600;fill:'+e.d.c});
+      t.textContent = fmtK(e.v); svg.appendChild(t);
+    });
+    const card = $('cmpcard');
+    let tip = $('tip4');
+    if (!tip){
+      tip = document.createElement('div'); tip.id='tip4';
+      tip.style.cssText = 'position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:.74rem;line-height:1.5;padding:.4rem .55rem;border-radius:8px;opacity:0;white-space:nowrap;z-index:5';
+      card.appendChild(tip);
+    }
+    const hov = el('line',{x1:0,x2:0,y1:PADT,y2:PADT+ih,stroke:'#23281d','stroke-width':1,opacity:0});
+    svg.appendChild(hov);
+    svg.onmousemove = e => {
+      const rct = svg.getBoundingClientRect();
+      const px = (e.clientX-rct.left)/rct.width*W;
+      const w = Math.max(1, Math.min(52, Math.round((px-PADL)/iw*51+1)));
+      hov.setAttribute('x1',X(w)); hov.setAttribute('x2',X(w)); hov.setAttribute('opacity',.25);
+      tip.innerHTML = '<b>week '+w+'</b><br>' + CMP.map(d=>d.short+' '+fmt(cmp[d.key].weeks[w-1].cash)).join('<br>');
+      const cr = card.getBoundingClientRect();
+      let tx = e.clientX-cr.left+14; if (tx>cr.width-210) tx = e.clientX-cr.left-215;
+      tip.style.left=tx+'px'; tip.style.top=(e.clientY-cr.top-10)+'px'; tip.style.opacity=1;
+    };
+    svg.onmouseleave = () => { tip.style.opacity=0; hov.setAttribute('opacity',0); };
+    const rows = [
+      {label:'Upfront, day 1',   get:r=>r.capex0,          fmt:v=>fmt(v),        best:'min'},
+      {label:'Fixed / month',    get:r=>r.fixedMo,         fmt:v=>fmt(v),        best:'min'},
+      {label:'Cash floor',       get:r=>r.minW.cash,       fmt:v=>fmt(v),        best:'max'},
+      {label:'Break-even',       get:r=>r.be??99,          fmt:v=>v===99?'never':'week '+v, best:'min'},
+      {label:'£10k stake back',  get:r=>r.stakeBack??99,   fmt:v=>v===99?'not in yr 1':'week '+v, best:'min'},
+      {label:'Cash at week 52',  get:r=>r.weeks[51].cash,  fmt:v=>fmt(v),        best:'max'},
+    ];
+    let h = '<thead><tr><th></th>' + CMP.map(d=>'<th style="color:'+d.c+'">'+d.short+'</th>').join('') + '</tr></thead><tbody>';
+    for (const row of rows){
+      const vals = CMP.map(d=>row.get(cmp[d.key]));
+      const bestV = row.best==='min' ? Math.min(...vals) : Math.max(...vals);
+      h += '<tr><td>'+row.label+'</td>' + vals.map(v=>'<td'+(v===bestV?' class="best"':'')+'>'+row.fmt(v)+'</td>').join('') + '</tr>';
+    }
+    $('cmptbl').innerHTML = h + '</tbody>';
+    const w52 = CMP.map(d=>({s:d.short, v:cmp[d.key].weeks[51].cash})).sort((a,b)=>b.v-a.v);
+    $('cmpnote').innerHTML = 'Over the full year <b>' + w52[0].s + '</b> comes out ' + fmt(w52[0].v - w52[2].v) + ' ahead of ' + w52[2].s + ' — but the floor and upfront rows are what decide whether you sleep at night.';
+  }
+
+  // ---------- cash chart ----------
+  function renderCash(r){
+    const svg = $('cashsvg'); svg.innerHTML = '';
+    const W=720, H=250, iw=W-PADL-PADR, ih=H-PADT-PADB;
+    const ys = r.weeks.map(x=>x.cash);
+    const ymax = Math.max(10000, ...ys)*1.06, ymin = Math.min(0, ...ys)*1.15 - 200;
+    const X = w => PADL + (w-1)/51*iw;
+    const Y = v => PADT + (ymax-v)/(ymax-ymin)*ih;
+    const step = ymax-ymin > 16000 ? 5000 : 2500;
+    for (let v=Math.ceil(ymin/step)*step; v<=ymax; v+=step){
+      svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(v),y2:Y(v),class:'grid'}));
+      const t = el('text',{x:PADL-6,y:Y(v)+3.5,'text-anchor':'end'}); t.textContent = fmtK(v); svg.appendChild(t);
+    }
+    if (ymin<0){ svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(0),y2:Y(0),stroke:'#a33d33','stroke-width':1,'stroke-dasharray':'4 3'})); }
+    for (let w=1;w<=52;w+=window.matchMedia('(max-width:600px)').matches?13:8){
+      const t = el('text',{x:X(w),y:H-8,'text-anchor':'middle'}); t.textContent='w'+w; svg.appendChild(t);
+    }
+    svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:PADT+ih,y2:PADT+ih,class:'axis'}));
+    let d = 'M'+X(1)+','+Y(ys[0]);
+    for (let i=1;i<52;i++) d += ' L'+X(i+1)+','+Y(ys[i]);
+    svg.appendChild(el('path',{d:d+' L'+X(52)+','+Y(Math.max(0,ymin))+' L'+X(1)+','+Y(Math.max(0,ymin))+' Z', fill:'#5b7d33', opacity:.13}));
+    svg.appendChild(el('path',{d, fill:'none', stroke:'#5b7d33','stroke-width':2,'stroke-linejoin':'round'}));
+    svg.appendChild(el('circle',{cx:X(r.minW.w),cy:Y(r.minW.cash),r:4.5,fill:r.minW.cash<0?'#a33d33':'#5b7d33',stroke:'#fbf9f2','stroke-width':2}));
+    const ml = el('text',{x:X(r.minW.w),y:Y(r.minW.cash)+16,'text-anchor':'middle',style:'font-weight:600;fill:#23281d'});
+    ml.textContent = 'floor ' + fmtK(r.minW.cash); svg.appendChild(ml);
+    if (r.be){
+      svg.appendChild(el('line',{x1:X(r.be),x2:X(r.be),y1:PADT,y2:PADT+ih,stroke:'#a96e1f','stroke-width':1,'stroke-dasharray':'3 3'}));
+      const bl = el('text',{x:X(r.be)+4,y:PADT+12,style:'fill:#7c5116'}); bl.textContent='break-even'; svg.appendChild(bl);
+    }
+    if (r.stakeBack){
+      const sx = X(r.stakeBack), sy = Y(r.weeks[r.stakeBack-1].cash);
+      svg.appendChild(el('path',{d:'M'+sx+' '+(sy-6)+' l6 6 -6 6 -6 -6 Z', fill:'#3a5127', stroke:'#fbf9f2','stroke-width':1.5}));
+      const sl = el('text',{x:sx,y:sy-11,'text-anchor':'middle',style:'font-weight:600;fill:#3a5127'});
+      sl.textContent='£10k back'; svg.appendChild(sl);
+    }
+    const tip = $('tip'), card = $('cashcard');
+    const hov = el('line',{x1:0,x2:0,y1:PADT,y2:PADT+ih,stroke:'#23281d','stroke-width':1,opacity:0});
+    const dot = el('circle',{r:4,fill:'#5b7d33',stroke:'#fbf9f2','stroke-width':2,opacity:0});
+    svg.appendChild(hov); svg.appendChild(dot);
+    svg.onmousemove = e => {
+      const rct = svg.getBoundingClientRect();
+      const px = (e.clientX-rct.left)/rct.width*W;
+      const w = Math.max(1, Math.min(52, Math.round((px-PADL)/iw*51+1)));
+      const wk = r.weeks[w-1];
+      hov.setAttribute('x1',X(w)); hov.setAttribute('x2',X(w)); hov.setAttribute('opacity',.25);
+      dot.setAttribute('cx',X(w)); dot.setAttribute('cy',Y(wk.cash)); dot.setAttribute('opacity',1);
+      tip.innerHTML = '<b>week '+w+'</b><br>cash '+fmt(wk.cash)+'<br>in '+fmt(wk.rev)+' · out '+fmt(wk.cost);
+      const cr = card.getBoundingClientRect();
+      let tx = e.clientX-cr.left+14; if (tx > cr.width-150) tx = e.clientX-cr.left-150;
+      tip.style.left = tx+'px'; tip.style.top = (e.clientY-cr.top-10)+'px'; tip.style.opacity = 1;
+    };
+    svg.onmouseleave = () => { tip.style.opacity=0; hov.setAttribute('opacity',0); dot.setAttribute('opacity',0); };
+  }
+
+  // ---------- milestone rail ----------
+  function renderRail(r){
+    const svg = $('railsvg'); svg.innerHTML='';
+    const W=720, L=28, R=692, midY=66;
+    const X = w => L + Math.min(52,Math.max(0,w))/52*(R-L);
+    svg.appendChild(el('line',{x1:L,x2:R,y1:midY,y2:midY,stroke:'#ddd5c2','stroke-width':2}));
+    for (let m=0;m<=12;m+=3){
+      const x = L + m/12*(R-L);
+      svg.appendChild(el('line',{x1:x,x2:x,y1:midY-4,y2:midY+4,stroke:'#ddd5c2','stroke-width':1.5}));
+      const t = el('text',{x, y:midY+16,'text-anchor':'middle'}); t.textContent = m===0?'start':'m'+m; svg.appendChild(t);
+    }
+    const ms = [
+      {w:1,  txt:'sign + register', c:'#23281d'},
+      {w:6,  txt:'first harvest & £', c:'#5b7d33'},
+      r.be ? {w:r.be, txt:'break-even', c:'#a96e1f'} : null,
+      state.ffis ? {w:32, txt:'phase 2 kit in', c:'#7a4a8f'} : null,
+      state.ffis ? {w:44, txt:'phase 2 full rate', c:'#2e79c9'} : null,
+      r.stakeBack ? {w:r.stakeBack, txt:'£10k stake back', c:'#3a5127'} : null,
+    ].filter(Boolean).sort((a,b)=>a.w-b.w);
+    const LV = [
+      {ly:16,  lineTo:24},
+      {ly:126, lineTo:118},
+      {ly:38,  lineTo:46},
+      {ly:104, lineTo:96},
+    ];
+    ms.forEach((m,i)=>{
+      const x = X(m.w), lv = LV[i%4];
+      const above = lv.ly < midY;
+      svg.appendChild(el('line',{x1:x,x2:x,y1:above?lv.lineTo:midY+6,y2:above?midY-6:lv.lineTo,stroke:m.c,'stroke-width':1,'stroke-dasharray':'2 2'}));
+      svg.appendChild(el('path',{d:'M'+x+' '+(midY-6)+' l6 6 -6 6 -6 -6 Z', fill:m.c, stroke:'#fbf9f2','stroke-width':1.5}));
+      const anchor = x < 110 ? 'start' : x > W-150 ? 'end' : 'middle';
+      const t = el('text',{x, y:lv.ly,'text-anchor':anchor,style:'font-weight:600;fill:'+m.c});
+      t.textContent = m.txt + ' · w' + m.w; svg.appendChild(t);
+    });
+  }
+
+  // ---------- monthly P&L bars ----------
+  function renderPL(r){
+    const svg = $('plsvg'); svg.innerHTML='';
+    const W=720, H=230, iw=W-PADL-PADR, ih=H-PADT-PADB;
+    const vmax = Math.max(...r.months.map(m=>Math.max(m.rev,m.cost)))*1.12 || 1;
+    const Y = v => PADT + (1-v/vmax)*ih;
+    const step = vmax>4000?1000:500;
+    for (let v=0; v<=vmax; v+=step){
+      svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(v),y2:Y(v),class:'grid'}));
+      const t = el('text',{x:PADL-6,y:Y(v)+3.5,'text-anchor':'end'}); t.textContent=fmtK(v); svg.appendChild(t);
+    }
+    svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:PADT+ih,y2:PADT+ih,class:'axis'}));
+    const slot = iw/12, bw = Math.min(16,(slot-10)/2);
+    let tip = $('tip2');
+    if (!tip){
+      tip = document.createElement('div'); tip.id='tip2';
+      tip.style.cssText = 'position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:.74rem;line-height:1.5;padding:.4rem .55rem;border-radius:8px;opacity:0;white-space:nowrap;z-index:5';
+      $('plcard').appendChild(tip);
+    }
+    r.months.forEach((m,i)=>{
+      const cx = PADL + slot*i + slot/2;
+      const mk = (v,off,color)=>{
+        const h = Math.max(0,(v/vmax)*ih);
+        const b = el('rect',{x:cx+off, y:Y(v), width:bw, height:h, rx:3, fill:color});
+        b.addEventListener('mouseenter', e=>{
+          const cr = $('plcard').getBoundingClientRect();
+          tip.innerHTML = '<b>month '+m.m+'</b><br>revenue '+fmt(m.rev)+'<br>costs '+fmt(m.cost)+'<br>net '+fmt(m.rev-m.cost);
+          let tx = e.clientX-cr.left+14; if (tx>cr.width-160) tx = e.clientX-cr.left-160;
+          tip.style.left=tx+'px'; tip.style.top=(e.clientY-cr.top-10)+'px'; tip.style.opacity=1;
+        });
+        b.addEventListener('mouseleave', ()=>{ tip.style.opacity=0; });
+        svg.appendChild(b);
+      };
+      mk(m.rev, -bw-1, '#5b7d33');
+      mk(m.cost, 1, '#7a4a8f');
+      const t = el('text',{x:cx,y:H-8,'text-anchor':'middle'}); t.textContent='m'+m.m; svg.appendChild(t);
+    });
+  }
+
+  // ---------- itemised cost stack ----------
+  const CD_KEYS = [
+    {k:'cRent', c:'#7a4a8f', label:'Rent & container'},
+    {k:'cElec', c:'#c17f24', label:'Electricity'},
+    {k:'cLogi', c:'#2e79c9', label:'Delivery, packaging, insurance'},
+    {k:'cInput', c:'#5b7d33', label:'Substrate'},
+    {k:'cKit', c:'#b0446a', label:'One-off / FFIS share'},
+  ];
+  function renderCostDetail(r){
+    const svg = $('cdsvg'); svg.innerHTML='';
+    const W=720, H=250, iw=W-PADL-PADR, ih=H-PADT-PADB;
+    const vmax = Math.max(...r.months.map(m=>m.cost))*1.12 || 1;
+    const Y = v => PADT + (1-v/vmax)*ih;
+    const step = vmax>1600?500:250;
+    for (let v=0; v<=vmax; v+=step){
+      svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:Y(v),y2:Y(v),class:'grid'}));
+      const t = el('text',{x:PADL-6,y:Y(v)+3.5,'text-anchor':'end'}); t.textContent=fmtK(v); svg.appendChild(t);
+    }
+    svg.appendChild(el('line',{x1:PADL,x2:W-PADR,y1:PADT+ih,y2:PADT+ih,class:'axis'}));
+    const slot = iw/12, bw = Math.min(30, slot-14);
+    const card = $('cdcard');
+    let tip = $('tip3');
+    if (!tip){
+      tip = document.createElement('div'); tip.id='tip3';
+      tip.style.cssText = 'position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:.74rem;line-height:1.5;padding:.4rem .55rem;border-radius:8px;opacity:0;white-space:nowrap;z-index:5';
+      card.appendChild(tip);
+    }
+    r.months.forEach((m,i)=>{
+      const x = PADL + slot*i + (slot-bw)/2;
+      let acc = 0;
+      CD_KEYS.forEach(({k,c})=>{
+        const v = m[k]; if (v<=0.5) return;
+        const y1 = Y(acc), y0 = Y(acc+v);
+        const h = Math.max(0, y1-y0-2);
+        if (h>0.5) svg.appendChild(el('rect',{x, y:y0+1, width:bw, height:h, rx:3, fill:c}));
+        acc += v;
+      });
+      const hit = el('rect',{x:x-4, y:PADT, width:bw+8, height:ih, fill:'transparent'});
+      hit.addEventListener('mouseenter', e=>{
+        const cr = card.getBoundingClientRect();
+        tip.innerHTML = '<b>month '+m.m+' — '+fmt(m.cost)+'</b><br>' +
+          CD_KEYS.filter(d=>m[d.k]>0.5).map(d=>d.label+' '+fmt(m[d.k])).join('<br>');
+        let tx = e.clientX-cr.left+14; if (tx>cr.width-230) tx = e.clientX-cr.left-235;
+        tip.style.left=tx+'px'; tip.style.top=(e.clientY-cr.top-10)+'px'; tip.style.opacity=1;
+      });
+      hit.addEventListener('mouseleave', ()=>{ tip.style.opacity=0; });
+      svg.appendChild(hit);
+      const t = el('text',{x:x+bw/2,y:H-8,'text-anchor':'middle'}); t.textContent='m'+m.m; svg.appendChild(t);
+    });
+    const last = r.months[11];
+    const lt = el('text',{x:PADL+slot*11+(slot)/2, y:Y(last.cost)-8,'text-anchor':'middle',style:'font-weight:600;fill:#23281d'});
+    lt.textContent = fmtK(last.cost)+'/mo'; svg.appendChild(lt);
+  }
+
+  // ---------- table view ----------
+  function renderTable(r){
+    const w = $('tblwrap');
+    let h = '<table class="dtable"><thead><tr><th>Month</th><th>Revenue</th><th>Costs</th><th>Rent+box</th><th>Power</th><th>Delivery+ins</th><th>Substrate</th><th>Kit</th><th>Net</th><th>Cash at end</th></tr></thead><tbody>';
+    for (const m of r.months) h += '<tr><td>m'+m.m+'</td><td>'+fmt(m.rev)+'</td><td>'+fmt(m.cost)+'</td><td>'+fmt(m.cRent)+'</td><td>'+fmt(m.cElec)+'</td><td>'+fmt(m.cLogi)+'</td><td>'+fmt(m.cInput)+'</td><td>'+(m.cKit>0?fmt(m.cKit):'—')+'</td><td>'+fmt(m.rev-m.cost)+'</td><td>'+fmt(m.cash)+'</td></tr>';
+    w.innerHTML = h + '</tbody></table>';
+  }
+
+  // ---------- budget ----------
+  function renderBudget(r){
+    const o = r.o;
+    const rows = [
+      ['Yard deposit', o.deposit, state.opt==='bundle' ? 'one month at £640 (Bonnyrigg terms TBC on the call)' : '£800 stated in the Dalkeith ad'],
+      state.opt==='buy' ? ['20ft container, delivered', 1730, '£1,550 + ~£180 HIAB — CS Containers, Grangemouth stock'] : null,
+      ['Fungi fit-out', FITOUT, 'insulation £450 · shelving £240 · humidifier + fogger £120 · fresh-air fan & filter £140 · heater £80 · Pi controller, sensors, relays £250 · 2 cameras + edge-AI vision £120 · RCD wiring £90 · sundries £110'],
+      ['Cultivation kit', FUNGIKIT, 'steriliser barrel, grow bags, grain spawn starter, PPE, scales'],
+      ['Substrate stock', SUB0, 'hardwood pellets, soy hulls, straw — first two months of blocks'],
+      ['Dehydrator', DRYER, 'turns surplus into the £18/kg dried channel'],
+      ['Compliance & launch', COMPLY, 'hygiene cert £20 · year-1 insurance £180 · packaging & labels £120 · platform fees float £80'],
+    ].filter(Boolean);
+    const spent = rows.reduce((s,x)=>s+x[1],0);
+    rows.push(['Working capital & buffer', 10000-spent, 'covers rent, power and substrate until break-even' + (r.be?' (week '+r.be+')':'') + ' — the floor tile above shows how deep it dips']);
+    let h = '';
+    for (const [n,a,why] of rows) h += '<tr><td>'+n+'<span class="why">'+why+'</span></td><td class="amt">'+fmt(a)+'</td></tr>';
+    h += '<tr class="total"><td>Total — the stake</td><td class="amt">£10,000</td></tr>';
+    document.querySelector('#budget tbody').innerHTML = h;
+  }
+
+  // ---------- channels ----------
+  function chanText(kg){
+    const s = split(kg);
+    return s;
+  }
+  function renderChannels(){
+    const p1 = chanText(state.kg);
+    const p2 = state.ffis ? chanText(state.kg2) : null;
+    const cell = (a, b, pa, pb) => Math.round(a) + (p2? ' → '+Math.round(b) : '') + ' <small>kg/wk</small><br>' + fmt(pa) + (p2? ' → '+fmt(pb) : '') + ' <small>/wk</small>';
+    $('ch-ws').innerHTML = cell(p1.wsKg, p2?p2.wsKg:0, p1.wsKg*state.pws, p2?p2.wsKg*state.pws:0);
+    $('ch-pre').innerHTML = cell(p1.preKg, p2?p2.preKg:0, p1.preKg*P_PRE, p2?p2.preKg*P_PRE:0);
+    $('ch-dry').innerHTML = cell(p1.dryKg, p2?p2.dryKg:0, p1.dryKg*P_DRY, p2?p2.dryKg*P_DRY:0);
+    const blended1 = p1.rev/Math.max(1,state.kg);
+    $('blend').innerHTML = 'Blended price: <b>£' + blended1.toFixed(2) + '/kg</b> at Phase 1 dials'
+      + (p2 ? ' · Phase 2 revenue ≈ <b>' + fmt(p2.rev) + '/wk</b> (' + fmt(p2.rev*52) + '/yr)' : '')
+      + ' · pre-order capped at ' + PRECAP + ' kg/wk — beyond that it\'s wholesale.';
+  }
+
+  // ---------- wire up ----------
+  function refresh(){
+    const r = run();
+    const cmp = {}; for (const d of CMP) cmp[d.key] = d.key===state.opt ? r : run(d.key);
+    renderKPIs(r); renderCompare(cmp); renderCash(r); renderRail(r); renderPL(r); renderCostDetail(r); renderTable(r); renderBudget(r); renderChannels();
+  }
+  const bind = (id, out, f, fmtV) => {
+    $(id).addEventListener('input', e => {
+      const v = +e.target.value; f(v);
+      if (out) $(out).textContent = fmtV ? fmtV(v) : v;
+      refresh();
+    });
+  };
+  bind('c-kg','o-kg', v=>state.kg=v);
+  bind('c-pre','o-pre', v=>state.pre=v, v=>v+'%');
+  bind('c-dry','o-dry', v=>state.dry=v, v=>v+'%');
+  bind('c-pws','o-pws', v=>state.pws=v, v=>'£'+v);
+  bind('c-kg2','o-kg2', v=>state.kg2=v);
+  $('c-ffis').addEventListener('change', e=>{
+    state.ffis = e.target.checked;
+    $('kg2wrap').style.opacity = state.ffis ? 1 : .35;
+    $('c-kg2').disabled = !state.ffis;
+    refresh();
+  });
+  document.querySelectorAll('.optcard input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      state.opt = inp.value;
+      document.querySelectorAll('.optcard').forEach(c=>c.classList.toggle('sel', c.dataset.opt===state.opt));
+      refresh();
+    });
+  });
+  $('btn-table').addEventListener('click', ()=>{
+    const w = $('tblwrap'), on = w.hidden;
+    w.hidden = !on; $('cashsvg').style.display = on?'none':'';
+    $('btn-table').textContent = on?'chart':'table';
+    $('btn-table').setAttribute('aria-pressed', on);
+  });
+  window.addEventListener('resize', refresh);
+  refresh();
+
+  // App page navigation
+  document.querySelectorAll('#appnav button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#appnav button').forEach(x => x.classList.toggle('on', x === b));
+      document.querySelectorAll('.apppage').forEach(p => p.classList.toggle('on', p.id === 'page-' + b.dataset.page));
+      window.scrollTo({ top: 0 });
+      if (b.dataset.page === 'plan') refresh(); // charts need a visible layout
+    });
+  });
+})();
+</script>
