@@ -3,7 +3,8 @@ export const meta = {
   description: 'Adversarially-verified market due diligence with a weighted 6-dimension rubric, scenario ranges and comparables (reusable; pass products via args)',
   whenToUse: 'Full professional market analysis of N candidate products for a small solo venture. args: { products: [{key, name, brief}], operator?: string, verifyTop?: number, wage?: number, weights?: {income_potential, scalability, ai_resilience, home_start, time_to_cash, constraint_fit} }',
   phases: [
-    { title: 'Analyse', detail: 'one market analyst per product, live web research, structured output', model: 'opus' },
+    { title: 'Gate', detail: 'cheap kill-tests first (commodity appliance + fatal regulatory) so dead candidates never get a full analysis', model: 'sonnet' },
+    { title: 'Analyse', detail: 'one market analyst per surviving product, live web research, structured output', model: 'opus' },
     { title: 'Verify', detail: 'adversarial fact-check of the top candidates by weighted score, claim by claim', model: 'opus' },
     { title: 'Synthesis', detail: 'one judge reads everything: cross-ranking, synergies, the honest recommendation', model: 'opus' },
   ],
@@ -70,6 +71,8 @@ SCORING — six dimensions, 0-10, one shared calibration (use the FULL scale):
 - time_to_cash: 10 = <8 weeks · 7 = ~3-4 months · 5 = ~6 months · 2 = ~1 year · 0 = >18 months.
 - constraint_fit: solo + online-only channels + Scottish climate/regulatory fit. A fatal blocker → regulatory_blocker=true AND fit ≤2.
 
+TOKEN DISCIPLINE (costs are real): the gate phase already ran the commodity-appliance test — build on its result, do NOT repeat those searches. Never re-verify anything the FACTS BANK answers. Prefer ~12-18 high-value searches over exhaustive sweeps; stop searching a rule the moment it is satisfied. Keep prose fields tight.
+
 Cover everything in the schema. Your final output is data for a synthesis step, not prose.`
 
 const ANALYSIS_SCHEMA = {
@@ -82,9 +85,9 @@ const ANALYSIS_SCHEMA = {
     market_size_uk: {type:'string', description:'UK size/growth with figures and sources'},
     market_size_cross_check: {type:'string', description:'second independent estimate; agreement or divergence stated'},
     sam_estimate: {type:'string', description:'bottom-up serviceable market with visible arithmetic'},
-    demand_evidence: {type:'array', items:{type:'string'}, description:'concrete demand signals, each with source'},
-    channels_online: {type:'array', items:{type:'string'}, description:'specific no-call channels with names/URLs'},
-    comparables: {type:'array', minItems:5, items:{type:'object', required:['seller','item','price','url'], properties:{seller:{type:'string'}, item:{type:'string'}, price:{type:'string'}, url:{type:'string'}}}},
+    demand_evidence: {type:'array', maxItems:6, items:{type:'string'}, description:'concrete demand signals, each with source'},
+    channels_online: {type:'array', maxItems:6, items:{type:'string'}, description:'specific no-call channels with names/URLs'},
+    comparables: {type:'array', minItems:5, maxItems:7, items:{type:'object', required:['seller','item','price','url'], properties:{seller:{type:'string'}, item:{type:'string'}, price:{type:'string'}, url:{type:'string'}}}},
     competition_notes: {type:'string'},
     barriers: {type:'string'},
     regulatory: {type:'string', description:'full UK/Scotland chain for this exact product form'},
@@ -104,11 +107,11 @@ const ANALYSIS_SCHEMA = {
     kill_question: {type:'object', required:['question','answer','verified'], properties:{question:{type:'string'}, answer:{type:'string'}, verified:{type:'boolean'}}},
     incumbent_cost_structure: {type:'array', items:{type:'object', required:['line','pct','removable_by_stack','source'], properties:{line:{type:'string'}, pct:{type:'number'}, removable_by_stack:{type:'boolean'}, source:{type:'string'}}}, description:'typical incumbent cost/failure lines summing to ~100%'},
     commodity_appliance_check: {type:'object', required:['searched','found','verdict'], properties:{searched:{type:'string', description:'which appliance/controller searches were run'}, found:{type:'string', description:'best appliance found with live price and URL, or "none"'}, verdict:{type:'string', enum:['void','partial','clear'], description:'void = a ≤€300 appliance already solves the bottleneck; partial = solves part of it; clear = no appliance solves it'}}},
-    risks: {type:'array', items:{type:'string'}},
+    risks: {type:'array', maxItems:6, items:{type:'string'}},
     scores: {type:'object', required:['income_potential','scalability','ai_resilience','home_start','time_to_cash','constraint_fit'],
       properties:{income_potential:{type:'number'},scalability:{type:'number'},ai_resilience:{type:'number'},home_start:{type:'number'},time_to_cash:{type:'number'},constraint_fit:{type:'number'}}},
     verdict: {type:'string', description:'3-6 sentences, honest'},
-    sources: {type:'array', items:{type:'string'}},
+    sources: {type:'array', maxItems:12, items:{type:'string'}},
   }
 }
 
@@ -132,11 +135,39 @@ const VERIFY_SCHEMA = {
 const weighted = (s) => +Object.entries(W).reduce((t,[k,w])=>t+w*((s&&s[k])||0),0).toFixed(2)
 
 // ---------- phase 1: analyse ----------
+// ---------- phase 0: cheap kill-gate (never pay a full analysis for a dead candidate) ----------
+phase('Gate')
+const GATE_SCHEMA = {
+  type:'object', required:['key','appliance_found','appliance_verdict','regulatory_fatal','proceed','reason'],
+  properties:{
+    key:{type:'string'},
+    appliance_found:{type:'string', description:'best consumer appliance/controller ≤€300 that solves the process bottleneck, with live price + URL, or "none"'},
+    appliance_verdict:{type:'string', enum:['void','partial','clear']},
+    regulatory_fatal:{type:'string', description:'likely fatal blocker for home production + online sale in Scotland, or "none"'},
+    proceed:{type:'boolean'},
+    reason:{type:'string', description:'one or two sentences'},
+  }
+}
+log('Gate: cheap kill-tests on ' + PRODUCTS.length + ' candidates…')
+const gates = (await parallel(PRODUCTS.map(p => () =>
+  agent(OPERATOR_FULL + `
+You are a fast kill-gate, not a full analyst. TWO checks only, ≤10 targeted searches total, be economical:
+1. COMMODITY-APPLIANCE TEST: search Amazon/AliExpress/eBay for a consumer appliance or controller ≤€300 that already solves this product's process bottleneck for an untrained buyer. Name the best find with live price + URL.
+2. FATAL REGULATORY: any likely fatal blocker for home production + online sale in Scotland (excise, premises-approval walls)? Use the facts bank; do not re-research what it already answers.
+proceed=false ONLY when the appliance verdict is void AND the brief names no other credible edge (scale economics, labor at volume, regulatory moat, demand access), or when regulation is fatal. When in doubt, proceed=true — the full analysis decides.
+PRODUCT: ` + p.name + '\nBRIEF: ' + p.brief + '\nSet key to "' + p.key + '".',
+    { label: 'gate:' + p.key, phase: 'Gate', schema: GATE_SCHEMA, model: 'sonnet', effort: 'low' })
+))).filter(Boolean)
+const gateByKey = Object.fromEntries(gates.map(g => [g.key, g]))
+const killedAtGate = gates.filter(g => !g.proceed)
+const survivors = PRODUCTS.filter(p => !gateByKey[p.key] || gateByKey[p.key].proceed)
+log('Gate: ' + gates.map(g => g.key + ':' + (g.proceed ? 'pass' : 'KILL')).join(', '))
+
 phase('Analyse')
-log('Launching ' + PRODUCTS.length + ' market analysts…')
-const analyses = (await parallel(PRODUCTS.map(p => () =>
-  agent(OPERATOR_FULL + '\n' + TASK + '\n\nPRODUCT TO ANALYSE: ' + p.name + '\nContext: ' + p.brief + '\nSet key to "' + p.key + '".',
-    { label: 'analyse:' + p.key, phase: 'Analyse', schema: ANALYSIS_SCHEMA, model: 'opus' })
+log('Launching ' + survivors.length + ' market analysts (' + killedAtGate.length + ' killed at gate)…')
+const analyses = (await parallel(survivors.map(p => () =>
+  agent(OPERATOR_FULL + '\n' + TASK + '\n\nPRODUCT TO ANALYSE: ' + p.name + '\nContext: ' + p.brief + '\nGATE RESULT (appliance test already run — build on it, do not repeat it): ' + JSON.stringify(gateByKey[p.key] || {}) + '\nSet key to "' + p.key + '".',
+    { label: 'analyse:' + p.key, phase: 'Analyse', schema: ANALYSIS_SCHEMA, model: 'opus', effort: 'medium' })
 ))).filter(Boolean)
 for (const a of analyses) {
   a.weighted = weighted(a.scores)
@@ -173,11 +204,11 @@ const SYNTH_SCHEMA = {
 const synthesis = await agent(OPERATOR_FULL + `
 You are the synthesis judge. Read every analysis and every verification below TOGETHER. Deliver: a final cross-ranking (use revised scores where verified), the synergies between candidates (shared infrastructure, customers, skills — combinations worth more than parts), and one honest recommendation for this operator including how this round's best compares to the standing #1 from prior rounds (the fungi stack, solo £26k / multi-site £58k Y5). Name what would change your mind.
 
-ANALYSES:
-` + JSON.stringify(ranked) + `
+ANALYSES (slimmed — sources/comparable rows omitted, numbers kept):
+` + JSON.stringify(ranked.map(a => { const { comparables, sources, demand_evidence, channels_online, ...rest } = a; return rest })) + `
 
 VERIFICATIONS:
 ` + JSON.stringify(verifications),
   { label:'synthesis', phase:'Synthesis', schema: SYNTH_SCHEMA, model: 'opus' })
 
-return { ranked, verifications, synthesis, config: { weights: W, verifyTop: VERIFY_TOP, wage: WAGE, productCount: PRODUCTS.length } }
+return { ranked, verifications, synthesis, gate: gates, killed_at_gate: killedAtGate.map(g => ({ key: g.key, reason: g.reason })), config: { weights: W, verifyTop: VERIFY_TOP, wage: WAGE, productCount: PRODUCTS.length, analysed: survivors.length } }
