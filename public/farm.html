@@ -168,6 +168,7 @@
       <button data-page="fungi">🍄 Build Funghi · Roma</button>
       <button data-page="garlic">🧄 Build Aglio Nero · Roma</button>
       <button data-page="licenze">📜 Licenze Scozia</button>
+      <button data-page="ai">🧠 AI &amp; Sensori</button>
     </nav>
   </header>
 
@@ -466,6 +467,112 @@
 
       <div class="call"><span class="tag">Cancello di uscita fase-0</span><p>Entro il mese 3: <b>contaminazione &lt;15%</b> sui blocchi fatti da te · 2 flush puliti per specie · qualità confrontabile con le foto dei produttori UK · controller che regge <b>7 giorni senza interventi manuali</b>. Passa → il progetto Scozia ha basi reali. Fallisce → hai speso €400 e hai la risposta.</p></div>
       <div class="risk"><span class="trip">avvertenze</span><p>Spore in aria alla raccolta (FFP2, raccogli presto); mai vendere senza SCIA; d'estate senza cella frigo i risultati mentono — non giudicare il processo a 28°C.</p></div>
+    </section>
+  </div>
+
+  <!-- ============ PAGE: AI & SENSORI ============ -->
+  <div id="page-ai" class="apppage">
+    <section style="padding-top:1rem">
+      <div class="kicker">Il layer che fa la differenza · sense → decide → act</div>
+      <h2>Sensori, camera e AI: i sette anelli chiusi</h2>
+      <p class="lede" style="font-size:1rem">Avere sensori non è un vantaggio: loggano e basta. Il vantaggio è <b>chiudere l'anello</b> — ogni misura deve produrre una decisione che cambia un numero del conto economico. Questi sono i sette anelli, in ordine di impatto, con l'hardware esatto e il guadagno atteso. Insieme trasformano l'economia di un principiante in quella di un buon operatore <b>6-12 mesi prima</b>, e a scala sono ciò che rende possibile il multi-sito a &lt;5 h/settimana per sito.</p>
+
+      <div class="wk"><div class="tag">1</div><div><b>QC della pastorizzazione — l'anello più noioso e più redditizio</b><p><b>Sente:</b> 2-3 sonde DS18B20 <u>dentro la massa</u> del substrato (non nell'aria del fusto — errore da principiante: il centro della massa può stare 10°C sotto). <b>Decide:</b> la curva tempo-a-temperatura dice se il lotto ha davvero fatto ≥65°C a cuore per le ore richieste. <b>Cambia:</b> la contaminazione nasce a monte — la maggior parte dei grower "tira a indovinare" la pastorizzazione. Log = lotti puliti in partenza: <b>+5-8% di resa</b> e il grafico finisce dritto nell'HACCP per l'ispettore.</p></div></div>
+
+      <div class="wk"><div class="tag">2</div><div><b>Contaminazione precoce — time-lapse differencing, non "foto e speranza"</b><p><b>Sente:</b> camera fissa + <b>flash LED sincronizzato allo scatto</b> (relay: luce solo durante la foto → esposizione identica → i frame sono confrontabili; è l'80% della CV affidabile in una grow room). <b>Decide:</b> il Trichoderma all'inizio è bianco come il micelio — a colori non lo distingui. Ma cresce <u>più veloce e con pattern diverso</u>: il confronto tra frame (differencing) evidenzia le zone ad accelerazione anomala 1-2 giorni PRIMA della sporulazione verde. HSV threshold sul verde come seconda rete. <b>Cambia:</b> blocco rimosso prima che sporuli = la stanza si salva. Perdite tipiche <b>dal 10-15% al ~5%</b>.</p></div></div>
+
+      <div class="wk"><div class="tag">3</div><div><b>Calendario di produzione — il forecast che vende</b><p><b>Sente:</b> % di copertura bianca del micelio per blocco (dalla stessa camera: segmentazione semplice su immagini a luce costante). <b>Decide:</b> la curva di colonizzazione predice QUANDO ogni lotto è pronto a fruttificare → il sistema costruisce da solo il calendario sfalsato. <b>Cambia:</b> per un business B2B <b>l'affidabilità È il prodotto</b>: "10 kg ogni martedì, garantiti" vale più di qualsiasi foto. Meno feast-famine, meno invenduto (~−5% sprechi), contratti che si rinnovano.</p></div></div>
+
+      <div class="wk"><div class="tag">4</div><div><b>Diagnosi difetti ↔ storia del clima — la scorciatoia sugli anni di mestiere</b><p><b>Sente:</b> morfologia dal time-lapse + log clima continuo. <b>Decide:</b> ogni difetto ha una firma climatica: <u>gambi lunghi e cappelli piccoli = CO₂ alto</u> · <u>cappelli screpolati = RH bassa</u> · <u>gambi pelosi = poca FAE</u> · <u>macchie batteriche = condensa</u> (RH che attraversa il punto di rugiada sul fungo). Il sistema incrocia il difetto con il log e ti dice: "cappelli screpolati perché la RH è scesa a 78% per 3h alle 02:00 quando il serbatoio si è svuotato". <b>Cambia:</b> questo loop è ciò che un artigiano impara in anni di errori — tu lo compili in settimane. Quota di prima scelta in salita costante.</p></div></div>
+
+      <div class="wk"><div class="tag">5</div><div><b>Finestra di raccolta — le 12-24 ore che valgono il 10-15%</b><p><b>Sente:</b> tasso di crescita del corpo fruttifero dal time-lapse. <b>Decide:</b> oyster si raccoglie PRIMA che il bordo del cappello si appiattisca; lion's mane prima che le spine si allunghino/ingialliscano. Il modello proietta la crescita e manda la notifica: "raccogli domattina". <b>Cambia:</b> raccolto allo stadio giusto = più sodo, <b>+1-2 giorni di shelf life</b> (meno resi), niente nevicata di spore nella stanza (qualità aria + attrezzature), e il grado premium che i ristoranti ripagano: <b>+10-15% sul prezzo</b>.</p></div></div>
+
+      <div class="wk"><div class="tag">6</div><div><b>Libro mastro delle rese — l'A/B testing che compone</b><p><b>Sente:</b> celle di carico HX711 sotto i ripiani (peso continuo = crescita + eventi idrici gratis) o pesata a fine raccolta legata al lotto. <b>Decide:</b> ogni lotto porta con sé ricetta substrato, fornitore spawn, parametri clima → dopo 20 lotti sai QUALE combinazione rende di più (lo spread tra ricette è 20-40% di efficienza biologica). <b>Cambia:</b> <b>+10-20% di resa nel primo anno</b> solo scegliendo coi dati. Questo dataset è anche il moat del futuro controller/consulenza: nessuno può copiartelo.</p></div></div>
+
+      <div class="wk"><div class="tag">7</div><div><b>La guardia notturna — l'anello che salva tutto il resto</b><p><b>Sente:</b> watchdog su ogni sensore (silenzio = allarme), galleggiante nel serbatoio dell'umidificatore (<u>il guasto reale n°1</u>), sensore allagamento a pavimento, reed switch sulla porta (correla aperture ↔ contaminazioni!), UPS/powerbank sul Pi con notifica di blackout. <b>Decide:</b> escalation: anomalia → retry → alert Telegram → (a scala) failover pompa/riscaldatore gemello. <b>Cambia:</b> una sola stanza salvata da un guasto notturno ripaga l'intero stack. Ed è ciò che rende vere le <b>≤20 h/settimana</b>: il raccolto sopravvive alla tua assenza, tu dormi e vai in vacanza.</p></div></div>
+
+      <h3>🧄 Gli anelli specifici dell'aglio nero</h3>
+      <p style="font-size:.95rem"><b>Gradiente, non "una temperatura"</b>: 3 sonde (fondo/centro/cima) — una camera fai-da-te ha 5-10°C di gradiente, ed è il motivo dei batch incostanti; il PID regola sulla sonda di massa, il log mostra il gradiente da correggere con un deflettore. <b>Cella di carico sotto il vassoio</b>: la curva di perdita peso È la curva di cottura → sai quando è pronto <u>senza mai aprire</u> (ogni apertura = crollo termico + fuga d'aroma). <b>kWh per batch</b> dalla presa smart → costo/kg misurato, non stimato: la riga che convince il business plan. <b>Sperimentale ma da fare</b>: sensore gas BME688 (~€20) sullo sfiato — i volatili di Maillard cambiano con lo stadio: se la firma è leggibile, hai un "naso" che nessun produttore al mondo sta usando.</p>
+
+      <h3>⚙️ I dettagli da professionista (dove i principianti sbagliano)</h3>
+      <div class="risk"><span class="trip">CO₂ · SCD40</span><p><b>Disattiva l'auto-calibrazione (ASC)</b>: assume che la stanza veda 400 ppm una volta a settimana — una fruiting room non li vede mai, e il sensore deriva verso il basso mentendo. Calibrazione manuale all'aperto una volta al mese; sensore ad altezza chioma, non a soffitto.</p></div>
+      <div class="risk"><span class="trip">umidità · 90%+ RH</span><p>I sensori RH capacitivi <b>derivano in ambiente saturo</b> e la condensa li acceca. Tre contromisure: schermo aspirato (ventolina 40mm che tira aria sul sensore — evita il bias da bagnato), <b>salt test mensile</b> (NaCl saturo = 75,3% RH di riferimento: costa un barattolo di sale), e dove possibile il riscaldatore integrato dell'SHT (cicli anti-condensa). <b>Due sensori per zona, allarme se divergono</b>: il drift silenzioso è il killer classico.</p></div>
+      <div class="risk"><span class="trip">camera · CV</span><p>La CV affidabile nasce dall'<b>illuminazione costante</b>: LED dedicato acceso via relay SOLO durante lo scatto, esposizione manuale fissa, camera imbullonata. Senza questo, ogni confronto tra frame misura la luce, non il fungo. Obiettivo protetto dalla nebbia (tettuccio + idrofobico), pulizia nel ciclo settimanale.</p></div>
+      <div class="risk"><span class="trip">modelli · in ordine giusto</span><p>Non partire dal deep learning: <b>settimane 1-8 = CV classica</b> (HSV per il verde, frame differencing per l'anomalia, copertura % per la colonizzazione) — funziona subito e genera il dataset etichettato. <b>Dopo 200-300 foto etichettate</b>: fine-tuning di un classificatore piccolo (MobileNet) sul Pi. <b>LLM con vision</b> (locale o API) per la "visita del micologo" settimanale: legge foto + log e scrive la diagnosi. Ogni livello produce i dati per il successivo.</p></div>
+
+      <h3>🛒 Lista acquisti — upgrade AI/sensori <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— oltre allo stack base già nelle pagine Build</span></h3>
+      <div class="budgetwrap"><table class="budget" data-list="ai">
+        <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
+        <tbody>
+          <tr><td>Kit celle di carico 4×50 kg + HX711 (×2) <a class="buy" href="https://www.amazon.it/s?k=cella+di+carico+50kg+hx711" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">peso continuo ripiani (funghi) + vassoio (aglio): anelli 6 e cottura</span></td><td class="amt">€24</td></tr>
+          <tr><td>5× sonde DS18B20 impermeabili <a class="buy" href="https://www.amazon.it/s?k=ds18b20+impermeabile+5+pezzi" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">massa substrato (pastorizzazione) + 3 zone camera aglio</span></td><td class="amt">€12</td></tr>
+          <tr><td>2° sensore RH/temp per zona (SHT31/35) <a class="buy" href="https://www.amazon.it/s?k=sht35+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">ridondanza + allarme divergenza: il drift non ti mente più</span></td><td class="amt">€18</td></tr>
+          <tr><td>2× prese smart con misura energia (Shelly Plug S / Tapo P110) <a class="buy" href="https://www.amazon.it/s?k=shelly+plug+s" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">kWh per batch e per dispositivo → costo/kg vero; API locale</span></td><td class="amt">€28</td></tr>
+          <tr><td>Galleggiante serbatoio + sensore allagamento <a class="buy" href="https://www.amazon.it/s?k=sensore+livello+acqua+galleggiante" target="_blank" rel="noopener">🛒 livello</a> <a class="buy" href="https://www.amazon.it/s?k=sensore+allagamento+acqua" target="_blank" rel="noopener">🛒 allagamento</a><span class="why">il guasto n°1 (umidificatore a secco) e il n°2 (perdite)</span></td><td class="amt">€18</td></tr>
+          <tr><td>Reed switch porta + ventolina 40 mm (schermo aspirato) <a class="buy" href="https://www.amazon.it/s?k=reed+switch+porta+magnetico" target="_blank" rel="noopener">🛒 reed</a> <a class="buy" href="https://www.amazon.it/s?k=ventola+40mm+5v" target="_blank" rel="noopener">🛒 ventola</a><span class="why">correlazione aperture↔contaminazioni · RH senza bias da condensa</span></td><td class="amt">€14</td></tr>
+          <tr><td>Powerbank-UPS per Raspberry (pass-through) <a class="buy" href="https://www.amazon.it/s?k=ups+raspberry+pi+powerbank" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">blackout: il Pi resta su e ti avvisa; il clima no, ma tu lo SAI</span></td><td class="amt">€25</td></tr>
+          <tr><td>BME688 (gas/VOC) — sperimentale <a class="buy" href="https://www.amazon.it/s?k=bme688+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">il "naso" sullo sfiato dell'aglio nero: firma dei volatili per stadio</span></td><td class="amt">€22</td></tr>
+          <tr><td>Sale fino (calibrazione RH al 75,3%)<span class="why">salt test mensile in barattolo chiuso — il trucco da laboratorio a €1</span></td><td class="amt">€1</td></tr>
+          <tr class="total"><td>Totale upgrade (opzionale: Coral USB per CV veloce, ~€70)</td><td class="amt">~€160</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>🗺 Architettura — local-first, l'anti-farmhand</h3>
+      <figure style="margin:.8rem 0 0">
+        <svg viewBox="0 0 720 210" width="100%" role="img" aria-label="Architettura: sensori e camera entrano nel Raspberry Pi via MQTT; il Pi comanda i relay e produce log; sopra, il layer LLM genera diagnosi, journal, contenuti e documenti; gli alert arrivano a Telegram. Tutto locale, nessun cloud obbligatorio.">
+          <g fill="#fbf9f2" stroke="#ddd5c2">
+            <rect x="10" y="20" width="150" height="80" rx="10"/>
+            <rect x="10" y="115" width="150" height="60" rx="10"/>
+            <rect x="240" y="55" width="180" height="90" rx="10" stroke="#4f6a37" stroke-width="2"/>
+            <rect x="500" y="12" width="205" height="60" rx="10"/>
+            <rect x="500" y="82" width="205" height="60" rx="10" stroke="#a96e1f"/>
+            <rect x="500" y="152" width="205" height="48" rx="10"/>
+          </g>
+          <g style="font-size:11.5px" fill="#23281d">
+            <text x="20" y="40" style="font-weight:600">Sensori</text>
+            <text x="20" y="56">RH ×2 · CO₂ · DS18B20 ×5</text>
+            <text x="20" y="70">celle di carico · reed · livello</text>
+            <text x="20" y="84">prese smart (kWh)</text>
+            <text x="20" y="135" style="font-weight:600">Camera + flash</text>
+            <text x="20" y="151">scatto sincronizzato</text>
+            <text x="20" y="165">time-lapse comparabile</text>
+            <text x="250" y="76" style="font-weight:600">Raspberry Pi (locale)</text>
+            <text x="250" y="92">MQTT · loop controllo · CV</text>
+            <text x="250" y="106">→ relay: umid · ventola · luce</text>
+            <text x="250" y="120">→ log batch (il dataset)</text>
+            <text x="250" y="134">watchdog + failsafe</text>
+            <text x="510" y="32" style="font-weight:600">Layer LLM</text>
+            <text x="510" y="48">diagnosi difetti↔clima · journal</text>
+            <text x="510" y="62">HACCP · etichette · contenuti</text>
+            <text x="510" y="102" style="font-weight:600">Telefono (Telegram)</text>
+            <text x="510" y="118">alert · "raccogli domattina"</text>
+            <text x="510" y="132">report settimanale</text>
+            <text x="510" y="172" style="font-weight:600">Nessun cloud obbligatorio</text>
+            <text x="510" y="188">tutto gira anche offline</text>
+          </g>
+          <g stroke="#6d7160" stroke-width="1.5" fill="none">
+            <path d="M160 60 H240"/><path d="M160 145 C200 145 200 110 240 110"/>
+            <path d="M420 80 H500 M420 100 C460 100 460 110 500 110"/>
+          </g>
+          <g fill="#6d7160"><path d="M240 60 l-8 -4 v8 Z"/><path d="M240 110 l-8 -4 v8 Z"/><path d="M500 80 l-8 -4 v8 Z"/><path d="M500 110 l-8 -4 v8 Z"/></g>
+        </svg>
+        <figcaption style="font-size:.85rem;color:var(--muted);margin-top:.4rem">Il principio anti-farmhand: quando Freight Farms è morta, i cloud dei clienti si sono spenti. Qui tutto gira in locale; il cloud è opzionale — ed è esattamente lo stack che un giorno puoi vendere agli altri grower.</figcaption>
+      </figure>
+
+      <h3>📓 Il copilota di batch — inizia dal giorno 1 a Roma</h3>
+      <p style="font-size:.95rem">Il valore composto nasce dal log strutturato. Ogni lotto, un record; l'LLM legge questo + le foto e scrive la diagnosi settimanale. Schema minimo:</p>
+      <div class="tblwrap"><pre style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding: .8rem 1rem;font-size:.75rem;overflow-x:auto">{
+ "lotto": "F-2026-014", "specie": "lion's mane", "ricetta": "masters-mix-A",
+ "spawn": {"fornitore": "…", "lotto": "…"},
+ "pastorizzazione": {"curva": "log/F014-past.csv", "ore_sopra_65C": 9.5},
+ "inoculo": "2026-09-12", "colonizzazione_pct": [5,18,41,77,100],
+ "fruiting": {"inizio": "2026-10-01", "setpoint": {"T": 17, "RH": 90, "CO2": 700}},
+ "eventi": ["2026-10-04 02:10 RH 78% x3h — serbatoio vuoto"],
+ "raccolti": [{"data": "2026-10-09", "g": 480, "grado": "A"}],
+ "difetti": ["cappelli leggermente screpolati flush 1"],
+ "kwh": 14.2, "note_llm": "→ anticipare rabbocco; ridurre FAE notturna"
+}</pre></div>
+      <div class="call"><span class="tag">La regola che tiene tutto insieme</span><p>Ogni sensore che aggiungi deve rispondere a UNA domanda: <b>"quale decisione cambia?"</b> Se la risposta è "nessuna, ma è bello vederlo su un grafico", non comprarlo. I sette anelli sopra passano tutti il test — ed è per questo che ~€160 di componenti spostano percentuali a due cifre del conto economico.</p></div>
     </section>
   </div>
 
