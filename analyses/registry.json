@@ -7,7 +7,8 @@
    "universe-screen 40 new",
    "deepdive-v3 new8",
    "reframe-15h",
-   "scale-engineering"
+   "scale-engineering",
+   "process-advantage 8"
   ]
  },
  "entries": [
@@ -960,6 +961,86 @@
    "mature_net_gbp": 78000,
    "status": "designed",
    "note": "Solo cut-leaf-only version tops out at ~£20-28k net. Two stacked caps: (a) demand — UK fine-dining oyster-leaf TAM is £250-750k RETAIL (verified in prior round)"
+  },
+  {
+   "key": "phytoplankton-process",
+   "name": "Live phytoplankton and copepod cultures for reef aquarists, subscription D2C (UK",
+   "round": "process-advantage",
+   "score": 6.05,
+   "y3_net_gbp": 14000,
+   "mature_net_gbp": 22000,
+   "status": "verified",
+   "note": "REJECT as the lead venture under this round's decisive test, on criterion (2): the operator's stack demonstrably removes the #1 production loss driver (contamin"
+  },
+  {
+   "key": "miso-aged-process",
+   "name": "Scottish craft miso and long-aged koji products (12-24 month barrel-aged miso ja",
+   "round": "process-advantage",
+   "score": 5.6,
+   "y3_net_gbp": 9000,
+   "mature_net_gbp": 20000,
+   "status": "verified",
+   "note": "Aged Scottish miso passes this round's decisive test, but narrowly and asymmetrically: the operator's chamber genuinely removes the #1 loss driver (koji quality"
+  },
+  {
+   "key": "isopods-process",
+   "name": "Rare isopod (Cubaris spp., rare Armadillidium morphs) and springtail breeding fo",
+   "round": "process-advantage",
+   "score": 5.4,
+   "y3_net_gbp": 6000,
+   "mature_net_gbp": 9000,
+   "status": "verified",
+   "note": "REJECT as a core venture; permit only as a near-zero-cost hobby side-SKU. The production thesis is correct — sensored climate-stable racks genuinely remove the "
+  },
+  {
+   "key": "tempeh-process",
+   "name": "Fresh artisan tempeh (soy, 250g blocks) produced solo in Edinburgh for local veg",
+   "round": "process-advantage",
+   "score": 5.85,
+   "y3_net_gbp": 14000,
+   "mature_net_gbp": 20000,
+   "status": "verified",
+   "note": "REJECT under this round's decisive test, despite being a pleasant, legal, cheap-to-start product. The process thesis is empirically wrong: tempeh incubation con"
+  },
+  {
+   "key": "vinegar-solera-process",
+   "name": "Craft vinegar house: barrel-aged fruit/malt vinegars, shelf-stable D2C (Scotland",
+   "round": "process-advantage",
+   "score": 5,
+   "y3_net_gbp": 8000,
+   "mature_net_gbp": 15000,
+   "status": "analysed",
+   "note": "REJECT under this round's process-advantage criterion, despite being a pleasant, legal, low-capex business. The regulatory path is clean (no excise licence, dut"
+  },
+  {
+   "key": "coral-frags-process",
+   "name": "Soft coral and zoanthid frag propagation on home reef racks, sold online (eBay/o",
+   "round": "process-advantage",
+   "score": 4.58,
+   "y3_net_gbp": 7000,
+   "mature_net_gbp": 12000,
+   "status": "analysed",
+   "note": "REJECT under this round's process-advantage criterion, despite clean regulation and genuine biological compounding. The sense-decide-act stack is real but not d"
+  },
+  {
+   "key": "grafted-plants-process",
+   "name": "Grafted vegetable plants (tomato, cucumber, aubergine) sold D2C to UK gardeners ",
+   "round": "process-advantage",
+   "score": 4.25,
+   "y3_net_gbp": 9000,
+   "mature_net_gbp": 14000,
+   "status": "analysed",
+   "note": "REJECT under this round's decisive test, with evidence. The process thesis fails verification: published trials show novices hit >80% tomato graft survival with"
+  },
+  {
+   "key": "affinage-process",
+   "name": "Micro-affinage: buying young British cheeses (clothbound cheddars, hard territor",
+   "round": "process-advantage",
+   "score": 4.1,
+   "y3_net_gbp": 7000,
+   "mature_net_gbp": 13000,
+   "status": "analysed",
+   "note": "REJECT on the round's decisive test, despite being legal to start at home and genuinely charming. The regulatory kill shot the brief feared does not fire — DTC "
   }
  ]
 }
