@@ -22,6 +22,7 @@ const PER_SCOUT = cfg.perScout ?? 5
 const CONTEXT = `
 OPERATOR: solo engineer (sensors, Pi, local AI vision, closed-loop control), Rome now / Edinburgh later, £10k, home-first, online-only sales, ≤20h/wk.
 THE CRITERION a candidate must fit: real existing demand + the incumbent producers' binding constraint is PROCESS-shaped (continuous monitoring, batch losses, skill scarcity, consistency) — because that is what the operator's sense-decide-act stack removes, creating a cost/consistency/capacity position others cannot match. Growth mechanics required: repeat purchase, biologically compounding inventory, or capacity that scales by adding chambers/racks instead of people.
+COMMODITY-APPLIANCE KILL TEST (earned by the black-garlic fermenter miss): if a consumer appliance or controller ≤€300 on Amazon/AliExpress/eBay already solves the process bottleneck for an untrained buyer (black-garlic fermenters €70-150, biltong boxes £60-150, yogurt/natto incubators €30-60, dehydrators, proofing boxes, reptile thermostats, £20 PID controllers), the pain is already commoditized and the candidate FAILS unless it has a different verified edge. Check this before proposing; "the machine exists but ours has sensors" is not an edge.
 ALREADY ANALYSED (do NOT propose again): gourmet mushrooms & every mushroom derivative (kits, powder, logs, spawn), black garlic, hot honey, dog treats, ornamental shrimp, dahlia tubers, kindling, coffee roasting, wasabi, saffron, microgreens, tissue-culture houseplants, coastal halophytes/oyster leaf, edible flowers, moss/terrariums, aquarium plants, snails, quail eggs, vermicompost, freeze-dried candy, bonsai, insects for feed, seaweed, mead, christmas trees, watercress, RAS fish, chilli sauce, grow controllers/SaaS/courses, heritage seeds, herb plugs, willow, truffle saplings, biochar, sea buckthorn, rhubarb, hatching eggs, nucs/queens, peony, snowdrops, carnivorous plants, succulents, chilli plants, hops, garlic seed, dried flowers, cut flowers, chocolate bean-to-bar, herbal tea, kombucha, pickles/ferments, micro-bakery, tempeh, vinegar, miso, cheese affinage, phytoplankton/copepods, coral frags, isopods, grafted vegetable plants.`
 
 const MINE = `
@@ -53,7 +54,7 @@ phase('Mine')
 log('Launching ' + DOMAINS.length + ' scouts…')
 const mined = (await parallel(DOMAINS.map((d, i) => () =>
   agent(CONTEXT + '\n' + MINE + '\n\nYOUR DOMAIN: ' + d,
-    { label:'scout:' + (i+1), phase:'Mine', schema: MINE_SCHEMA })
+    { label:'scout:' + (i+1), phase:'Mine', schema: MINE_SCHEMA, model: 'opus' })
 ))).filter(Boolean)
 const all = mined.flatMap(m => m.candidates || [])
 log(all.length + ' raw candidates mined')
@@ -70,10 +71,10 @@ const SIFT_SCHEMA = {
   }
 }
 const sifted = await agent(CONTEXT + `
-You are the sifter. Below are raw mined candidates. Dedupe, drop anything on the already-analysed list, drop anything whose evidence is weak (no real quote, no transaction proxy), drop obvious regulatory dead-ends (alcohol excise at home, animal-product approval walls — unless the candidate is strong enough to be worth the wall, then say so). Rank by: strength of pain evidence × demand proxy × growth mechanic. Output the top 6-8 as a shortlist with briefs READY for the market-analysis workflow (each brief must carry its evidence URLs), and list the rejected with one-line reasons.
+You are the sifter. Below are raw mined candidates. Dedupe, drop anything on the already-analysed list, drop anything whose evidence is weak (no real quote, no transaction proxy), drop anything that fails the COMMODITY-APPLIANCE KILL TEST above (run quick searches yourself: if a ≤€300 appliance already solves the pain, reject and name the appliance), drop obvious regulatory dead-ends (alcohol excise at home, animal-product approval walls — unless the candidate is strong enough to be worth the wall, then say so). Rank by: strength of pain evidence × demand proxy × growth mechanic. Output the top 6-8 as a shortlist with briefs READY for the market-analysis workflow (each brief must carry its evidence URLs), and list the rejected with one-line reasons.
 
 RAW CANDIDATES:
 ` + JSON.stringify(all),
-  { label:'sift', phase:'Sift', schema: SIFT_SCHEMA })
+  { label:'sift', phase:'Sift', schema: SIFT_SCHEMA, model: 'opus' })
 
 return { shortlist: (sifted && sifted.shortlist) || [], rejected: (sifted && sifted.rejected) || [], raw_count: all.length }

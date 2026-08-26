@@ -3,9 +3,9 @@ export const meta = {
   description: 'Adversarially-verified market due diligence with a weighted 6-dimension rubric, scenario ranges and comparables (reusable; pass products via args)',
   whenToUse: 'Full professional market analysis of N candidate products for a small solo venture. args: { products: [{key, name, brief}], operator?: string, verifyTop?: number, wage?: number, weights?: {income_potential, scalability, ai_resilience, home_start, time_to_cash, constraint_fit} }',
   phases: [
-    { title: 'Analyse', detail: 'one market analyst per product, live web research, structured output' },
-    { title: 'Verify', detail: 'adversarial fact-check of the top candidates by weighted score, claim by claim' },
-    { title: 'Synthesis', detail: 'one judge reads everything: cross-ranking, synergies, the honest recommendation' },
+    { title: 'Analyse', detail: 'one market analyst per product, live web research, structured output', model: 'opus' },
+    { title: 'Verify', detail: 'adversarial fact-check of the top candidates by weighted score, claim by claim', model: 'opus' },
+    { title: 'Synthesis', detail: 'one judge reads everything: cross-ranking, synergies, the honest recommendation', model: 'opus' },
   ],
 }
 
@@ -19,7 +19,8 @@ VERIFIED FACTS BANK (do not re-derive; correct an analyst only if a fresh OFFICI
 - Finance: FFIS ≤£20k at 80% (winter 2026, competitive, upside never plan); Start Up Loan ≤£25k @7.5%/5yr; VAT £90k; trading allowance £1k.
 - Verified market sizes: UK functional-mushroom supplements ~£100-200m (headlines 10x inflated); grow kits £8-15m (logs £1-3m); fresh wasabi 3-6t/yr; black garlic ~£5m (artisan online £0.3-0.7m); craft koji <£2m; farmed snails £0.5-1m. Oyster wholesale £6.92/kg flat; growers net £9-13 restaurants, £12-20 direct.
 - Post-mortems: Freight Farms (~600 units, no orphan market, cloud death), Smallhold (wholesale trap → partner network), vertical lettuce (energy 40-60% opex; fungi 2.2kWh/kg escape), Mara Seaweed exit, both UK edible-flower flagships exited 2025-26, Sow Good -88% (freeze-dried window closed).
-- Operator verified: fungi labor 1h/kg → 0.3h/kg; contamination 15%→5%; solo mature £26k, multi-site £58k Y5 cred 5/10; 20ft £1,550/£17wk; yards £360-640/mo.`
+- Operator verified: fungi labor 1h/kg → 0.3h/kg; contamination 15%→5%; solo mature £26k, multi-site £58k Y5 cred 5/10; 20ft £1,550/£17wk; yards £360-640/mo.
+- Commodity appliances (process already solved cheap — voids any "stack advantage" claim): black-garlic fermenters €70-150, biltong boxes £60-150, yogurt/natto incubators €30-60, dehydrators, proofing boxes, reptile/aquarium thermostats, Inkbird PID ~£20. If a ≤€300 appliance produces substantially the same outcome for an untrained buyer, the operator's edge must come from something ELSE (scale economics, labor at volume, regulatory moat, demand access) or the candidate fails.`
 
 // ---------- configuration (all overridable via args) ----------
 const cfg = args || {}
@@ -59,6 +60,7 @@ MANDATORY METHOD RULES (each earned by a failure in earlier rounds):
 10. PHASE-0 AT HOME: the cheapest legal home validation — cost, months, what it proves, abort criterion.
 11. MEASURED DEMAND, NOT ESTIMATED: check eBay UK SOLD listings count and Etsy review velocity for the exact product class — real transactions beat any report. State what you found.
 12. INCUMBENT COST STRUCTURE: decompose a typical incumbent's cost/failure structure into lines with % and source (fill incumbent_cost_structure). The process-advantage index = which lines the operator's sense-decide-act stack removes, and how much of total cost that is.
+13. COMMODITY-APPLIANCE TEST (kill criterion — earned by the black-garlic fermenter miss): before crediting the operator's sensor/AI stack with ANY advantage, actively search Amazon/AliExpress/eBay/specialist shops for consumer or prosumer appliances and controllers that ALREADY solve the process bottleneck (examples that killed earlier claims: black-garlic fermenters €70-150, biltong boxes £60-150, yogurt/natto incubators €30-60, £20 Inkbird PID controllers, proofing boxes, reptile thermostats). If an appliance at ≤€300 lets an untrained person get substantially the same outcome, the process advantage is VOID: fill commodity_appliance_check with the machine and its live price+URL, score ai_leverage honestly as ~zero, and the venture must then stand on a DIFFERENT verified edge (scale economics the appliance cannot reach, labor at volume the appliance doesn't remove, regulatory moat, demand access) or be rejected. "The machine exists but mine has sensors" is NOT an edge.
 
 SCORING — six dimensions, 0-10, one shared calibration (use the FULL scale):
 - income_potential: mature (yr 4-5) NET base case. 0 = <£10k · 3 = ~£15k · 5 = ~£25k · 8 = £60k · 10 = £100k+ credible.
@@ -72,7 +74,7 @@ Cover everything in the schema. Your final output is data for a synthesis step, 
 
 const ANALYSIS_SCHEMA = {
   type: 'object',
-  required: ['key','product','market_summary','market_size_uk','market_size_cross_check','sam_estimate','demand_evidence','channels_online','comparables','competition_notes','barriers','regulatory','regulatory_blocker','capex_breakdown','unit_economics','time_to_first_revenue_weeks','scenarios','hours_per_week','economic_profit_gbp','phase0_home','staging','ai_leverage','ai_leverage_limits','kill_question','incumbent_cost_structure','risks','scores','verdict','sources'],
+  required: ['key','product','market_summary','market_size_uk','market_size_cross_check','sam_estimate','demand_evidence','channels_online','comparables','competition_notes','barriers','regulatory','regulatory_blocker','capex_breakdown','unit_economics','time_to_first_revenue_weeks','scenarios','hours_per_week','economic_profit_gbp','phase0_home','staging','ai_leverage','ai_leverage_limits','kill_question','incumbent_cost_structure','commodity_appliance_check','risks','scores','verdict','sources'],
   properties: {
     key: {type:'string'},
     product: {type:'string'},
@@ -101,6 +103,7 @@ const ANALYSIS_SCHEMA = {
     ai_leverage_limits: {type:'string', description:'binding constraints the skill can NOT touch'},
     kill_question: {type:'object', required:['question','answer','verified'], properties:{question:{type:'string'}, answer:{type:'string'}, verified:{type:'boolean'}}},
     incumbent_cost_structure: {type:'array', items:{type:'object', required:['line','pct','removable_by_stack','source'], properties:{line:{type:'string'}, pct:{type:'number'}, removable_by_stack:{type:'boolean'}, source:{type:'string'}}}, description:'typical incumbent cost/failure lines summing to ~100%'},
+    commodity_appliance_check: {type:'object', required:['searched','found','verdict'], properties:{searched:{type:'string', description:'which appliance/controller searches were run'}, found:{type:'string', description:'best appliance found with live price and URL, or "none"'}, verdict:{type:'string', enum:['void','partial','clear'], description:'void = a ≤€300 appliance already solves the bottleneck; partial = solves part of it; clear = no appliance solves it'}}},
     risks: {type:'array', items:{type:'string'}},
     scores: {type:'object', required:['income_potential','scalability','ai_resilience','home_start','time_to_cash','constraint_fit'],
       properties:{income_potential:{type:'number'},scalability:{type:'number'},ai_resilience:{type:'number'},home_start:{type:'number'},time_to_cash:{type:'number'},constraint_fit:{type:'number'}}},
@@ -133,7 +136,7 @@ phase('Analyse')
 log('Launching ' + PRODUCTS.length + ' market analysts…')
 const analyses = (await parallel(PRODUCTS.map(p => () =>
   agent(OPERATOR_FULL + '\n' + TASK + '\n\nPRODUCT TO ANALYSE: ' + p.name + '\nContext: ' + p.brief + '\nSet key to "' + p.key + '".',
-    { label: 'analyse:' + p.key, phase: 'Analyse', schema: ANALYSIS_SCHEMA })
+    { label: 'analyse:' + p.key, phase: 'Analyse', schema: ANALYSIS_SCHEMA, model: 'opus' })
 ))).filter(Boolean)
 for (const a of analyses) {
   a.weighted = weighted(a.scores)
@@ -147,11 +150,11 @@ phase('Verify')
 const top = ranked.slice(0, VERIFY_TOP)
 const verifications = (await parallel(top.map(a => () =>
   agent(OPERATOR_FULL + `
-You are an adversarial fact-checker. Below is a market analysis another analyst produced. Try to REFUTE its 5 most load-bearing claims — the numbers and assertions the verdict and scores depend on (comparable prices, market/SAM sizing, regulatory status, fulfilment costs, time-to-revenue, the scenario bases, the AI-leverage quantification). For each: run fresh WebSearches, state what you found with a URL, rule holds/weak/refuted, and where refuted/weak give the corrected value. Independently re-answer the kill question. Then restate the SIX rubric scores and the y3/mature base scenarios as they stand AFTER your corrections (calibration: income 0=<£10k, 5=~£25k, 8=£60k, 10=£100k+; scalability 0=hours-for-money, 10=near-zero marginal hours; ai_resilience 8=perishable-local-craft-trust; home_start 10=<£500 <3mo; time_to_cash 10=<8wk; fit: blocker→≤2). Set key to "` + a.key + `".
+You are an adversarial fact-checker. Below is a market analysis another analyst produced. Try to REFUTE its 5 most load-bearing claims — the numbers and assertions the verdict and scores depend on (comparable prices, market/SAM sizing, regulatory status, fulfilment costs, time-to-revenue, the scenario bases, the AI-leverage quantification). For each: run fresh WebSearches, state what you found with a URL, rule holds/weak/refuted, and where refuted/weak give the corrected value. Independently re-answer the kill question. Independently RE-RUN THE COMMODITY-APPLIANCE TEST: search Amazon/AliExpress/eBay for consumer appliances or controllers ≤€300 that already solve the claimed process bottleneck — finding one the analysis missed REFUTES its ai_leverage claim; correct the scores accordingly. Then restate the SIX rubric scores and the y3/mature base scenarios as they stand AFTER your corrections (calibration: income 0=<£10k, 5=~£25k, 8=£60k, 10=£100k+; scalability 0=hours-for-money, 10=near-zero marginal hours; ai_resilience 8=perishable-local-craft-trust; home_start 10=<£500 <3mo; time_to_cash 10=<8wk; fit: blocker→≤2). Set key to "` + a.key + `".
 
 ANALYSIS UNDER REVIEW:
 ` + JSON.stringify(a),
-    { label: 'verify:' + a.key, phase: 'Verify', schema: VERIFY_SCHEMA })
+    { label: 'verify:' + a.key, phase: 'Verify', schema: VERIFY_SCHEMA, model: 'opus' })
 ))).filter(Boolean)
 for (const v of verifications) v.revised_weighted = weighted(v.revised_scores)
 log('Verification complete on ' + verifications.length + ' candidates')
@@ -175,6 +178,6 @@ ANALYSES:
 
 VERIFICATIONS:
 ` + JSON.stringify(verifications),
-  { label:'synthesis', phase:'Synthesis', schema: SYNTH_SCHEMA })
+  { label:'synthesis', phase:'Synthesis', schema: SYNTH_SCHEMA, model: 'opus' })
 
 return { ranked, verifications, synthesis, config: { weights: W, verifyTop: VERIFY_TOP, wage: WAGE, productCount: PRODUCTS.length } }

@@ -57,6 +57,12 @@
     "edible_flowers_uk": "both flagship producers (Greens of Devon, Maddocks Farm) exited 2025-26",
     "sow_good": "US freeze-dried candy leader -88% revenue 2025; CPG majors took the shelf — window closed"
   },
+  "commodity_appliances": {
+    "rule": "Before crediting the sensor/AI stack with any advantage, search for consumer appliances/controllers that already solve the process bottleneck. If a ≤€300 appliance gives an untrained buyer substantially the same outcome, the process advantage is VOID — the venture must stand on a different verified edge (scale economics, labor at volume, regulatory moat, demand access) or be rejected.",
+    "known_appliances": "black-garlic fermenters €70-150 (Amazon, adjustable-temp models exist); biltong boxes £60-150; yogurt/natto incubators €30-60; dehydrators; bread proofing boxes; reptile/aquarium thermostats; Inkbird PID controllers ~£20",
+    "origin": "black-garlic round: the whole 'chamber + profiles' advantage was already on Amazon at €100 — caught by the user, not the workflow; tempeh/grafted-plants/coral-dosing were earlier ad-hoc catches of the same failure",
+    "source": "codified 2026-08-26 as market-analysis rule 13 + scout kill test"
+  },
   "operator_verified": {
     "fungi_labor": "artisan ~1h/kg all-in; operator stack ~0.3h/kg (survived adversarial attack); contamination 10-15%→~5% via early vision detection; multi-site <5h/wk/site feasible; solo mature £26k, multi-site D2C-weighted £58k Y5 at credibility 5/10",
     "container_costs": "20ft £1,550 buy / £17wk hire (CS Containers Grangemouth, verified to the pound); DIY fungi fit-out ~£3k vs £15-60k turnkey",
