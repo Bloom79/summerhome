@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "purpose": "Verified constants bank for market-analysis rounds. Injected into every analyst so verified facts are never re-derived or re-broken. Update ONLY with adversarially verified values; keep the source and date.",
+    "updated": "2026-08-26"
+  },
+  "fulfilment_uk": {
+    "royal_mail_2026": {
+      "large_letter_untracked": "£1.55",
+      "large_letter_tracked48": "£2.85",
+      "small_parcel_2kg_tracked48": "£3.65-5.25 by service",
+      "parcel_2_5kg_evri_dropoff": "£2.62-6.59",
+      "parcel_10kg_courier_business": "£5.39 (Evri) / £6.45 (DPD) via Parcel2Go",
+      "source": "verified round 2 + round 4 fact-checks, Apr 2026 price guide"
+    },
+    "live_animals": "Only Royal Mail carries live invertebrates (enumerated permitted list); Parcelforce, Evri, DPD, UPS prohibit all live creatures. Etsy and Amazon ban live animals; eBay allows.",
+    "etsy_fees_all_in": "~13-17% incl. VAT-on-fees; UK regulatory operating fee 0.32%→0.48% from 22 Jun 2026",
+    "amazon_grocery": "gated category: council registration + compliant label photos required; GTIN must be GS1-registered to the seller (~£99+VAT/yr); FBA requires ~105 days shelf life inbound"
+  },
+  "demand_acquisition": {
+    "d2c_food_cac": "£12-28 blended paid CAC vs typical £8 first-order margin — paid acquisition structurally unprofitable for cold food brands",
+    "d2c_supplements_cac": "~$89 blended (Meta 'sensitive category' since 2025)",
+    "coffee_subscription_churn": "5-10%/month; ~28% gone inside 90 days",
+    "youtube_growth": "median new channel needs ~15.5 months to reach 1,000 subscribers; plans requiring 10k+ in year 1 are top-5% outcomes"
+  },
+  "grants_finance_scotland": {
+    "ffis": "≤£20,000 at 80% intervention for new entrants; Round 2 winter 2026; competitive (~725 funded in round 1, £14.25M pot); requires RPID registration; container/CEA eligibility unconfirmed — treat as upside, never as plan",
+    "start_up_loan": "≤£25,000 personal, ~7.5% fixed, 5 years",
+    "vat_threshold": "£90,000 (most food zero-rated)",
+    "trading_allowance": "£1,000/yr before HMRC registration required"
+  },
+  "regulatory_scotland": {
+    "food_registration": "free, cannot be refused, ≥28 days before first sale, per-premises with the local council; domestic kitchens registrable; Scotland uses CookSafe (NOT the English SFBB pack) and FHIS Pass/Improvement-Required (not 0-5 stars)",
+    "novel_foods_blocked": "mushroom MYCELIUM powders (all species), cordyceps militaris as food; lion's mane/oyster/shiitake FRUITING BODY and its powder are NOT novel (verified vs EU catalogue)",
+    "health_claims": "no authorised claims for mushrooms; ASA actively enforces (memory/focus/stress claims banned)",
+    "animal_products": "premises APPROVAL (retained 853/2004) applies to products of animal origin only; plant-based foods need registration only. Pet food from animal by-products needs FSS feed registration (direct, feed@fss.scot, since Apr 2021) AND APHA plant approval BEFORE first sale; domestic premises approvable only with strict separation from the family kitchen",
+    "plants_distance_selling": "SASA professional-operator registration free; plant-passport authorisation mandatory for ALL online plant sales incl. hobbyist-scale (inspection ~£120-250/yr); felled birch/oak logs need NO passport (conifer and sweet chestnut do); no GB passports valid for NI",
+    "invertebrates": "outside Scottish pet-selling licensing (s.16 AHW(S)A 2006 defines animal = vertebrate; crustaceans excluded per gov.scot guidance); ornamental aquatic breeding: get free written FHI/APB scope confirmation",
+    "honey": "Honey (Scotland) Regulations 2015 reserve the name 'honey' for pure honey — infused products need a qualified name (e.g. 'chilli infused honey preparation')",
+    "alcohol": "mead/'made-wine' requires excise approval — kills home phase-0; vinegar from bought alcohol: verify duty status per input",
+    "firewood": "Ready to Burn is England-only law; Scotland at consultation stage (2026)"
+  },
+  "market_sizes_verified": {
+    "uk_functional_mushroom_supplements": "~£100-200m retail (headline $1.85bn figures are ~10x inflated — MRFR $174m cross-check)",
+    "uk_mushroom_grow_kits": "~£8-15m/yr, log-kit segment £1-3m",
+    "uk_fresh_wasabi": "3-6 t/yr total (~£0.5-1.5m); TWC ~1.5-2t incumbent",
+    "uk_black_garlic": "~£5m total; artisan-online slice £0.3-0.7m/yr",
+    "uk_craft_koji": "sub-£2m; 5 micro-producers incl. one serving Edinburgh since 2020",
+    "uk_farmed_snails": "~£0.5-1m/yr after 20 years of incumbents",
+    "uk_oyster_wholesale_price": "£6.92/kg (Foodomarket Jul 2026, flat 12 months); small growers net £9-13/kg restaurants, £12-20 direct; Sainsbury's lion's mane £25/kg retail (compression signal)",
+    "vendor_reports_rule": "cross-check every market headline on ≥2 independent sources; >3x divergence → use conservative bottom-up"
+  },
+  "post_mortems": {
+    "freight_farms": "Ch.7 2025: ~600 units ever sold at ~$150k to buyers who couldn't profit; Growcer rescued the software — there is NO orphan market; lesson: never sell kit to unprofitable operators; local-first no-cloud design",
+    "smallhold": "Ch.11 2024: VC-scale facilities + national wholesale commodity pricing; re-emerged as asset-light partner-farm network",
+    "vertical_lettuce": "energy 40-60% of opex; 11-15 kWh/kg viability threshold; fungi at 2.2 kWh/kg escape this wall",
+    "mara_seaweed": "Scotland's flagship seaweed brand exited — leader-exit signal for that category",
+    "edible_flowers_uk": "both flagship producers (Greens of Devon, Maddocks Farm) exited 2025-26",
+    "sow_good": "US freeze-dried candy leader -88% revenue 2025; CPG majors took the shelf — window closed"
+  },
+  "operator_verified": {
+    "fungi_labor": "artisan ~1h/kg all-in; operator stack ~0.3h/kg (survived adversarial attack); contamination 10-15%→~5% via early vision detection; multi-site <5h/wk/site feasible; solo mature £26k, multi-site D2C-weighted £58k Y5 at credibility 5/10",
+    "container_costs": "20ft £1,550 buy / £17wk hire (CS Containers Grangemouth, verified to the pound); DIY fungi fit-out ~£3k vs £15-60k turnkey",
+    "yard_rent_edinburgh": "£360-640/month (live listings verified Aug 2026)"
+  }
+}

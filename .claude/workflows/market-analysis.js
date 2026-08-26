@@ -5,8 +5,21 @@ export const meta = {
   phases: [
     { title: 'Analyse', detail: 'one market analyst per product, live web research, structured output' },
     { title: 'Verify', detail: 'adversarial fact-check of the top candidates by weighted score, claim by claim' },
+    { title: 'Synthesis', detail: 'one judge reads everything: cross-ranking, synergies, the honest recommendation' },
   ],
 }
+
+// ---------- verified facts bank (distilled from analyses/facts.json — update BOTH together) ----------
+const FACTS = `
+VERIFIED FACTS BANK (do not re-derive; correct an analyst only if a fresh OFFICIAL source contradicts these):
+- Postage UK 2026: large letter £1.55 untracked / £2.85 Tracked48; small parcel 2kg £3.65-5.25; 2-5kg Evri £2.62-6.59; 10kg courier £5.39-6.45 business rates. Live animals: ONLY Royal Mail (enumerated invertebrates); Etsy/Amazon ban live animals, eBay allows.
+- Fees: Etsy all-in ~13-17% (+0.48% reg fee from Jun 2026). Amazon Grocery gated; GS1-registered GTIN required (~£99+VAT/yr); FBA needs ~105 days shelf life.
+- CAC: cold D2C food £12-28 blended vs ~£8 first-order margin (structurally unprofitable paid); supplements ~$89. Coffee subs churn 5-10%/mo. Median YouTube channel: 15.5 months to 1k subs.
+- Scotland regs: food registration free, 28 days, per-premises, CookSafe not SFBB, FHIS Pass/IR. Animal-origin products need premises APPROVAL; pet food needs FSS feed reg + APHA approval BEFORE first sale. Plant distance-selling needs SASA operator reg (free) + passport authorisation (~£120-250/yr); birch/oak logs exempt. Invertebrates outside pet-licensing (s.16 AHWSA 2006). Honey name reserved (Honey (Scotland) Regs 2015). Mead/made-wine excise kills home phase-0. Mycelium powders and cordyceps = illegal novel foods; fruiting-body powder legal; zero authorised health claims for mushrooms.
+- Finance: FFIS ≤£20k at 80% (winter 2026, competitive, upside never plan); Start Up Loan ≤£25k @7.5%/5yr; VAT £90k; trading allowance £1k.
+- Verified market sizes: UK functional-mushroom supplements ~£100-200m (headlines 10x inflated); grow kits £8-15m (logs £1-3m); fresh wasabi 3-6t/yr; black garlic ~£5m (artisan online £0.3-0.7m); craft koji <£2m; farmed snails £0.5-1m. Oyster wholesale £6.92/kg flat; growers net £9-13 restaurants, £12-20 direct.
+- Post-mortems: Freight Farms (~600 units, no orphan market, cloud death), Smallhold (wholesale trap → partner network), vertical lettuce (energy 40-60% opex; fungi 2.2kWh/kg escape), Mara Seaweed exit, both UK edible-flower flagships exited 2025-26, Sow Good -88% (freeze-dried window closed).
+- Operator verified: fungi labor 1h/kg → 0.3h/kg; contamination 15%→5%; solo mature £26k, multi-site £58k Y5 cred 5/10; 20ft £1,550/£17wk; yards £360-640/mo.`
 
 // ---------- configuration (all overridable via args) ----------
 const cfg = args || {}
@@ -28,6 +41,8 @@ OPERATOR PROFILE (fixed constraints — every analysis must respect these):
 - HARD preferences: start AT HOME with minimum spend, expand through go/no-go gates; all sales through online channels (no cold calls); solo, ≤20 h/week sustained.
 - Sector post-mortems are binding context: Freight Farms Ch.7 2025 (~600 units ever; Growcer rescue — no orphan market), Smallhold Ch.11 2024 (VC facilities + wholesale commodity pricing), lettuce vertical farms (energy 40-60% of opex).`
 
+const OPERATOR_FULL = OPERATOR + '\n' + FACTS
+
 const TASK = `
 You are a professional market analyst. Produce a COMPLETE, honest market analysis for the product below. Use WebSearch extensively for real, current (2026) UK/Scotland data. Cite real URLs. A rejection with evidence is a valid, valuable outcome.
 
@@ -42,6 +57,8 @@ MANDATORY METHOD RULES (each earned by a failure in earlier rounds):
 8. KILL QUESTION: the single question whose answer would kill this venture — answer it with searches and state whether the answer is verified.
 9. REGULATORY PRECISION: check the exact product form (fruiting body vs mycelium; food vs feed; fresh vs processed). Novel Foods, FSS/council, APHA/SASA, excise, UKCA — flag any blocker explicitly.
 10. PHASE-0 AT HOME: the cheapest legal home validation — cost, months, what it proves, abort criterion.
+11. MEASURED DEMAND, NOT ESTIMATED: check eBay UK SOLD listings count and Etsy review velocity for the exact product class — real transactions beat any report. State what you found.
+12. INCUMBENT COST STRUCTURE: decompose a typical incumbent's cost/failure structure into lines with % and source (fill incumbent_cost_structure). The process-advantage index = which lines the operator's sense-decide-act stack removes, and how much of total cost that is.
 
 SCORING — six dimensions, 0-10, one shared calibration (use the FULL scale):
 - income_potential: mature (yr 4-5) NET base case. 0 = <£10k · 3 = ~£15k · 5 = ~£25k · 8 = £60k · 10 = £100k+ credible.
@@ -55,7 +72,7 @@ Cover everything in the schema. Your final output is data for a synthesis step, 
 
 const ANALYSIS_SCHEMA = {
   type: 'object',
-  required: ['key','product','market_summary','market_size_uk','market_size_cross_check','sam_estimate','demand_evidence','channels_online','comparables','competition_notes','barriers','regulatory','regulatory_blocker','capex_breakdown','unit_economics','time_to_first_revenue_weeks','scenarios','hours_per_week','economic_profit_gbp','phase0_home','staging','ai_leverage','ai_leverage_limits','kill_question','risks','scores','verdict','sources'],
+  required: ['key','product','market_summary','market_size_uk','market_size_cross_check','sam_estimate','demand_evidence','channels_online','comparables','competition_notes','barriers','regulatory','regulatory_blocker','capex_breakdown','unit_economics','time_to_first_revenue_weeks','scenarios','hours_per_week','economic_profit_gbp','phase0_home','staging','ai_leverage','ai_leverage_limits','kill_question','incumbent_cost_structure','risks','scores','verdict','sources'],
   properties: {
     key: {type:'string'},
     product: {type:'string'},
@@ -83,6 +100,7 @@ const ANALYSIS_SCHEMA = {
     ai_leverage: {type:'string', description:'where the operator skill changes the economics, quantified'},
     ai_leverage_limits: {type:'string', description:'binding constraints the skill can NOT touch'},
     kill_question: {type:'object', required:['question','answer','verified'], properties:{question:{type:'string'}, answer:{type:'string'}, verified:{type:'boolean'}}},
+    incumbent_cost_structure: {type:'array', items:{type:'object', required:['line','pct','removable_by_stack','source'], properties:{line:{type:'string'}, pct:{type:'number'}, removable_by_stack:{type:'boolean'}, source:{type:'string'}}}, description:'typical incumbent cost/failure lines summing to ~100%'},
     risks: {type:'array', items:{type:'string'}},
     scores: {type:'object', required:['income_potential','scalability','ai_resilience','home_start','time_to_cash','constraint_fit'],
       properties:{income_potential:{type:'number'},scalability:{type:'number'},ai_resilience:{type:'number'},home_start:{type:'number'},time_to_cash:{type:'number'},constraint_fit:{type:'number'}}},
@@ -114,7 +132,7 @@ const weighted = (s) => +Object.entries(W).reduce((t,[k,w])=>t+w*((s&&s[k])||0),
 phase('Analyse')
 log('Launching ' + PRODUCTS.length + ' market analysts…')
 const analyses = (await parallel(PRODUCTS.map(p => () =>
-  agent(OPERATOR + '\n' + TASK + '\n\nPRODUCT TO ANALYSE: ' + p.name + '\nContext: ' + p.brief + '\nSet key to "' + p.key + '".',
+  agent(OPERATOR_FULL + '\n' + TASK + '\n\nPRODUCT TO ANALYSE: ' + p.name + '\nContext: ' + p.brief + '\nSet key to "' + p.key + '".',
     { label: 'analyse:' + p.key, phase: 'Analyse', schema: ANALYSIS_SCHEMA })
 ))).filter(Boolean)
 for (const a of analyses) {
@@ -128,7 +146,7 @@ log(analyses.length + '/' + PRODUCTS.length + ' analyses complete. Weighted orde
 phase('Verify')
 const top = ranked.slice(0, VERIFY_TOP)
 const verifications = (await parallel(top.map(a => () =>
-  agent(OPERATOR + `
+  agent(OPERATOR_FULL + `
 You are an adversarial fact-checker. Below is a market analysis another analyst produced. Try to REFUTE its 5 most load-bearing claims — the numbers and assertions the verdict and scores depend on (comparable prices, market/SAM sizing, regulatory status, fulfilment costs, time-to-revenue, the scenario bases, the AI-leverage quantification). For each: run fresh WebSearches, state what you found with a URL, rule holds/weak/refuted, and where refuted/weak give the corrected value. Independently re-answer the kill question. Then restate the SIX rubric scores and the y3/mature base scenarios as they stand AFTER your corrections (calibration: income 0=<£10k, 5=~£25k, 8=£60k, 10=£100k+; scalability 0=hours-for-money, 10=near-zero marginal hours; ai_resilience 8=perishable-local-craft-trust; home_start 10=<£500 <3mo; time_to_cash 10=<8wk; fit: blocker→≤2). Set key to "` + a.key + `".
 
 ANALYSIS UNDER REVIEW:
@@ -138,4 +156,25 @@ ANALYSIS UNDER REVIEW:
 for (const v of verifications) v.revised_weighted = weighted(v.revised_scores)
 log('Verification complete on ' + verifications.length + ' candidates')
 
-return { ranked, verifications, config: { weights: W, verifyTop: VERIFY_TOP, wage: WAGE, productCount: PRODUCTS.length } }
+// ---------- phase 3: synthesis judge ----------
+phase('Synthesis')
+const SYNTH_SCHEMA = {
+  type:'object', required:['final_ranking','synergies','recommendation','what_would_change_it'],
+  properties:{
+    final_ranking:{type:'array', items:{type:'object', required:['key','final_score','one_line'], properties:{key:{type:'string'}, final_score:{type:'number'}, one_line:{type:'string'}}}},
+    synergies:{type:'array', items:{type:'string'}, description:'cross-candidate combinations worth more than the parts (shared infrastructure, shared customers, shared skills)'},
+    recommendation:{type:'string', description:'the honest 5-8 sentence recommendation across ALL candidates in this round, incl. against the incumbent #1 from prior rounds'},
+    what_would_change_it:{type:'array', items:{type:'string'}, description:'the 2-4 facts that, if different, would flip this recommendation'},
+  }
+}
+const synthesis = await agent(OPERATOR_FULL + `
+You are the synthesis judge. Read every analysis and every verification below TOGETHER. Deliver: a final cross-ranking (use revised scores where verified), the synergies between candidates (shared infrastructure, customers, skills — combinations worth more than parts), and one honest recommendation for this operator including how this round's best compares to the standing #1 from prior rounds (the fungi stack, solo £26k / multi-site £58k Y5). Name what would change your mind.
+
+ANALYSES:
+` + JSON.stringify(ranked) + `
+
+VERIFICATIONS:
+` + JSON.stringify(verifications),
+  { label:'synthesis', phase:'Synthesis', schema: SYNTH_SCHEMA })
+
+return { ranked, verifications, synthesis, config: { weights: W, verifyTop: VERIFY_TOP, wage: WAGE, productCount: PRODUCTS.length } }

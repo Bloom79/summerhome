@@ -1,0 +1,965 @@
+{
+ "_meta": {
+  "purpose": "Cumulative registry of every candidate analysed across all rounds. Append per round; the app can render this.",
+  "updated": "2026-08-26",
+  "rounds": [
+   "r1-r2 via universe rescore",
+   "universe-screen 40 new",
+   "deepdive-v3 new8",
+   "reframe-15h",
+   "scale-engineering"
+  ]
+ },
+ "entries": [
+  {
+   "key": "fungi-stack",
+   "name": "Fungi Stack (fresh → kits/dried → powder, staged)",
+   "round": "universe-screen",
+   "score": 7.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Strongest verified candidate: staged de-risking, each layer reuses the prior one's infrastructure and skills."
+  },
+  {
+   "key": "black-garlic",
+   "name": "Black garlic production + D2C brand",
+   "round": "universe-screen",
+   "score": 7.35,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: shelf-stable ambient product, simple food-business registration, proven UK retail demand with only a few incumbents."
+  },
+  {
+   "key": "hot-honey",
+   "name": "Infused honey brand (hot honey, botanicals)",
+   "round": "universe-screen",
+   "score": 7.35,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: shelf-stable, no licence beyond free food-business registration; crowding is the only risk."
+  },
+  {
+   "key": "robotic-multisite",
+   "name": "Robotic / Multi-Site Scale Path",
+   "round": "universe-screen",
+   "score": 7.25,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The only scale path that survived adversarial attack; earns its place as the destination, not the starting point."
+  },
+  {
+   "key": "dog-treats",
+   "name": "Dehydrated single-ingredient dog treats brand",
+   "round": "universe-screen",
+   "score": 7.15,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Best overall fit for this operator: indoor and climate-independent, machine-led (dehydrators run unattended), shelf-stable shipped product, subscription economi"
+  },
+  {
+   "key": "shrimp-breeding",
+   "name": "Ornamental shrimp breeding (Neocaridina/Caridina)",
+   "round": "universe-screen",
+   "score": 7.05,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Best overall fit. Shrimp are invertebrates so they escape both the Royal Mail live-fish ban and (likely) Scottish pet-vertebrate selling licensing; a 6-10 tank "
+  },
+  {
+   "key": "dahlia-tubers",
+   "name": "Dahlia tuber propagation e-commerce (named varieties)",
+   "round": "universe-screen",
+   "score": 6.95,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker. Commodity end is pressured by Dutch bulk importers (£3.80/tuber), but UK boutique presale culture is alive: farms sell out and run waitlist pre-orde"
+  },
+  {
+   "key": "kindling",
+   "name": "Kiln-dried kindling/firewood processed products e-commerce",
+   "round": "universe-screen",
+   "score": 6.95,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Strongest all-rounder: machine-led once processor+kiln bought (£25k loan covers entry-level), winter demand is proven, Scotland's premium pricing helps, and kin"
+  },
+  {
+   "key": "daphnia-livefoods",
+   "name": "Live fish foods + cultures e-commerce",
+   "round": "universe-screen",
+   "score": 6.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "The cheapest, fastest validation of the whole list: cultures boot in 2-4 weeks, phase-0 costs under £200, first eBay revenue inside 8 weeks. But unit prices are"
+  },
+  {
+   "key": "mushroom-logs",
+   "name": "Inoculated shiitake/oyster mushroom logs e-commerce",
+   "round": "universe-screen",
+   "score": 6.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Best home phase-0 of the set: drill + spawn plugs + wax on Scottish birch is well under £500, legal, garage-scale, and sellable on Etsy within weeks. Inventory "
+  },
+  {
+   "key": "coffee-roasting",
+   "name": "Subscription coffee roastery (machine-led, D2C)",
+   "round": "universe-screen",
+   "score": 6.7,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No regulatory blocker; home electric roasting + free food registration is legal. Risk is crowding, not legality."
+  },
+  {
+   "key": "dried-flowers",
+   "name": "Grown + dried flower bouquets/wreaths e-commerce",
+   "round": "universe-screen",
+   "score": 6.7,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: trend still growing, mainstream retailers (Bloom & Wild) validate the category, product ships non-perishable."
+  },
+  {
+   "key": "vinegar-craft",
+   "name": "Craft vinegar brewing (barrel-aged) brand",
+   "round": "universe-screen",
+   "score": 6.55,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: vinegar production carries no excise licence, product is shelf-stable, and the UK craft field is nearly empty."
+  },
+  {
+   "key": "mushrooms-fresh",
+   "name": "Fresh Gourmet Mushrooms (standalone)",
+   "round": "universe-screen",
+   "score": 6.55,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Fast, cheap start but ceiling is structural — wholesale floor caps growth unless converted into the fungi-stack."
+  },
+  {
+   "key": "heritage-seeds",
+   "name": "Heritage/rare vegetable seed production e-commerce",
+   "round": "universe-screen",
+   "score": 6.45,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "The best hours-decoupling on the list after dog treats: seeds multiply thousands-fold per season, store for years, ship for a stamp, and the brand/trust layer ("
+  },
+  {
+   "key": "willow",
+   "name": "Living-willow kits + basketry rods + cuttings",
+   "round": "universe-screen",
+   "score": 6.4,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: incumbents thriving, willow loves Scottish ground, kits ship dormant Dec–Apr as ordinary parcels."
+  },
+  {
+   "key": "chocolate-btb",
+   "name": "Bean-to-bar chocolate micro-factory",
+   "round": "universe-screen",
+   "score": 6.2,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Legal and home-startable; the flag-worthy issue is economic (cocoa input volatility + razor-thin craft margins), not regulatory."
+  },
+  {
+   "key": "tea-herbal",
+   "name": "Grown Scottish herbal tea brand",
+   "round": "universe-screen",
+   "score": 6.2,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker — chamomile/mint/nettle grow fine in Scotland, dried tea is unregulated beyond free food registration. Constraint is market size, not law."
+  },
+  {
+   "key": "carnivorous",
+   "name": "Carnivorous plant nursery (sarracenia, drosera) online",
+   "round": "universe-screen",
+   "score": 6.15,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker. Hardy sarracenia/drosera suit Scotland outdoors; domestic UK sales avoid CITES paperwork (that bites only on import/export). Peat-free media transit"
+  },
+  {
+   "key": "snowdrops-rare",
+   "name": "Rare Galanthus twin-scaling for collectors",
+   "round": "universe-screen",
+   "score": 6.1,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker. Auction prices are verified real, market is small but liquid on eBay every February. Barrier is time-to-flowering-size and reputation in a connoisse"
+  },
+  {
+   "key": "grow-kits",
+   "name": "Mushroom Grow Kits",
+   "round": "universe-screen",
+   "score": 6.05,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Crowded field and marketplace fees eat the margin; viable but mediocre alone."
+  },
+  {
+   "key": "tempeh",
+   "name": "Fresh tempeh for retail/veg-box/D2C",
+   "round": "universe-screen",
+   "score": 6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: registration-level food business, proven fast-growing UK category."
+  },
+  {
+   "key": "micro-bakery",
+   "name": "Subscription sourdough micro-bakery from home",
+   "round": "universe-screen",
+   "score": 6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker — free registration, proven model. The issue is a structural ceiling, not legality."
+  },
+  {
+   "key": "peony-crowns",
+   "name": "Peony/hellebore crown propagation, mail-order",
+   "round": "universe-screen",
+   "score": 6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker — but multiplication rate (divide every 3-5 years into 3-5 crowns) makes this a decade game, and a nationally significant incumbent (Binny Plants, 30"
+  },
+  {
+   "key": "herb-plugs",
+   "name": "Culinary/medicinal herb plants online nursery",
+   "round": "universe-screen",
+   "score": 6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: live-plant e-commerce is legal with cheap plant-passport registration; demand real. The risk is margin compression, not a wall."
+  },
+  {
+   "key": "courses-content",
+   "name": "Courses / Content Layer",
+   "round": "universe-screen",
+   "score": 6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Upside is real but conditioned on tail-outcome audience growth, and generic grow-content is squarely in AI's blast radius."
+  },
+  {
+   "key": "chilli-plants",
+   "name": "Superhot chilli plants + seeds e-commerce",
+   "round": "universe-screen",
+   "score": 5.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker; incumbent retreat is an opening, not an exit of the market (eBay sellers like Chillikings still active). Seeds are non-perishable and near-zero marg"
+  },
+  {
+   "key": "partner-network",
+   "name": "Partner Grower Network Layer",
+   "round": "universe-screen",
+   "score": 5.85,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The model asks partners to work for margins the verified volumes can't fund — fix the offer before the network."
+  },
+  {
+   "key": "functional-powders",
+   "name": "Functional Mushroom Powders",
+   "round": "universe-screen",
+   "score": 5.75,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Great unit price, brutal customer-acquisition economics; the $89 CAC kills it as a cold-start."
+  },
+  {
+   "key": "pickles-ferments",
+   "name": "Kraut/kimchi fermented veg brand",
+   "round": "universe-screen",
+   "score": 5.7,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No legal blocker, but the category is verifiably crowded including a direct Scottish incumbent (Crafty Pickle Co, Aberdeen)."
+  },
+  {
+   "key": "ornamental-fish",
+   "name": "Ornamental fish breeding (plecos, fancy guppies, killifish)",
+   "round": "universe-screen",
+   "score": 5.65,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Workable but strictly worse than shrimp for this operator: courier-only shipping (no Royal Mail) eats margin and adds DOA risk; a heated fishroom costs £1-2k+ t"
+  },
+  {
+   "key": "koji",
+   "name": "Koji / Fermentation Cultures",
+   "round": "universe-screen",
+   "score": 5.65,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Charming craft business in a market too small to clear the livelihood bar, with the obvious local seat taken."
+  },
+  {
+   "key": "nucs-queens",
+   "name": "Bee breeding: nucleus colonies + queens",
+   "round": "universe-screen",
+   "score": 5.6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Verified seller's market in Scotland with premium prices and livestock that multiplies itself — the strongest AI-resilience on the list. But it is seasonal, wea"
+  },
+  {
+   "key": "truffle-saplings",
+   "name": "Truffle-inoculated saplings (selling trees, not truffles)",
+   "round": "universe-screen",
+   "score": 5.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: legal, several incumbents actively selling, UK climate demand growing. Risks are the small niche and the 12-18 month production pipeline, not a wall"
+  },
+  {
+   "key": "biochar",
+   "name": "Biochar production + bagged horticultural D2C",
+   "round": "universe-screen",
+   "score": 5.45,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Real but small: retail bags carry good margin and post cheaply, yet micro-kiln batches are labour-per-burn (poor hours decoupling at hobby scale) and the garden"
+  },
+  {
+   "key": "controller-plus-farm",
+   "name": "Grow Controller + Own Farm",
+   "round": "universe-screen",
+   "score": 5.4,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The controller is a side dish, not a business — value collapses into whichever farm concept it rides on."
+  },
+  {
+   "key": "cut-flowers",
+   "name": "British cut flowers mail-order (dahlia/peony)",
+   "round": "universe-screen",
+   "score": 5.35,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No blocker: sector growing, mail-order precedent proven; constraints are seasonality and perishable logistics, not legality or demand."
+  },
+  {
+   "key": "microgreens",
+   "name": "Microgreens",
+   "round": "universe-screen",
+   "score": 5.35,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Fastest first pound of the whole list, but a well-trodden path with a low, crowded ceiling."
+  },
+  {
+   "key": "garlic-seed",
+   "name": "Elephant garlic + seed garlic e-commerce",
+   "round": "universe-screen",
+   "score": 5.25,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "The unit economics check out (£50+/kg retail-equivalent at pack sizes) and it starts at home for under £300, but the biology sets the pace: garlic multiplies on"
+  },
+  {
+   "key": "rhubarb-forced",
+   "name": "Forced rhubarb (dark-shed winter crop) for chefs/D2C",
+   "round": "universe-screen",
+   "score": 5.2,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Beautiful margin story ruined by structure: the crown-exhaustion cycle means every kg forced consumes 2-3 years of field-grown crown, so beyond a home trial you"
+  },
+  {
+   "key": "sea-buckthorn",
+   "name": "Novel Scottish berries: sea buckthorn/haskap/aronia products",
+   "round": "universe-screen",
+   "score": 5.1,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Climate fit is excellent and AI-resilience near-maximal (living perennial crop, Scottish provenance), but as specified — 3-5 years to fruit on leased ground — i"
+  },
+  {
+   "key": "hatching-eggs",
+   "name": "Rare-breed hatching eggs by post",
+   "round": "universe-screen",
+   "score": 5.05,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Legal and genuinely postal (fertile eggs are not 'live creatures' for Royal Mail), APHA registration is free, and an Orkney seller posting UK-wide proves the mo"
+  },
+  {
+   "key": "hops-rhizomes",
+   "name": "Hop rhizomes + homebrew plants e-commerce",
+   "round": "universe-screen",
+   "score": 5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Cheap to start and propagation gives some leverage, but this is the smallest addressable market on the list: £8-9 per plant sold to a shrinking homebrew hobby, "
+  },
+  {
+   "key": "wasabi",
+   "name": "Wasabi (side-bed scale)",
+   "round": "universe-screen",
+   "score": 4.95,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Superb AI-resilience and margins, but 18mo+ crop cycle and a tiny national market cap it as a side income."
+  },
+  {
+   "key": "kombucha",
+   "name": "Kombucha/SCOBY brand",
+   "round": "universe-screen",
+   "score": 4.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No hard blocker (<0.5% ABV is legally alcohol-free soft drink), but heavily crowded with funded national brands and cold-chain economics hostile to online-only "
+  },
+  {
+   "key": "coastal-herbs",
+   "name": "Coastal / Halophyte Herbs",
+   "round": "universe-screen",
+   "score": 4.9,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Real defensibility inside a market too small to matter — the moat guards a pond."
+  },
+  {
+   "key": "succulents",
+   "name": "Cacti/succulent propagation e-commerce",
+   "round": "universe-screen",
+   "score": 4.6,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "Not fatal — legal and demand exists — but the segment is verifiably saturated with price erosion from automated Dutch glasshouse imports, and Scotland's low win"
+  },
+  {
+   "key": "spawn-lab",
+   "name": "Mushroom Spawn Lab",
+   "round": "universe-screen",
+   "score": 4.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "B2B picks-and-shovels play where the shovels aisle is already full."
+  },
+  {
+   "key": "wasabi-scale",
+   "name": "Wasabi at Scale",
+   "round": "universe-screen",
+   "score": 4.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Scaling into a 3-6 tonne national market means buying market share that barely exists; low-credibility £30k even if it works."
+  },
+  {
+   "key": "snail-caviar",
+   "name": "Garden snail caviar (escargot pearls)",
+   "round": "universe-screen",
+   "score": 4.4,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "screened",
+   "note": "No hard blocker: D2C sales to final consumers need only council food-business registration (853/2004 approval only if selling B2B). But no UK producer could be "
+  },
+  {
+   "key": "tissue-culture",
+   "name": "Plant Tissue Culture Lab",
+   "round": "universe-screen",
+   "score": 4.35,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Selling into a structurally deflating market with income tied to bench hours — the wrong side of both curves."
+  },
+  {
+   "key": "chilli-sauce",
+   "name": "Provenance Chilli Sauce",
+   "round": "universe-screen",
+   "score": 4.25,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The whole verified playbook for this category is the one channel the constraint set makes hardest."
+  },
+  {
+   "key": "moss-terrariums",
+   "name": "Moss Cultivation / Terrariums",
+   "round": "universe-screen",
+   "score": 4.2,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "You cannot out-price competitors whose raw material is free."
+  },
+  {
+   "key": "halophyte-supply",
+   "name": "Halophyte Supply at Scale",
+   "round": "universe-screen",
+   "score": 4.2,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The scale thesis was self-refuted: the market physically cannot absorb livelihood-level volume."
+  },
+  {
+   "key": "edible-flowers",
+   "name": "Edible Flowers",
+   "round": "universe-screen",
+   "score": 4.15,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "When both category leaders exit within a year, the vacancy is a warning, not an opportunity."
+  },
+  {
+   "key": "aquarium-plants",
+   "name": "Aquarium Plants",
+   "round": "universe-screen",
+   "score": 4.1,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "A professional cost base cannot live between an industrial ceiling and a free-labour floor."
+  },
+  {
+   "key": "agtech-compound",
+   "name": "AgTech Compound (hobby SaaS) Scale",
+   "round": "universe-screen",
+   "score": 4.1,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Hobbyist willingness-to-pay sets a hard ceiling well under the livelihood bar, and AI is eroding exactly this software tier."
+  },
+  {
+   "key": "bonsai",
+   "name": "Bonsai Nursery",
+   "round": "universe-screen",
+   "score": 3.95,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Beautiful AI-proof craft with a working-capital cycle measured in years."
+  },
+  {
+   "key": "insect-feed",
+   "name": "Insect Protein / Feed",
+   "round": "universe-screen",
+   "score": 3.85,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "The scalable form of the product is exactly the form that is a globally traded commodity."
+  },
+  {
+   "key": "saffron",
+   "name": "UK Saffron",
+   "round": "universe-screen",
+   "score": 3.7,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Income is a linear function of stooped picking hours; nothing to leverage."
+  },
+  {
+   "key": "quail-eggs",
+   "name": "Quail Eggs",
+   "round": "universe-screen",
+   "score": 3.7,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Wholesale floor makes the arithmetic hopeless at solo scale."
+  },
+  {
+   "key": "snails-meat",
+   "name": "Heliciculture (Snail Meat)",
+   "round": "universe-screen",
+   "score": 3.65,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Two decades of category history is the demand verdict."
+  },
+  {
+   "key": "grow-controller",
+   "name": "Standalone Grow Controller",
+   "round": "universe-screen",
+   "score": 3,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "prior",
+   "note": "Tiny addressable base, a cheap incumbent, and a free open-source alternative; also the most AI-erodible product on the list."
+  },
+  {
+   "key": "ras-fish",
+   "name": "Micro-RAS food fish (arctic char/trout) in container",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Capital and consent chain verifiably beyond the £10-35k envelope: commercial RAS capex runs ~$500k-$2M and the sector has a high failure rate even at scale; in "
+  },
+  {
+   "key": "seaweed",
+   "name": "Scottish seaweed: shore-harvest + dried products brand",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "The market's own leaders exited: Mara Seaweed — Scotland's flagship D2C dried-seaweed brand, VC-funded — entered administration in June 2023 (dissolved Sept 202"
+  },
+  {
+   "key": "mead",
+   "name": "Micro-meadery (mead/melomel D2C)",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Licence chain kills the home phase-0: mead is 'made-wine', so selling any of it requires an HMRC excise licence for the premises plus alcohol duty, AND in Scotl"
+  },
+  {
+   "key": "christmas-trees",
+   "name": "Christmas trees on leased ground",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Not regulatory but structural: 8-10 years from planting to a saleable 6ft Nordmann means year-4/5 net is NEGATIVE (lease + maintenance, no crop), unbridgeable w"
+  },
+  {
+   "key": "watercress",
+   "name": "Watercress/land cress with spring water",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Triple blocker: (1) operator has no land or spring — commercial watercress needs flowing spring/borehole beds and abstraction consent (licence needed >20m3/day;"
+  },
+  {
+   "key": "vermicompost",
+   "name": "Vermicompost / Worm Castings",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "ABP Category-3 regulatory blocker on feedstock — established fatal in prior diligence"
+  },
+  {
+   "key": "freeze-dried",
+   "name": "Freeze-Dried Snacks/Candy",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Market window closed — Sow Good down 88% and CPG majors have entered"
+  },
+  {
+   "key": "cordyceps",
+   "name": "Cordyceps Cultivation",
+   "round": "universe-screen",
+   "score": 2.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": null,
+   "status": "fatal",
+   "note": "Novel Food regulation — illegal to sell as food in the UK (established fatal)"
+  },
+  {
+   "key": "mushroom-logs-deepdive",
+   "name": "Inoculated Scottish hardwood shiitake logs (two-tier: fresh-inoculated £20-25 ki",
+   "round": "deepdive-v3",
+   "score": 6.05,
+   "y3_net_gbp": 13500,
+   "mature_net_gbp": 20000,
+   "status": "verified",
+   "note": "A real, verified market with unusually cheap and fast validation — but a small one with a hard ceiling. The demand is proven (eight-plus live UK sellers, Christ"
+  },
+  {
+   "key": "kindling-deepdive",
+   "name": "Kiln-dried kindling + firelighter bundles, boxed e-commerce (machine-led), produ",
+   "round": "deepdive-v3",
+   "score": 5.95,
+   "y3_net_gbp": 15500,
+   "mature_net_gbp": 26000,
+   "status": "verified",
+   "note": "A workable, fast-to-cash, machine-leveraged seasonal business with a mediocre ceiling. The postal model is proven (Certainly Wood, Log Barn, Lekto), the price u"
+  },
+  {
+   "key": "dahlia-tubers-deepdive",
+   "name": "Named-variety dahlia tuber and rooted-cutting propagation near Edinburgh; stock ",
+   "round": "deepdive-v3",
+   "score": 5.7,
+   "y3_net_gbp": 12000,
+   "mature_net_gbp": 24000,
+   "status": "verified",
+   "note": "A genuinely sound niche with verified sellout demand, a retiring competitor, cheap legal home start (~£550), a Scottish precedent (Dachshund Dahlias), strong AI"
+  },
+  {
+   "key": "hot-honey-deepdive",
+   "name": "Hot honey / chilli-infused Scottish honey brand, D2C (Etsy/Shopify/IG + online w",
+   "round": "deepdive-v3",
+   "score": 5.65,
+   "y3_net_gbp": 11000,
+   "mature_net_gbp": 22000,
+   "status": "verified",
+   "note": "Reject as a livelihood; permissible only as a £450 side-experiment. The screening anchors survive verification — WilderBee really did ~£1m organically and the t"
+  },
+  {
+   "key": "black-garlic-deepdive",
+   "name": "Black garlic production (automated 60-90 day maillard-aging chambers) + D2C bran",
+   "round": "deepdive-v3",
+   "score": 5.6,
+   "y3_net_gbp": 12000,
+   "mature_net_gbp": 20000,
+   "status": "analysed",
+   "note": "Black garlic is a genuinely good operator-fit product — legal at home for ~£420, superb gross margins (~48% net contribution at £99-179/kg retail equivalents), "
+  },
+  {
+   "key": "shrimp-breeding-deepdive",
+   "name": "Ornamental shrimp breeding (Neocaridina/Caridina) on home racks, shipped UK-wide",
+   "round": "deepdive-v3",
+   "score": 5.15,
+   "y3_net_gbp": 8000,
+   "mature_net_gbp": 12000,
+   "status": "analysed",
+   "note": "Reject as a livelihood; viable only as a self-funding hobby or a minor income layer. The venture scores superbly on the operator's constraints — sub-£500 fully "
+  },
+  {
+   "key": "dog-treats-deepdive",
+   "name": "Premium dehydrated single-ingredient dog treats (liver, sprats, chicken feet, fi",
+   "round": "deepdive-v3",
+   "score": 5,
+   "y3_net_gbp": 17000,
+   "mature_net_gbp": 28000,
+   "status": "analysed",
+   "note": "A real, legal, growing niche that a solo founder near Edinburgh can enter for under £1,000 and validate within 4 months — but it is a modest-income business, no"
+  },
+  {
+   "key": "coffee-roasting-deepdive",
+   "name": "Subscription coffee roastery — data/automation-tuned roasting story, national D2",
+   "round": "deepdive-v3",
+   "score": 4.75,
+   "y3_net_gbp": 12000,
+   "mature_net_gbp": 18000,
+   "status": "analysed",
+   "note": "Weak reject as a primary livelihood; acceptable only as a deliberately capped side venture. The market is real and subscriptions are proven (Pact: 45k subscribe"
+  },
+  {
+   "key": "fungi-stack-reframe",
+   "name": "Staged fungi venture: fresh lion's mane/oyster (local Edinburgh) → dried mushroo",
+   "round": "reframe-15h",
+   "score": 6,
+   "y3_net_gbp": 3000,
+   "mature_net_gbp": 26000,
+   "status": "verified",
+   "note": "Under the reframed benchmark (£15/h fallback livelihood, not software wages) this is the first candidate to clear the bar honestly: year-3 economic profit is po"
+  },
+  {
+   "key": "grow-kits-reframe",
+   "name": "Ready-to-fruit gourmet mushroom grow kits (oyster, lion's mane, shiitake blocks,",
+   "round": "reframe-15h",
+   "score": 6,
+   "y3_net_gbp": 2500,
+   "mature_net_gbp": 24000,
+   "status": "verified",
+   "note": "This is the rare candidate that fits the reframed method almost perfectly: a genuine £500/3-month home phase-0 that directly tests the kill question, total stag"
+  },
+  {
+   "key": "wasabi-reframe",
+   "name": "Fresh wasabi (Wasabia japonica) grown as a staged side bed behind a faster incom",
+   "round": "reframe-15h",
+   "score": 5.5,
+   "y3_net_gbp": -200,
+   "mature_net_gbp": 20000,
+   "status": "verified",
+   "note": "As a standalone livelihood, wasabi fails the operator's own test: the honestly-sized UK market (~3-6 t/yr, cross-checked) caps a solo online-only entrant at rou"
+  },
+  {
+   "key": "mushrooms-fresh-reframe",
+   "name": "Fresh gourmet mushrooms (oyster, lion's mane, king oyster) grown near Edinburgh,",
+   "round": "reframe-15h",
+   "score": 6,
+   "y3_net_gbp": 4000,
+   "mature_net_gbp": 26000,
+   "status": "verified",
+   "note": "Under the reframed objective this venture now clears the bar and is one of the stronger candidates: year-3 net ~£20k at 19h/wk yields a POSITIVE economic profit"
+  },
+  {
+   "key": "functional-powders-reframe",
+   "name": "UK-grown lion's mane fruiting-body powder provenance brand (home-first, Edinburg",
+   "round": "reframe-15h",
+   "score": 5,
+   "y3_net_gbp": 600,
+   "mature_net_gbp": 24000,
+   "status": "analysed",
+   "note": "This is one of the strongest phase-0 candidates in the portfolio and a mediocre mature livelihood. Everything the operator's method demands lines up: legal from"
+  },
+  {
+   "key": "koji-ferments-reframe",
+   "name": "Craft koji ferments (fresh/dried rice & barley koji, shio koji, amazake, small-b",
+   "round": "reframe-15h",
+   "score": 5,
+   "y3_net_gbp": 4000,
+   "mature_net_gbp": 22000,
+   "status": "analysed",
+   "note": "Under the £15/h reframe this is one of the few honestly cash-positive candidates: year-3 net ~£15.5k at 15h/wk is ~£22/h, economic profit ≈ +£4.3k, phase-0 cost"
+  },
+  {
+   "key": "controller-plus-farm-reframe",
+   "name": "Dual play: Edinburgh gourmet-mushroom micro-farm (oyster/lion's mane, online-ord",
+   "round": "reframe-15h",
+   "score": 5,
+   "y3_net_gbp": 2500,
+   "mature_net_gbp": 26000,
+   "status": "analysed",
+   "note": "The compound reframing survives scrutiny only in asymmetric form: the farm is the business, the controller is a ~£2-5k/yr side product and marketing/upsell engi"
+  },
+  {
+   "key": "coastal-herbs-reframe",
+   "name": "Cultivated oyster leaf (Mertensia maritima) plus a supporting range of coastal h",
+   "round": "reframe-15h",
+   "score": 4,
+   "y3_net_gbp": 1500,
+   "mature_net_gbp": 18000,
+   "status": "analysed",
+   "note": "A rare case where phase-0 is genuinely cheap (£950) and the moat claim is real: Mertensia propagation is verifiably hard, incumbcents' plants and seed sell out,"
+  },
+  {
+   "key": "tissue-culture-reframe",
+   "name": "Home plant tissue-culture lab near Edinburgh: rare/variegated houseplant plantle",
+   "round": "reframe-15h",
+   "score": 3,
+   "y3_net_gbp": 1500,
+   "mature_net_gbp": 18000,
+   "status": "analysed",
+   "note": "Reject as a primary livelihood; conditionally keep as a cheap skill-building side-module. The £1,550 home phase-0 is among the cheapest of any candidate and eve"
+  },
+  {
+   "key": "microgreens-reframe",
+   "name": "Microgreens, B2C-first: weekly cut-punnet home-delivery subscriptions in Edinbur",
+   "round": "reframe-15h",
+   "score": 3,
+   "y3_net_gbp": 3500,
+   "mature_net_gbp": 17000,
+   "status": "analysed",
+   "note": "Reject as a primary livelihood; acceptable only as a wage-floor side income. The B2C reframe genuinely avoids the no-cold-calls blocker — OFN/REKO/Etsy/own-site"
+  },
+  {
+   "key": "courses-content-scale",
+   "name": "The GroCycle play, Edinburgh edition: a deliberately small automated mushroom mi",
+   "round": "scale-engineering",
+   "score": 4,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 48000,
+   "status": "attacked",
+   "note": "The mechanism design is sound — decoupling revenue from hours via digital+kits is the right move, the precedent companies are real, and the design is unusually "
+  },
+  {
+   "key": "fungi-brand-network-scale",
+   "name": "Fungi vertical brand → UK partner-farm network (\"Smallhold 2.0\"): own Edinburgh ",
+   "round": "scale-engineering",
+   "score": 4,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 48000,
+   "status": "attacked",
+   "note": "The two mechanisms that carry the £95k claim are exactly the two that fail inspection. (1) The partner network as specified is internally inconsistent: at the d"
+  },
+  {
+   "key": "wasabi-farm-scale-scale",
+   "name": "Wasabi at real farm scale — the UK's second fresh-wasabi supplier (Scotland), bu",
+   "round": "scale-engineering",
+   "score": 3,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 30000,
+   "status": "attacked",
+   "note": "The structural argument survives: the constraint really is area x cash-cycle, not hours, so this venture CAN in principle pass the wage ceiling — that is more t"
+  },
+  {
+   "key": "robotic-multisite-scale",
+   "name": "Automated multi-CONTAINER fungi hub (redesigned from multi-site): one rented yar",
+   "round": "scale-engineering",
+   "score": 5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 58000,
+   "status": "attacked",
+   "note": "Nothing structurally breaks — every mechanism has a real precedent and the two verified capital sources cover the build — but four of five load-bearing numbers "
+  },
+  {
+   "key": "agtech-compound-scale",
+   "name": "Compound farm + controller: own automated mushroom/CEA micro-farm as the living ",
+   "round": "scale-engineering",
+   "score": 5.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 80000,
+   "status": "designed",
+   "note": "Standalone hobby controller tops out at £16-26k/yr: at £85-129 retail (~£84 margin) he needs ~190-250 units/yr just for a wage, every unit adds linear support/a"
+  },
+  {
+   "key": "halophyte-supply-scale",
+   "name": "Coastal halophyte platform: cut-leaf wholesale (oyster leaf + sea aster, ice pla",
+   "round": "scale-engineering",
+   "score": 5.5,
+   "y3_net_gbp": null,
+   "mature_net_gbp": 78000,
+   "status": "designed",
+   "note": "Solo cut-leaf-only version tops out at ~£20-28k net. Two stacked caps: (a) demand — UK fine-dining oyster-leaf TAM is £250-750k RETAIL (verified in prior round)"
+  }
+ ]
+}
