@@ -128,7 +128,12 @@
   @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
 
   /* App pages */
-  #appnav{display:flex; gap:.5rem; flex-wrap:wrap; margin:1.4rem 0 0; border-bottom:2px solid var(--line); padding-bottom:.6rem}
+  #appnav{display:flex; gap:.5rem; flex-wrap:wrap; margin:1.4rem 0 0; border-bottom:2px solid var(--line); padding:.5rem 0 .6rem; position:sticky; top:0; background:var(--paper); z-index:20}
+  .buy{font-family:var(--mono); font-size:.72rem; background:var(--ochre-wash); color:#7c5116 !important; border-radius:8px; padding:.12rem .5rem; text-decoration:none; white-space:nowrap; margin-left:.45rem; display:inline-block}
+  .buy:hover{background:var(--ochre); color:#fff !important}
+  .budget input[type=checkbox]{width:1.05rem; height:1.05rem; accent-color:var(--green); margin-right:.55rem; vertical-align:-2px; cursor:pointer}
+  .budget tr.done td{opacity:.5}
+  .buyprog{font-family:var(--mono); font-size:.8rem; font-weight:600; color:var(--green-deep); margin:.45rem 0 0}
   #appnav button{font-family:"Bricolage Grotesque",sans-serif; font-weight:700; font-size:.95rem; padding:.45rem .9rem; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--muted); cursor:pointer}
   #appnav button.on{background:var(--green-wash); border-color:var(--green); color:var(--green-deep)}
   .apppage{display:none}
@@ -423,20 +428,20 @@
       <h2>Build: camera funghi in casa, con il tuo stack</h2>
       <p class="lede" style="font-size:1rem">Obiettivo: dimostrare che il processo funziona nelle TUE mani (contaminazione &lt;15%, 2 flush puliti) e costruire il controller che poi migra in Scozia. Tutto in una cantina/stanza fresca. <b>Non si vende nulla da Roma senza SCIA</b>: si coltiva, si mangia, si regala, si documenta.</p>
 
-      <h3>🛒 Lista acquisti</h3>
-      <div class="budgetwrap"><table class="budget">
+      <h3>🛒 Lista acquisti <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— spunta quello che hai già; si salva nel browser</span></h3>
+      <div class="budgetwrap"><table class="budget" data-list="fungi">
         <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
         <tbody>
-          <tr><td>Tenda grow 80×80×160 cm<span class="why">amazon.it / growshop — con oblò e passacavi</span></td><td class="amt">€70</td></tr>
-          <tr><td>Umidificatore a ultrasuoni 4-5 L<span class="why">uscita orientabile; meglio se con attacco per tubo</span></td><td class="amt">€35</td></tr>
-          <tr><td>Ventola inline 100 mm + ducting + filtro antipolvere<span class="why">estrazione in alto; intake passivo in basso con garza filtrante</span></td><td class="amt">€40</td></tr>
-          <tr><td>Scaffalino 3-4 ripiani + bacinelle<span class="why">plastica, lavabile con alcool</span></td><td class="amt">€30</td></tr>
-          <tr><td>4-6 blocchi pronti di oyster (poi lion's mane)<span class="why">fornitori IT/EU di substrato inoculato — prima impari a fruttificare, POI a inoculare</span></td><td class="amt">€80</td></tr>
-          <tr><td>Igiene: alcool isopropilico, guanti, FFP2, spruzzino<span class="why">flusso pulito→sporco, sempre</span></td><td class="amt">€20</td></tr>
-          <tr><td><b>Stack controllo</b>: Raspberry Pi (Zero 2 W o 4) o ESP32<span class="why">quello che hai in cassetto va bene</span></td><td class="amt">€25-60</td></tr>
-          <tr><td>Sensore SHT31 (temp+RH) + SCD40 (CO₂)<span class="why">I²C, librerie pronte</span></td><td class="amt">€35</td></tr>
-          <tr><td>Relay board 4 canali + prese<span class="why">canali: umidificatore, ventola, luce, riserva (frigo/riscaldatore)</span></td><td class="amt">€15</td></tr>
-          <tr><td>Camera (Pi cam o USB) + striscia LED 6500K su timer<span class="why">vision: pinning, finestra di raccolta, muffe verdi</span></td><td class="amt">€30</td></tr>
+          <tr><td>Tenda grow 80×80×160 cm <a class="buy" href="https://www.amazon.it/s?k=grow+box+80x80x160" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">con oblò e passacavi</span></td><td class="amt">€70</td></tr>
+          <tr><td>Umidificatore a ultrasuoni 4-5 L <a class="buy" href="https://www.amazon.it/s?k=umidificatore+ultrasuoni+5+litri" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">uscita orientabile; meglio se con attacco per tubo</span></td><td class="amt">€35</td></tr>
+          <tr><td>Ventola inline 100 mm + ducting + filtro <a class="buy" href="https://www.amazon.it/s?k=ventola+inline+100mm+aspirazione" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">estrazione in alto; intake passivo in basso con garza filtrante</span></td><td class="amt">€40</td></tr>
+          <tr><td>Scaffalino 3-4 ripiani + bacinelle <a class="buy" href="https://www.amazon.it/s?k=scaffale+plastica+4+ripiani" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">plastica, lavabile con alcool</span></td><td class="amt">€30</td></tr>
+          <tr><td>4-6 blocchi pronti di oyster (poi lion's mane) <a class="buy" href="https://www.amazon.it/s?k=kit+coltivazione+funghi+pleurotus+substrato" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">o growshop IT/EU specializzati — prima impari a fruttificare, POI a inoculare</span></td><td class="amt">€80</td></tr>
+          <tr><td>Igiene: alcool isopropilico, guanti, FFP2, spruzzino <a class="buy" href="https://www.amazon.it/s?k=alcol+isopropilico+1+litro" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">flusso pulito→sporco, sempre</span></td><td class="amt">€20</td></tr>
+          <tr><td><b>Stack controllo</b>: Raspberry Pi (Zero 2 W o 4) o ESP32 <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+zero+2+w" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">quello che hai in cassetto va bene</span></td><td class="amt">€25-60</td></tr>
+          <tr><td>Sensore SHT31 (temp+RH) + SCD40 (CO₂) <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 SHT31</a> <a class="buy" href="https://www.amazon.it/s?k=scd40+sensore+co2" target="_blank" rel="noopener">🛒 SCD40</a><span class="why">I²C, librerie pronte</span></td><td class="amt">€35</td></tr>
+          <tr><td>Relay board 4 canali + prese <a class="buy" href="https://www.amazon.it/s?k=modulo+relay+4+canali+5v" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">canali: umidificatore, ventola, luce, riserva (frigo/riscaldatore)</span></td><td class="amt">€15</td></tr>
+          <tr><td>Camera (Pi cam o USB) + striscia LED 6500K su timer <a class="buy" href="https://www.amazon.it/s?k=raspberry+pi+camera+module" target="_blank" rel="noopener">🛒 camera</a> <a class="buy" href="https://www.amazon.it/s?k=striscia+led+6500k+12v" target="_blank" rel="noopener">🛒 LED</a><span class="why">vision: pinning, finestra di raccolta, muffe verdi</span></td><td class="amt">€30</td></tr>
           <tr class="total"><td>Totale fase-0 funghi</td><td class="amt">~€400</td></tr>
         </tbody>
       </table></div>
@@ -514,18 +519,18 @@
       <h2>Build: camera di fermentazione per aglio nero</h2>
       <p class="lede" style="font-size:1rem">Il candidato n°2 del ranking (7.35): retail UK ~£100/kg, una manciata di produttori, e il processo è <b>al 100% controllo di temperatura e umidità per 60-90 giorni</b> — zero biologia viva, solo ingegneria. Il dataset dei parametri che costruisci qui È il vantaggio competitivo.</p>
 
-      <h3>🛒 Lista acquisti</h3>
-      <div class="budgetwrap"><table class="budget">
+      <h3>🛒 Lista acquisti <span style="font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--muted)">— spunta quello che hai già; si salva nel browser</span></h3>
+      <div class="budgetwrap"><table class="budget" data-list="garlic">
         <thead><tr><th>Componente</th><th style="text-align:right">Prezzo ~</th></tr></thead>
         <tbody>
-          <tr><td>Camera: mini-frigo dismesso O box EPP coibentato 40-60 L<span class="why">il frigo morto è perfetto: coibentato, richiudibile, gratis su subito.it</span></td><td class="amt">€0-60</td></tr>
-          <tr><td>Riscaldatore: cavo/tappetino da rettilario 50-100 W o PTC<span class="why">mai resistenze nude vicino a plastica</span></td><td class="amt">€25</td></tr>
-          <tr><td>Controllo: Inkbird ITC-306T (semplice) o Pi/ESP32 + SSR 25A + DS18B20<span class="why">la via Pi ti dà log + profili di temperatura programmabili — il dataset</span></td><td class="amt">€25-40</td></tr>
-          <tr><td>SHT31 per RH + ciotola d'acqua/spugna<span class="why">RH 70-85%; l'acqua nella camera basta quasi sempre</span></td><td class="amt">€12</td></tr>
-          <tr><td>Termofusibile di sicurezza + presa con contatore kWh<span class="why">sicurezza elettrica + misura del costo energetico reale per kg</span></td><td class="amt">€20</td></tr>
-          <tr><td>Filtro a carboni attivi sullo sfiato<span class="why">i primi 3-7 giorni l'odore è FORTE — questo è il fix</span></td><td class="amt">€18</td></tr>
-          <tr><td>Aglio: 2 kg standard + 1-2 kg premium (Voghiera DOP / rosso di Sulmona)<span class="why">batch comparativo: il premium giustifica il prezzo premium?</span></td><td class="amt">€25-40</td></tr>
-          <tr><td>Barattoli vetro, carta forno/foil per test avvolgimento, guanti</td><td class="amt">€15</td></tr>
+          <tr><td>Camera: mini-frigo dismesso O box EPP coibentato 40-60 L <a class="buy" href="https://www.subito.it/annunci-italia/vendita/usato/?q=mini+frigo" target="_blank" rel="noopener">🛒 Subito</a> <a class="buy" href="https://www.amazon.it/s?k=box+termico+polistirolo+60+litri" target="_blank" rel="noopener">🛒 box EPP</a><span class="why">il frigo morto è perfetto: coibentato, richiudibile, spesso gratis</span></td><td class="amt">€0-60</td></tr>
+          <tr><td>Riscaldatore: cavo/tappetino da rettilario 50-100 W o PTC <a class="buy" href="https://www.amazon.it/s?k=tappetino+riscaldante+rettili+50w" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">mai resistenze nude vicino a plastica</span></td><td class="amt">€25</td></tr>
+          <tr><td>Controllo: Inkbird ITC-306T o Pi/ESP32 + SSR 25A + DS18B20 <a class="buy" href="https://www.amazon.it/s?k=inkbird+itc-306t" target="_blank" rel="noopener">🛒 Inkbird</a> <a class="buy" href="https://www.amazon.it/s?k=rele+stato+solido+ssr+25a" target="_blank" rel="noopener">🛒 SSR</a> <a class="buy" href="https://www.amazon.it/s?k=ds18b20+sonda+impermeabile" target="_blank" rel="noopener">🛒 sonda</a><span class="why">la via Pi ti dà log + profili programmabili — il dataset</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>SHT31 per RH + ciotola d'acqua/spugna <a class="buy" href="https://www.amazon.it/s?k=sht31+sensore" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">RH 70-85%; l'acqua nella camera basta quasi sempre</span></td><td class="amt">€12</td></tr>
+          <tr><td>Termofusibile + presa con contatore kWh <a class="buy" href="https://www.amazon.it/s?k=fusibile+termico+ripristinabile" target="_blank" rel="noopener">🛒 fusibile</a> <a class="buy" href="https://www.amazon.it/s?k=presa+contatore+consumo+energia" target="_blank" rel="noopener">🛒 contatore</a><span class="why">sicurezza elettrica + misura del costo energetico reale per kg</span></td><td class="amt">€20</td></tr>
+          <tr><td>Filtro a carboni attivi sullo sfiato <a class="buy" href="https://www.amazon.it/s?k=filtro+carboni+attivi+100mm" target="_blank" rel="noopener">🛒 Amazon</a><span class="why">i primi 3-7 giorni l'odore è FORTE — questo è il fix</span></td><td class="amt">€18</td></tr>
+          <tr><td>Aglio: 2 kg standard + 1-2 kg premium (Voghiera DOP / rosso di Sulmona) <a class="buy" href="https://www.amazon.it/s?k=aglio+di+voghiera+dop" target="_blank" rel="noopener">🛒 Voghiera</a><span class="why">batch comparativo: il premium giustifica il prezzo premium? (meglio ancora: mercato)</span></td><td class="amt">€25-40</td></tr>
+          <tr><td>Barattoli vetro, carta forno/foil, guanti <a class="buy" href="https://www.amazon.it/s?k=barattoli+vetro+ermetici" target="_blank" rel="noopener">🛒 Amazon</a></td><td class="amt">€15</td></tr>
           <tr class="total"><td>Totale fase-0 aglio nero</td><td class="amt">~€160-220</td></tr>
         </tbody>
       </table></div>
@@ -994,14 +999,48 @@
   window.addEventListener('resize', refresh);
   refresh();
 
-  // App page navigation
-  document.querySelectorAll('#appnav button').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('#appnav button').forEach(x => x.classList.toggle('on', x === b));
-      document.querySelectorAll('.apppage').forEach(p => p.classList.toggle('on', p.id === 'page-' + b.dataset.page));
-      window.scrollTo({ top: 0 });
-      if (b.dataset.page === 'plan') refresh(); // charts need a visible layout
+  // App page navigation (hash-persistent: #fungi survives a reload)
+  const showPage = (name) => {
+    const b = document.querySelector('#appnav button[data-page="' + name + '"]');
+    if (!b) return;
+    document.querySelectorAll('#appnav button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.apppage').forEach(p => p.classList.toggle('on', p.id === 'page-' + name));
+    window.scrollTo({ top: 0 });
+    try { history.replaceState(null, '', '#' + name); } catch (e) { /* file:// */ }
+    if (name === 'plan') refresh(); // charts need a visible layout
+  };
+  document.querySelectorAll('#appnav button').forEach(b => b.addEventListener('click', () => showPage(b.dataset.page)));
+  if (location.hash) showPage(location.hash.slice(1));
+
+  // Shopping checklists — persist per browser (localStorage may be blocked: fail soft)
+  const bload = (k) => { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };
+  const bsave = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
+  document.querySelectorAll('table.budget[data-list]').forEach(tb => {
+    const key = 'ct_buy_' + tb.dataset.list;
+    const st = bload(key);
+    const rows = [...tb.querySelectorAll('tbody tr')].filter(r => !r.classList.contains('total'));
+    const prog = document.createElement('p');
+    prog.className = 'buyprog';
+    tb.closest('.budgetwrap').after(prog);
+    const upd = () => {
+      const done = rows.filter(r => r.classList.contains('done')).length;
+      prog.textContent = '🛒 ' + done + '/' + rows.length + ' acquistati' + (done === rows.length && done > 0 ? ' — tutto pronto ✓' : '');
+    };
+    rows.forEach((r, i) => {
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!st[i];
+      cb.setAttribute('aria-label', 'acquistato');
+      r.classList.toggle('done', !!st[i]);
+      cb.addEventListener('change', () => {
+        st[i] = cb.checked;
+        r.classList.toggle('done', cb.checked);
+        bsave(key, st);
+        upd();
+      });
+      r.cells[0].prepend(cb);
     });
+    upd();
   });
 })();
 </script>
