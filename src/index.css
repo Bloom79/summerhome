@@ -569,3 +569,35 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 /* ---- Lightbox zoom overlay ---- */
 .lbzoom{position:absolute;inset:0;overflow:hidden;background:#000;touch-action:none;cursor:grab;z-index:1;display:flex;align-items:center;justify-content:center}
 .lbzoom img{max-width:100%;max-height:100%;object-fit:contain;will-change:transform;user-select:none;-webkit-user-drag:none}
+
+/* ---- EPC / travel badges on cards ---- */
+.cstats .epcb{font-size:.68rem;font-weight:800;border-radius:5px;padding:1px 6px;color:#fff;background:#6b7280}
+.epc-A,.epc-B{background:#0e9f6e}.epc-C{background:#65a30d}.epc-D{background:#ca8a04}.epc-E{background:#ea580c}.epc-F,.epc-G{background:#dc2626}
+.cstats .travb{font-weight:600;color:var(--ink)}
+/* ---- Real ad description in the sheet ---- */
+.mdesc.real{background:#fbfdfd;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.9rem;line-height:1.5;color:var(--ink);margin-bottom:14px}
+.mdesc-src{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:4px}
+/* ---- Trends in the stats table ---- */
+.trendcell{white-space:nowrap}
+.trend{font-weight:700;font-size:.8rem;margin-right:6px}
+.trend.up{color:#b91c1c}.trend.down{color:#15803d}.trend.flat{color:var(--muted)}
+.spark{vertical-align:middle;color:var(--brand)}
+.statsweek{font-weight:600;color:var(--ink)}
+
+/* ---- Viewing-trip planner ---- */
+.tripbox{max-width:560px}
+.tripgate{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600}
+.tripgate select{border:1.5px solid var(--line);border-radius:9px;padding:6px 9px;font-size:.85rem;background:#fff}
+.trippick{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:6px}
+.trippickrow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:8px;cursor:pointer;font-size:.82rem}
+.trippickrow.on{background:var(--brand-light)}
+.trippickrow img,.tripph{width:44px;height:32px;object-fit:cover;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;background:#dce6e7}
+.tripaddr{display:flex;flex-direction:column;line-height:1.2}
+.tripaddr small{color:var(--muted);font-weight:600}
+.triproute{display:flex;flex-direction:column;gap:4px}
+.tripstop{display:flex;flex-direction:column;gap:2px}
+.tripstop.start{font-weight:800}
+.tripleg{font-size:.74rem;color:var(--muted);padding-left:10px}
+.tripname{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;font-size:.84rem;font-weight:600;color:var(--ink);cursor:pointer}
+.tripname:hover{border-color:var(--brand)}
+.triptotal{font-weight:800;margin:6px 0 2px}

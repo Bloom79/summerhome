@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 200 # trends.mjs reads the daily snapshots of data.json
 
       - name: Refresh listings
         id: refresh
@@ -41,6 +43,10 @@ jobs:
         if: steps.refresh.outputs.status == 'changed'
         id: deals
         run: node scripts/analyze-deals.mjs
+
+      - name: Market trends
+        if: steps.refresh.outputs.status == 'changed'
+        run: node scripts/trends.mjs || true
 
       - name: Restore built site
         if: steps.refresh.outputs.status == 'changed'
@@ -63,14 +69,14 @@ jobs:
 
       - name: Refresh data in the site
         if: steps.refresh.outputs.status == 'changed'
-        run: cp public/data.json dist/data.json && cp public/deals.json dist/deals.json
+        run: cp public/data.json dist/data.json && cp public/deals.json dist/deals.json && cp public/trends.json dist/trends.json 2>/dev/null || true
 
       - name: Commit and push
         if: steps.refresh.outputs.status == 'changed'
         run: |
           git config user.name 'casatrova-agent'
           git config user.email 'noreply@github.com'
-          git add public/data.json public/deals.json
+          git add public/data.json public/deals.json public/trends.json
           git commit -m "Daily listings refresh $(date -u +%F): ${{ steps.refresh.outputs.summary }} · ${{ steps.deals.outputs.summary }}" -m "$(cat refresh-report.md)" -m "$(cat deals-report.md 2>/dev/null || true)"
           git pull --rebase origin main
           git push origin main

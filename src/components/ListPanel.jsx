@@ -7,7 +7,7 @@ import { useI18n } from '../i18n.jsx'
 export default function ListPanel({
   items, activeFilters, onClearFilters, onShareSearch, areas, searches, onSaveSearch, onApplySearch, onDeleteSearch, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleAuction, onToggleFarm, onToggleDeals, onToggleSold, onSortChange,
-  favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
+  favCount, onOpenCompare, onOpenTrip, onOpenAlerts, alertsUnseen, hasAlerts,
   seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen, onOpenDealsSummary,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
@@ -60,6 +60,7 @@ export default function ListPanel({
         onToggleSold={onToggleSold}
         favCount={favCount}
         onOpenCompare={onOpenCompare}
+        onOpenTrip={onOpenTrip}
         onOpenAlerts={onOpenAlerts}
         alertsUnseen={alertsUnseen}
         hasAlerts={hasAlerts}
@@ -94,6 +95,7 @@ export default function ListPanel({
           <option value="sdesc">{t('sort_sdesc')}</option>
           <option value="ppm">{t('sort_ppm')}</option>
           <option value="drop">{t('sort_drop')}</option>
+          <option value="travel">{t('sort_travel')}</option>
           <option value="new">{t('sort_new')}</option>
           <option value="deal">{t('sort_deal')}</option>
           <option value="dist">{t('sort_dist')}</option>

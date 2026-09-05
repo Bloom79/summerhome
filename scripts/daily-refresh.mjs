@@ -111,6 +111,20 @@ const featsOf = (text) => {
   return f
 }
 
+// ---- Ad facts worth carrying into the portal ----
+// EPC letter (Scotland "EPC Rating = F", "EPC: C"; Ireland BER "C1" → C),
+// council tax band, and a ≤500-char excerpt of the ad's own description so
+// the sheet shows the agent's words, not a generated sentence.
+const epcOf = (text) => (/\bEPC(?:\s*[Rr]ating)?\s*[:=\-–]?\s*\b([A-G])\b/.exec(text) || /[Ee]nergy [Rr]ating[^A-G]{0,10}\b([A-G])\b/.exec(text) || /\bBER\b[^A-G]{0,15}\b([A-G])[1-3]?\b/.exec(text) || [])[1] || null
+const ctaxOf = (text) => (/[Cc]ouncil [Tt]ax(?:[^A-H]{0,20})[Bb]and:?\s*([A-H])\b/.exec(text) || [])[1] || null
+const clip = (str, max = 500) => {
+  const t = String(str || '').replace(/<[^>]+>/g, ' ').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  const cut = t.slice(0, max)
+  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
+  return (end > max * 0.5 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, '') + '…')
+}
+
 // ---- Zone configurations ----
 const RM_ZONES = [
   { zone: 'North Berwick (Scozia)', town: 'North Berwick', codes: ['1008'], pages: [0, 24], filter: /North Berwick|Gullane|Dirleton|Aberlady|EH39|EH31/i, cap: 30 },
@@ -182,6 +196,19 @@ const rmEnrich = async (l) => {
     if (gal.length >= l.imgs.length) l.imgs = gal
     const sqm = +((/info-reel-SIZE-text"><p[^>]*>[^<]*<\/p><p[^>]*>([\d,]+)\s*sq m/.exec(page)?.[1] || '').replace(/,/g, ''))
     if (sqm > 15 && sqm < 2000) l.size = sqm
+    // The rendered page lists the key features, then "Description" twice
+    // (headline, then the body): take the body up to the next section.
+    const rows = (kf >= 0 ? page.slice(kf, kf + 12000) : '').replace(/<[^>]+>/g, '\n').split('\n').map((x) => x.trim()).filter(Boolean)
+    const di = rows.lastIndexOf('Description', 60)
+    if (di > 0) {
+      const body = []
+      for (const r of rows.slice(di + 1)) { if (/^(Brochures?|Council tax|Read (more|less)|Show (more|less)|Map|Nearest stations|Summarise property details|Mortgage calculator)/i.test(r)) break; body.push(r); if (body.join(' ').length > 900) break }
+      if (body.length) l.desc = clip(body.join(' '))
+    }
+    const full = page.replace(/<[^>]+>/g, ' ')
+    l.energy = epcOf(text) || epcOf(full) || l.energy || null
+    l.ctax = ctaxOf(full) || l.ctax || null
+    l.enr = TODAY
   } catch { /* enrich is best-effort */ }
   return l
 }
@@ -217,11 +244,12 @@ const mhParse = async (u, zone, town) => {
   const imgs = [...new Set([...page.matchAll(/https:\/\/photos-a\.propertyimages\.ie\/media\/[^"'\\]+_l\.jpg/g)].map((x) => x[0]))].slice(0, 40)
   const h1 = /<h1[^>]*>\s*([^<]+)/.exec(page)?.[1]?.trim()
   const addrTxt = h1 || (title.split('|')[1] || title).split(/ [-–] /)[0].trim() || town
+  const metaDesc = /<meta (?:property="og:description"|name="description") content="([^"]{40,})"/.exec(page)?.[1] || ''
   return {
     id: 0, title: addrTxt, type: 'Casa indipendente', contract: 'sale', price, currency: 'EUR',
-    size: null, rooms: beds, baths, floor: null, year: null, energy: null,
+    size: null, rooms: beds, baths, floor: null, year: null, energy: epcOf(text),
     zone, town, addr: addrTxt, lat: +cm[2], lng: +cm[1], imgs,
-    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '', date: TODAY, url: u,
+    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: clip(metaDesc), date: TODAY, url: u, enr: TODAY,
   }
 }
 
@@ -331,11 +359,11 @@ const s1Candidate = (o, ztOverride) => {
     price: o.price, currency: 'GBP',
     size: null, rooms: ((n) => (n >= 1 && n <= 12 ? n : null))(+(/([0-9]+)\s*bedroom/.exec(featStr)?.[1] || 0)),
     baths: ((n) => (n >= 1 && n <= 10 ? n : null))(+(/([0-9]+)\s*bathroom/.exec(featStr)?.[1] || 0)),
-    floor: null, year: null, energy: null,
+    floor: null, year: null,
     zone: zt.zone, town: zt.town, addr, lat: la, lng: ln,
     imgs: (o.media || []).slice(0, 6).map((m) => m.metadata?.src?.url).filter((u) => u && u.startsWith('https://cdn.s1homes.com/')),
     // s1homes property ids start with the listing datetime (YYYYMMDD…).
-    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: '',
+    feats: featsOf(text), seaView: SEA.some((r) => r.test(text)), desc: clip(o.description || o.summary || ''), energy: epcOf(text), enr: TODAY,
     date: ((m) => (m && `${m[1]}-${m[2]}-${m[3]}` < TODAY && +m[2] <= 12 && +m[3] <= 31 ? `${m[1]}-${m[2]}-${m[3]}` : TODAY))(/^(20\d{2})(\d{2})(\d{2})/.exec(String(o.propertyId || ''))),
     url: `https://www.s1homes.com/property/${o.propertyId}`,
   }
@@ -401,6 +429,7 @@ const espcCandidate = async (r) => {
   const prev = prevByUrl.get(url)
   let la = prev?.lat, ln = prev?.lng
   let text = `${r.summary || ''} ${r.description || ''}`
+  let desc = prev?.desc || '', energy = prev?.energy || null, ctax = prev?.ctax || null, enr = prev?.enr || null
   if (!validCoords(la, ln)) {
     // New to the portal: the detail page carries the coordinates and the
     // full blurb (search results truncate it).
@@ -410,6 +439,9 @@ const espcCandidate = async (r) => {
     ln = parseFloat(/"longitude":"?(-?[\d.]+)/.exec(page)?.[1])
     if (!validCoords(la, ln)) return null
     text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
+    const hl = /<strong>Property highlight:<\/strong>([\s\S]*?)<\/p>\s*<p>([\s\S]*?)<\/p>/.exec(page)
+    desc = clip(hl ? `${hl[1]} ${hl[2]}` : (r.description || r.summary || ''))
+    energy = epcOf(text); ctax = ctaxOf(text); enr = TODAY
   }
   const imgs = (r.propertyImages || []).filter((u) => typeof u === 'string' && u.startsWith('https://espc.com/images?')).slice(0, 40)
   return {
@@ -420,7 +452,7 @@ const espcCandidate = async (r) => {
     baths: r.bathrooms >= 1 && r.bathrooms <= 10 ? r.bathrooms : null,
     floor: null, year: null, energy: null,
     zone: zt.zone, town: zt.town, addr, lat: la, lng: ln, imgs,
-    feats: featsOf(text), seaView: SEA.some((x) => x.test(text)), desc: '',
+    feats: featsOf(text), seaView: SEA.some((x) => x.test(text)), desc, energy, ctax, enr,
     date: prev?.date || TODAY, url,
   }
 }
@@ -483,7 +515,10 @@ const otmEnrich = async (l) => {
     const p = otmNext(await get(l.url))?.property
     if (!p) return l
     const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
-    if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
+    if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text); l.desc = clip(p.description || '') }
+    l.energy = epcOf(text) || (typeof p.epcRating === 'string' && /^[A-G]$/.test(p.epcRating) ? p.epcRating : null) || l.energy || null
+    l.ctax = ctaxOf(text) || (typeof p.councilTaxBand === 'string' && /^[A-H]$/.test(p.councilTaxBand) ? p.councilTaxBand : null) || l.ctax || null
+    l.enr = TODAY
     if (+p.minimumAreaSqM > 15) l.size = Math.round(+p.minimumAreaSqM)
     const big = (p.images || []).filter((im) => im.isImage && im.largeUrl?.startsWith('https://media.onthemarket.com/')).slice(0, 40).map((im) => im.largeUrl)
     if (big.length) l.imgs = big
@@ -834,7 +869,49 @@ const isRelist = (l) => !prevByUrl.has(l.url) &&
 for (let i = nextListings.length - 1; i >= 0; i--) if (isRelist(nextListings[i])) nextListings.splice(i, 1)
 events.nuove = events.nuove.filter((l) => !isRelist(l))
 
-const changed = events.nuove.length || events.ribassi.length || events.rialzi.length || events.vendute.length || retired.length
+// ---- Backfill: ad description / EPC / council tax for carried listings ----
+// New listings get them on ingestion; older ones catch up a batch a day
+// (BACKFILL, default 80) so the portal fills in within a couple of weeks.
+// The enrichers also rewrite tags and photos, so geo tags and the real
+// publication date are protected across the call.
+const BACKFILL = +(process.env.BACKFILL || 80)
+const backfillQueue = nextListings.filter((l) => !l.enr && prevByUrl.has(l.url) && /rightmove\.co\.uk|onthemarket\.com/.test(l.url)).slice(0, BACKFILL)
+let enriched = 0
+await pmap(backfillQueue, async (l) => {
+  const keep = { date: l.date, spiaggia: l.feats.includes('Spiaggia'), imgs: l.imgs }
+  if (/rightmove\.co\.uk/.test(l.url)) await rmEnrich(l)
+  else await otmEnrich(l)
+  l.date = keep.date
+  if (keep.spiaggia && !l.feats.includes('Spiaggia')) l.feats.push('Spiaggia')
+  if (l.imgs.length < keep.imgs.length) l.imgs = keep.imgs
+  l.enr = l.enr || TODAY // a failed fetch still counts: no retry loops
+  enriched++
+}, 6)
+if (enriched) console.log(`arricchite (descrizione/EPC/council tax): ${enriched}`)
+
+// ---- Driving time from the nearest airport (OSRM table, batched) ----
+// One number per house so the portal can filter "≤ 1h30 from the airport"
+// and sort by real travel time; the sheet stops asking OSRM one by one.
+const GATES = [['Edimburgo', 55.9508, -3.3615], ['Glasgow', 55.8642, -4.4331], ['Inverness', 57.5425, -4.0475], ['Aberdeen', 57.2019, -2.1978], ['Dublino', 53.4264, -6.2499], ['Donegal', 55.0442, -8.3410]]
+const travelQueue = nextListings.filter((l) => !l.travel)
+let travelled = 0
+for (let i = 0; i < travelQueue.length && i < 94 * 15; i += 94) {
+  const batch = travelQueue.slice(i, i + 94)
+  const coords = [...GATES.map((g) => `${g[2]},${g[1]}`), ...batch.map((l) => `${l.lng},${l.lat}`)].join(';')
+  try {
+    const j = JSON.parse(await get(`https://router.project-osrm.org/table/v1/driving/${coords}?sources=${GATES.map((_, k) => k).join(';')}&destinations=${batch.map((_, k) => k + GATES.length).join(';')}`))
+    if (j.code !== 'Ok') throw new Error(j.code)
+    batch.forEach((l, k) => {
+      let best = null
+      j.durations.forEach((row, gi) => { const sec = row && row[k]; if (sec != null && (best == null || sec < best.s)) best = { s: sec, g: GATES[gi][0] } })
+      if (best) { l.travel = { g: best.g, min: Math.round(best.s / 60) }; travelled++ }
+    })
+  } catch (e) { console.log('OSRM table failed:', e.message); break }
+  await new Promise((r) => setTimeout(r, 400))
+}
+if (travelled) console.log(`tempi di viaggio calcolati: ${travelled}`)
+
+const changed = events.nuove.length || events.ribassi.length || events.rialzi.length || events.vendute.length || retired.length || enriched || travelled
 if (!changed) {
   out('status', 'none')
   out('summary', 'nessuna novità: dati identici')
@@ -877,4 +954,4 @@ const lines = [
 ]
 writeFileSync(ROOT + 'refresh-report.md', lines.join('\n') + '\n')
 out('status', 'changed')
-out('summary', `${events.nuove.length} nuove, ${events.ribassi.length + events.rialzi.length} variazioni di prezzo, ${events.vendute.length} vendute/ritirate · ${db.listings.length} annunci totali`)
+out('summary', `${events.nuove.length} nuove, ${events.ribassi.length + events.rialzi.length} variazioni di prezzo, ${events.vendute.length} vendute/ritirate · ${db.listings.length} annunci totali${enriched ? ` · ${enriched} arricchite` : ''}${travelled ? ` · ${travelled} tempi di viaggio` : ''}`)

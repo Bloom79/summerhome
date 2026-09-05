@@ -47,6 +47,20 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 6. If a source can't be fetched for a zone, it keeps that zone's previous
    listings rather than emptying it, and makes no commit if nothing changed.
 
+## Ad facts, backfill, travel time, trends
+
+Every new listing carries, from its detail page, a ≤500-char excerpt of the
+ad's own description (`desc`), the EPC letter (`energy`) and the council
+tax band (`ctax`); older Rightmove/OnTheMarket listings catch up **80 a
+day** (`BACKFILL` env var), marked with `enr` so nothing is fetched twice.
+`travel` = `{g, min}` is the driving time from the nearest airport
+(Edinburgh, Glasgow, Inverness, Aberdeen, Dublin, Donegal) via OSRM's table
+service, computed once per house; the portal filters "≤ 1h30 / 2h30 / 4h"
+and sorts on it. `scripts/trends.mjs` reads the daily snapshots of
+`data.json` from git (checkout with `fetch-depth: 200`) and writes
+`public/trends.json` (per day: totals, new, sold; per zone: count and
+median asking in EUR) for the market-trends column of the stats panel.
+
 ## Bargain analysis (Occasioni)
 
 After each refresh, `scripts/analyze-deals.mjs` scores every listing with

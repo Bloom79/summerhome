@@ -2,6 +2,8 @@ import { fmtP, ppm, hostOf, srcOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
+const fmtMin = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}` : `${min} min`)
+
 export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
   const { t, typeLabel, eur: eurMode } = useI18n()
   const fx = eurMode ? gbpEur : null
@@ -58,6 +60,8 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         <div className="cstats">
           {l.size ? <span><b>{l.size}</b> m²</span> : null}
           {perSqm ? <span className="ppm" title={t('ppm_title')}>{perSqm}</span> : null}
+          {l.energy ? <span className={'epcb epc-' + l.energy}>{t('epc_badge', { e: l.energy })}</span> : null}
+          {l.travel ? <span className="travb">🚗 {fmtMin(l.travel.min)}</span> : null}
           {l.rooms ? <span dangerouslySetInnerHTML={{ __html: t(l.rooms === 1 ? 'bed_one' : 'bed_many', { n: `<b>${l.rooms}</b>` }) }} /> : null}
           {l.baths ? <span dangerouslySetInnerHTML={{ __html: t(l.baths === 1 ? 'bath_one' : 'bath_many', { n: `<b>${l.baths}</b>` }) }} /> : null}
           <span>{typeLabel(l.type)}</span>
