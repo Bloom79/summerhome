@@ -464,7 +464,10 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .homefeat{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 6px;max-height:46vh;overflow-y:auto}
 .homecard{text-align:left;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;padding:0;display:flex;flex-direction:column}
 .homecard:hover{border-color:var(--brand)}
-.hcimg{position:relative;aspect-ratio:3/2;background:#eef2f2}
+.hcimg{position:relative;aspect-ratio:3/2;background:#eef2f2;overflow:hidden}
+.hcimg .sgaln{right:auto;left:6px;bottom:6px;font-size:.66rem;padding:2px 7px}
+.hcimg .sgaldots{bottom:3px}
+.hcimg .sgalarr{width:26px;height:26px;font-size:1.1rem}
 .hcimg img{width:100%;height:100%;object-fit:cover;display:block}
 .hcph{display:flex;align-items:center;justify-content:center;height:100%;font-size:1.8rem;opacity:.4}
 .hcbadges{position:absolute;top:6px;left:6px;display:flex;gap:4px}
@@ -507,3 +510,9 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .satseg button.on{background:var(--brand);color:#fff}
 @media (max-width:840px){.satmap{height:200px}}
 .shareinput{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.8rem;font-family:ui-monospace,Consolas,monospace;color:var(--ink);background:var(--bg)}
+
+/* ---- Gallery arrows: pointer devices only, on hover ---- */
+.sgalarr{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:var(--ink);font-size:1.35rem;line-height:1;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.3);z-index:2;padding:0 0 2px}
+.sgalarr.prev{left:8px}.sgalarr.next{right:8px}
+@media (hover:hover) and (pointer:fine){.cimg:hover .sgalarr,.hcimg:hover .sgalarr,.popimg:hover .sgalarr{display:flex}}
+.sgalarr:hover{background:#fff}

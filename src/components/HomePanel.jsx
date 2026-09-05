@@ -1,5 +1,6 @@
 import { fmtP, srcOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import Gallery from './Gallery.jsx'
 
 // Landing "Novità" panel: the first thing shown on open. It greets with the
 // houses added since the last visit — sea-view and garden ones featured —
@@ -67,10 +68,12 @@ export default function HomePanel({
               const eur = l.currency === 'GBP' && gbpEur ? (fx ? fmtP(l) : '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT')) : null
               const src = srcOf(l.url)
               return (
-                <button key={l.id} className="homecard" onClick={() => onOpenListing(l.id)}>
+                <div key={l.id} className="homecard" role="button" tabIndex={0}
+                  onClick={() => onOpenListing(l.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenListing(l.id) } }}>
                   <div className="hcimg">
-                    {l.imgs && l.imgs[0]
-                      ? <img src={l.imgs[0]} alt="" loading="lazy" />
+                    {l.imgs && l.imgs.length
+                      ? <Gallery imgs={l.imgs} />
                       : <div className="hcph">📷</div>}
                     <div className="hcbadges">
                       {l.date === updated && <span className="hcb new">✨</span>}
@@ -88,7 +91,7 @@ export default function HomePanel({
                       {src && <span className={'srcb srcb-' + src.key}>{src.label}</span>}
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
