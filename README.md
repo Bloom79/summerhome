@@ -31,7 +31,7 @@ brief and how to change/pause it.
 - [Leaflet](https://leafletjs.com/) via
   [react-leaflet](https://react-leaflet.js.org/) for the interactive map
 - OpenStreetMap tiles + Nominatim geocoding, Esri World Imagery for the satellite view
-- Listing sources: Rightmove, OnTheMarket, s1homes, ESPC, TSPC (Scotland), MyHome.ie (Ireland)
+- Listing sources: Rightmove, OnTheMarket, s1homes, ESPC (Scotland), MyHome.ie (Ireland). TSPC was retired in Sept 2026 (blocks scripted requests).
 
 ## Project structure
 

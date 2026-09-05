@@ -1,20 +1,36 @@
+import { useEffect, useState } from 'react'
 import Filters from './Filters.jsx'
 import Card from './Card.jsx'
 import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, onShareSearch, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, onShareSearch, areas, searches, onSaveSearch, onApplySearch, onDeleteSearch, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleAuction, onToggleFarm, onToggleDeals, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen, onOpenDealsSummary,
   onOpen, onToggleFav, onSeen, onHover, cardRefs,
 }) {
   const { t } = useI18n()
+  // Render the list in pages of 40: a thousand cards with their photo
+  // strips choke a phone. A marker click on a card beyond the page extends
+  // the page so the card can scroll into view.
+  const PAGE = 40
+  const [limit, setLimit] = useState(PAGE)
+  useEffect(() => { setLimit(PAGE) }, [items])
+  useEffect(() => {
+    if (highlightId == null) return
+    const i = items.findIndex((l) => l.id === highlightId)
+    if (i >= limit) setLimit(Math.ceil((i + 1) / PAGE) * PAGE)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightId])
+  const shown = items.length > limit ? items.slice(0, limit) : items
   return (
     <section id="panel">
       <Filters
         zones={zones}
+        areas={areas}
+        searches={searches} onSaveSearch={onSaveSearch} onApplySearch={onApplySearch} onDeleteSearch={onDeleteSearch}
         zoneCounts={zoneCounts}
         features={features}
         filters={filters}
@@ -107,7 +123,7 @@ export default function ListPanel({
 
       {items.length ? (
         <div id="list">
-          {items.map((l) => (
+          {shown.map((l) => (
             <div key={l.id} ref={(el) => { if (cardRefs) cardRefs.current[l.id] = el }}>
               {soldView ? <SoldCard s={l} /> : <Card
             deal={dealById && dealById.get(l.id)}
@@ -130,6 +146,11 @@ export default function ListPanel({
               />}
             </div>
           ))}
+          {items.length > shown.length && (
+            <button id="showmore" onClick={() => setLimit((n) => n + PAGE)}>
+              {t('show_more', { n: Math.min(PAGE, items.length - shown.length) })} <small>{t('shown_of', { a: shown.length, n: items.length })}</small>
+            </button>
+          )}
         </div>
       ) : (
         <div id="empty">

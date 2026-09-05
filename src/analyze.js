@@ -61,7 +61,7 @@ export function analyzeListing(l, listings, gbpEur, pages = {}, updated = '') {
   const score = Math.min(100, checks.reduce((s, c) => s + c.pts, 0))
   const priceSignal = checks.filter((c) => ['sqm', 'comps', 'cuts'].includes(c.k)).reduce((s, c) => s + c.pts, 0)
   const isDeal = score >= 45 && priceSignal >= 15
-  return { score, isDeal, tier: score >= 70 ? 'top' : isDeal ? 'good' : null, checks }
+  return { score, isDeal, tier: score >= 60 ? 'top' : isDeal ? 'good' : null, checks }
 }
 
 // Estimated saving vs the zone median, in EUR. The €/m² estimate is
