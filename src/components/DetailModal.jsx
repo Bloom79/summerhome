@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
+import { nearby, fmtM, ICON, gmapsLink, osmLink } from '../poi.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
 import Gallery from './Gallery.jsx'
@@ -20,16 +21,6 @@ const GATES = [
 ]
 const travelCache = (() => { try { return JSON.parse(localStorage.getItem('ct_travel')) || {} } catch { return {} } })()
 const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`)
-
-// Nearby essentials (beach / pub / shop) via Overpass, cached per listing.
-const poiCache = (() => { try { return JSON.parse(localStorage.getItem('ct_poi')) || {} } catch { return {} } })()
-const hav = (a, b, c, d) => {
-  const r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r
-  const s = Math.sin(x / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(y / 2) ** 2
-  return 12742000 * Math.asin(Math.sqrt(s))
-}
-const fmtM = (m) => (m < 950 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1)} km`)
-
 
 // Block-level pass: <details> sections become native collapsibles and
 // fenced code becomes a <pre>, so the report reads summary-first with the
@@ -173,10 +164,11 @@ function LiveAnalysis({ l, toast }) {
 // all visible at zoom 17. Esri World Imagery needs no key; a labels
 // overlay keeps the place readable. Starts on satellite, one tap to the
 // street map, and a link to full-screen Google Maps imagery.
-function SatMini({ lat, lng, t }) {
+function SatMini({ lat, lng, t, pois }) {
   const ref = useRef(null)
   const mapRef = useRef(null)
   const layersRef = useRef(null)
+  const poiLayer = useRef(null)
   const [sat, setSat] = useState(true)
   useEffect(() => {
     if (!ref.current) return
@@ -191,9 +183,19 @@ function SatMini({ lat, lng, t }) {
     L.circleMarker([lat, lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#e8553f', fillOpacity: 1 }).addTo(map)
     map.setView([lat, lng], 17)
     mapRef.current = map
+    poiLayer.current = L.layerGroup().addTo(map)
     setSat(true)
-    return () => { map.remove(); mapRef.current = null }
+    return () => { map.remove(); mapRef.current = null; poiLayer.current = null }
   }, [lat, lng])
+  // Venues around the house as emoji pins on the aerial view.
+  useEffect(() => {
+    const g = poiLayer.current
+    if (!g) return
+    g.clearLayers()
+    for (const p of pois || []) {
+      L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: `<div class="poipin ${p.cat}" title="${(p.name || '').replace(/"/g, '')}">${ICON[p.cat]}</div>`, iconSize: [0, 0] }), interactive: false }).addTo(g)
+    }
+  }, [pois])
   const toggle = (on) => {
     const m = mapRef.current, ly = layersRef.current
     if (!m || !ly) return
@@ -283,37 +285,21 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
     return () => { alive = false }
   }, [l.url, l.lat, l.lng])
 
-  // Nearest beach, pub and food shop within walking/short-drive range.
-  const [poi, setPoi] = useState(null)
+  // Around the house: venues (pub/bar/restaurant/café) with links, and the
+  // nearest shop / beach / station / golf — one Overpass query, cached.
+  const [near, setNear] = useState(null) // null=loading, false=failed, {venues,nearest,counts}
   useEffect(() => {
-    setPoi(poiCache[l.url] || null)
-    if (poiCache[l.url]) return
     let alive = true
-    const q = `[out:json][timeout:10];(node(around:3000,${l.lat},${l.lng})["natural"="beach"];way(around:3000,${l.lat},${l.lng})["natural"="beach"];node(around:2500,${l.lat},${l.lng})["amenity"~"^(pub|bar|restaurant)$"];node(around:3000,${l.lat},${l.lng})["shop"~"^(supermarket|convenience|general)$"];);out center 60;`
-    fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: new URLSearchParams({ data: q }) })
-      .then((r) => r.json())
-      .then((j) => {
-        if (!alive) return
-        const best = {}
-        for (const el of j.elements || []) {
-          const la = el.lat ?? el.center?.lat, ln = el.lon ?? el.center?.lon
-          if (la == null) continue
-          const cat = el.tags?.natural === 'beach' ? 'beach' : el.tags?.shop ? 'shop' : 'pub'
-          const d = hav(l.lat, l.lng, la, ln)
-          if (!best[cat] || d < best[cat]) best[cat] = d
-        }
-        const rec = { b: best.beach ? Math.round(best.beach) : null, p: best.pub ? Math.round(best.pub) : null, s: best.shop ? Math.round(best.shop) : null }
-        poiCache[l.url] = rec
-        try { localStorage.setItem('ct_poi', JSON.stringify(poiCache)) } catch { /* full */ }
-        setPoi(rec)
-      })
-      .catch(() => { /* Overpass busy: hide the line */ })
+    setNear(null)
+    nearby(l.lat, l.lng).then((rec) => { if (alive) setNear(rec) }).catch(() => { if (alive) setNear(false) })
     return () => { alive = false }
-  }, [l.url, l.lat, l.lng])
-  const poiLine = poi && [
-    poi.b != null && `🏖 ${t('poi_beach')} ~${fmtM(poi.b)}`,
-    poi.p != null && `🍺 ${t('poi_pub')} ~${fmtM(poi.p)}`,
-    poi.s != null && `🛒 ${t('poi_shop')} ~${fmtM(poi.s)}`,
+  }, [l.lat, l.lng])
+  const poiLine = near && [
+    near.nearest.beach && `🏖 ${t('poi_beach')} ~${fmtM(near.nearest.beach.d)}`,
+    near.venues[0] && `🍺 ${t('poi_pub')} ~${fmtM(near.venues[0].d)}`,
+    near.nearest.shop && `🛒 ${t('poi_shop')} ~${fmtM(near.nearest.shop.d)}`,
+    near.nearest.station && `🚉 ${t('poi_station')} ~${fmtM(near.nearest.station.d)}`,
+    near.nearest.golf && `⛳ ${t('poi_golf')} ~${fmtM(near.nearest.golf.d)}`,
   ].filter(Boolean).join(' · ')
 
   // Keyboard: Esc closes, arrows navigate the gallery.
@@ -453,7 +439,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
 
           <div className="locbox">
             <h4>{t('loc_title')}</h4>
-            <SatMini lat={l.lat} lng={l.lng} t={t} />
+            <SatMini lat={l.lat} lng={l.lng} t={t} pois={near ? near.venues : []} />
             <div className="coords">{l.lat.toFixed(6)}, {l.lng.toFixed(6)}</div>
             {travel && <div className="travel">🚗 {t('travel_from', { t: fmtDur(travel.min), g: travel.g })}</div>}
             {poiLine && <div className="travel poi">{poiLine}</div>}
@@ -463,6 +449,32 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
               <a href={`https://www.google.com/maps/@?api=1&map_action=map&center=${l.lat},${l.lng}&zoom=18&basemap=satellite`} target="_blank" rel="noopener noreferrer">{t('loc_sat')}</a>
               <a onClick={() => { onClose(); onShowOnMap(l.id) }}>{t('loc_show_map')}</a>
             </div>
+          </div>
+
+          <div className="nearbox">
+            <h4>{t('near_title')}</h4>
+            {near === null && <div className="agentload"><span className="spin" />{t('near_loading')}</div>}
+            {near === false && <p className="lrsm">⚠️ OpenStreetMap non risponde ora</p>}
+            {near && (near.venues.length === 0
+              ? <p className="lrsm">{t('near_none')}</p>
+              : <>
+                <p className="nearsum">{t('near_counts', { p: near.counts.pub, r: near.counts.rest, c: near.counts.cafe })}</p>
+                <div className="nearlist">
+                  {near.venues.slice(0, 8).map((p) => (
+                    <div key={p.id} className="nearrow">
+                      <span className="nearico">{ICON[p.cat]}</span>
+                      <span className="nearname">{p.name || (p.cat === 'pub' ? 'Pub' : p.cat === 'rest' ? 'Ristorante' : 'Caffè')}{p.cuisine ? <small> · {p.cuisine}</small> : null}</span>
+                      <span className="neardist">{fmtM(p.d)}</span>
+                      <span className="nearlinks">
+                        {p.web && <a href={p.web} target="_blank" rel="noopener noreferrer">{t('link_site')} ↗</a>}
+                        <a href={gmapsLink(p, l.town)} target="_blank" rel="noopener noreferrer">{t('link_maps')} ↗</a>
+                        <a href={osmLink(p)} target="_blank" rel="noopener noreferrer" title="OpenStreetMap">OSM ↗</a>
+                      </span>
+                    </div>
+                  ))}
+                  {near.venues.length > 8 && <div className="lrsm">{t('near_more', { n: near.venues.length - 8 })}</div>}
+                </div>
+              </>)}
           </div>
 
           {similar.length > 0 && (

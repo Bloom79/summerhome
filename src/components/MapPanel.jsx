@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, ZoomControl, useMapEvents } from 'react-leaflet'
+import { pubsInBbox, ICON, gmapsLink, osmLink } from '../poi.js'
 import { fmtP, shortP, ppm, hostOf, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
@@ -30,6 +31,51 @@ function MapBridge({ onReady, onBoundsChange }) {
   return null
 }
 
+// Pubs / bars / restaurants from OpenStreetMap inside the viewport, from
+// zoom 13 up (a coastal town fits in one query). Fetches are debounced on
+// moveend and cached per rounded bbox in poi.js.
+const poiIcon = (p) => L.divIcon({ className: '', html: `<div class="poipin ${p.cat}">${ICON[p.cat]}</div>`, iconSize: [0, 0] })
+function PubsLayer({ on, t }) {
+  const [places, setPlaces] = useState([])
+  const [zoomOk, setZoomOk] = useState(false)
+  const onRef = useRef(on)
+  onRef.current = on
+  // moveend fires once per pan/zoom; the bbox cache absorbs repeats, so no
+  // timer (background tabs throttle timers to a crawl).
+  const map = useMapEvents({ moveend: () => load() })
+  const load = () => {
+    const ok = map.getZoom() >= 13
+    setZoomOk(ok)
+    if (!onRef.current || !ok) { setPlaces([]); return }
+    const b = map.getBounds()
+    if (!(b.getNorth() > b.getSouth())) return // hidden map (0×0 container): nothing to query
+    pubsInBbox(b).then((ps) => { if (onRef.current) setPlaces(ps) }).catch(() => { /* keep what we have */ })
+  }
+  useEffect(() => { load() }, [on]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (!on) return null
+  return (
+    <>
+      {places.map((p) => (
+        <Marker key={p.id} position={[p.lat, p.lng]} icon={poiIcon(p)} zIndexOffset={-100}>
+          <Popup>
+            <div className="poipop">
+              <b>{ICON[p.cat]} {p.name || (p.cat === 'pub' ? 'Pub' : 'Ristorante')}</b>
+              {p.cuisine && <div className="poicui">{p.cuisine}</div>}
+              {p.hours && <div className="poihrs">🕒 {p.hours}</div>}
+              <div className="poilinks">
+                {p.web && <a href={p.web} target="_blank" rel="noopener noreferrer">{t('link_site')} ↗</a>}
+                <a href={gmapsLink(p)} target="_blank" rel="noopener noreferrer">{t('link_maps')} ↗</a>
+                <a href={osmLink(p)} target="_blank" rel="noopener noreferrer">OSM ↗</a>
+              </div>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+      {!zoomOk && <div className="pubshint">{t('map_pubs_zoom')}</div>}
+    </>
+  )
+}
+
 const clusterIcon = (n) =>
   L.divIcon({ className: '', html: `<div class="clusterpin">${n}</div>`, iconSize: [0, 0] })
 
@@ -39,6 +85,9 @@ export default function MapPanel({
 }) {
   const { t, eur } = useI18n()
   const fx = eur ? gbpEur : null
+  // 🍺 layer toggle, remembered on the device.
+  const [pubsOn, setPubsOn] = useState(() => { try { return localStorage.getItem('ct_pubs') === '1' } catch { return false } })
+  const togglePubs = () => setPubsOn((v) => { try { localStorage.setItem('ct_pubs', v ? '0' : '1') } catch { /* ignore */ } return !v })
 
   // Grid clustering, no plugins: below street zoom, cells with 3+ houses
   // collapse into a count bubble that zooms in when clicked. The highlighted
@@ -87,6 +136,7 @@ export default function MapPanel({
           )}
           <ZoomControl position="bottomright" />
           <MapBridge onReady={onMapReady} onBoundsChange={onBoundsChange} />
+          <PubsLayer on={pubsOn} t={t} />
 
           {groups.map((g) => (
             <Marker
@@ -147,6 +197,7 @@ export default function MapPanel({
       <div className="mapbtns">
         <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>
         <button className={'mbtn sat' + (satellite ? ' on' : '')} onClick={onToggleSatellite} title={t('map_sat_title')}>{satellite ? t('map_sat_off') : t('map_sat')}</button>
+        <button className={'mbtn pubs' + (pubsOn ? ' on' : '')} onClick={togglePubs} title={t('map_pubs_title')}>{t('map_pubs')}</button>
         <button className="mbtn agent" onClick={onAgentSearchHere}>{t('map_agent_here')}</button>
         <button className="mbtn" onClick={onFitAll}>{t('map_see_all')}</button>
       </div>
