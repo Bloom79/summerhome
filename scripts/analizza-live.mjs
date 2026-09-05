@@ -78,7 +78,9 @@ if (!page) {
   if (epc) lines.push(`- EPC: **${epc[1]}**`)
   const addedOn = /(?:Added|Reduced) on (\d{2}\/\d{2}\/\d{4})/.exec(text)
   const reduced = /Reduced on (\d{2}\/\d{2}\/\d{4})/.exec(text)
-  if (reduced) lines.push(`- 📉 **Ribassata** il ${reduced[1]} — venditore già in trattativa con sé stesso`)
+  // A cut with no buyer at the table means the seller already moved first:
+  // real negotiating room, and a floor lower than the asking price.
+  if (reduced) lines.push(`- 📉 **Ribassata** il ${reduced[1]} (dato della fonte): il venditore ha già tagliato il prezzo senza un'offerta sul tavolo — c'è margine di trattativa e il prezzo pieno non è il suo minimo`)
   else if (addedOn) {
     const [d, mo, y] = addedOn[1].split('/')
     const days = Math.round((Date.now() - new Date(`${y}-${mo}-${d}`)) / 864e5)
