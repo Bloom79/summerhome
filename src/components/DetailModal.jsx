@@ -448,7 +448,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             <div className="loclinks">
               <a href={`https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`} target="_blank" rel="noopener noreferrer">{t('loc_gmaps')}</a>
               <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${l.lat},${l.lng}`} onClick={openStreetView} target="_blank" rel="noopener noreferrer">{t('loc_street')}</a>
-              <a href={`https://www.google.com/maps/@${l.lat},${l.lng},400m/data=!3m1!1e3`} target="_blank" rel="noopener noreferrer">{t('loc_sat')}</a>
+              <a href={`https://www.google.com/maps/@?api=1&map_action=map&center=${l.lat},${l.lng}&zoom=18&basemap=satellite`} target="_blank" rel="noopener noreferrer">{t('loc_sat')}</a>
               <a onClick={() => { onClose(); onShowOnMap(l.id) }}>{t('loc_show_map')}</a>
             </div>
           </div>
