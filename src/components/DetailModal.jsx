@@ -258,6 +258,8 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
   // Driving time from the nearest airport (one OSRM table request, cached).
   const [travel, setTravel] = useState(null)
   useEffect(() => {
+    // Nightly precomputed value first; the per-listing OSRM call is the fallback.
+    if (l.travel?.min) { setTravel({ g: l.travel.g, min: l.travel.min }); return }
     setTravel(travelCache[l.url] || null)
     if (travelCache[l.url]) return
     let alive = true
@@ -383,6 +385,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             {l.floor ? <div className="stat"><b>{l.floor}</b><span>{t('st_floor')}</span></div> : null}
             {l.year ? <div className="stat"><b>{l.year}</b><span>{t('st_year')}</span></div> : null}
             {l.energy ? <div className="stat"><b>{l.energy}</b><span>{t('st_epc')}</span></div> : null}
+            {l.ctax ? <div className="stat"><b>{l.ctax}</b><span>{t('st_ctax')}</span></div> : null}
           </div>
 
           {(() => {
@@ -440,7 +443,9 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             </div>
           )}
 
-          <p className="mdesc">{listingDesc(l)}</p>
+          {l.desc
+            ? <div className="mdesc real"><span className="mdesc-src">{t('desc_source')}</span>{l.desc}</div>
+            : <p className="mdesc">{listingDesc(l)}</p>}
           <div className="mfeats">
             {l.seaView && <span className="seaf">🌊 {featLabel('Vista mare')}</span>}
             {l.feats.map((f) => <span key={f}>✓ {featLabel(f)}</span>)}

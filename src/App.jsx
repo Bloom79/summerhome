@@ -9,6 +9,7 @@ import HomePanel from './components/HomePanel.jsx'
 import DetailModal from './components/DetailModal.jsx'
 import AlertsPanel from './components/AlertsPanel.jsx'
 import CompareModal from './components/CompareModal.jsx'
+import TripModal from './components/TripModal.jsx'
 import StatsModal from './components/StatsModal.jsx'
 import DealsModal from './components/DealsModal.jsx'
 import SyncModal from './components/SyncModal.jsx'
@@ -18,7 +19,7 @@ import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
 const initialFilters = {
   zone: '', area: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
-  rooms: '', baths: '', feats: [], freshness: '',
+  rooms: '', baths: '', feats: [], freshness: '', travel: '', epc: '',
 }
 
 // Previous-visit date (YYYY-MM-DD) for the "since my last visit" filter.
@@ -152,6 +153,7 @@ export default function App({ initialDb }) {
   const [news, setNews] = useState(() => loadJSON('ct_news', []))
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
+  const [tripOpen, setTripOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [dealsOpen, setDealsOpen] = useState(false)
   // Landing "Novità" panel: shown once per app open (unless the user has no
@@ -168,6 +170,13 @@ export default function App({ initialDb }) {
       .catch(() => { /* deals are optional */ })
   }, [db.updated])
   const dealById = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals])
+  // Market trends from the daily snapshots (scripts/trends.mjs -> public/trends.json).
+  const [trends, setTrends] = useState(null)
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}trends.json`, { cache: 'no-cache' })
+      .then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.days) setTrends(j) })
+      .catch(() => { /* optional */ })
+  }, [db.updated])
   // Special map pins: 'fresh' = added in the last 3 days; 'gem' = a curated
   // deal WITH sea view or garden priced below the zone median for the same
   // bedroom count (min 4 comparables; auction guide prices excluded).
@@ -332,6 +341,8 @@ export default function App({ initialDb }) {
     }
     if (filters.zone && l.zone !== filters.zone) return false
     if (filters.area && areaOf(l.town) !== filters.area) return false
+    if (filters.travel && (!l.travel || l.travel.min > +filters.travel)) return false
+    if (filters.epc && (!l.energy || l.energy > filters.epc)) return false
     if (filters.contract && l.contract !== filters.contract) return false
     if (filters.type && l.type !== filters.type) return false
     if (!inPriceBands(l.price, filters.priceRanges)) return false
@@ -390,6 +401,7 @@ export default function App({ initialDb }) {
     else if (sort === 'new') arr.sort((a, b) => b.date.localeCompare(a.date))
     else if (sort === 'deal') arr.sort((a, b) => (dealById.get(b.id)?.score || 0) - (dealById.get(a.id)?.score || 0))
     else if (sort === 'drop') arr.sort((a, b) => dropPct(b) - dropPct(a))
+    else if (sort === 'travel') arr.sort((a, b) => (a.travel?.min ?? 1e9) - (b.travel?.min ?? 1e9))
     else if (sort === 'dist' && userPos)
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
@@ -826,6 +838,8 @@ export default function App({ initialDb }) {
   const af = (label, clear) => activeFilters.push({ label, clear })
   if (filters.zone) af(filters.zone, () => setFilters((f) => ({ ...f, zone: '', area: '' })))
   if (filters.area) af(filters.area, () => setFilters((f) => ({ ...f, area: '' })))
+  if (filters.travel) af(t('travel_' + filters.travel).replace(/^🚗 /, ''), () => setFilters((f) => ({ ...f, travel: '' })))
+  if (filters.epc) af(`EPC ≥ ${filters.epc}`, () => setFilters((f) => ({ ...f, epc: '' })))
   if (filters.freshness) af(t('fresh_' + filters.freshness).replace(/^📅 /, ''), () => setFilters((f) => ({ ...f, freshness: '' })))
   if (filters.priceRanges.length) af(`${t('price_label')} (${filters.priceRanges.length})`, () => setFilters((f) => ({ ...f, priceRanges: [] })))
   if (filters.type) af(typeLabel(filters.type), () => setFilters((f) => ({ ...f, type: '' })))
@@ -1098,6 +1112,7 @@ export default function App({ initialDb }) {
           onToggleSold={() => setSoldView((v) => !v)}
           favCount={favs.size}
           onOpenCompare={() => setCompareOpen(true)}
+          onOpenTrip={() => setTripOpen(true)}
           seenFilter={seenFilter}
           seenCounts={seenCounts}
           onSeenFilter={setSeenFilter}
@@ -1175,6 +1190,7 @@ export default function App({ initialDb }) {
               soldView={soldView} soldCount={SOLD.length} onToggleSold={() => setSoldView((v) => !v)}
               favCount={favs.size}
               onOpenCompare={() => { setSheetOpen(false); setCompareOpen(true) }}
+              onOpenTrip={() => { setSheetOpen(false); setTripOpen(true) }}
               onOpenAlerts={() => { setSheetOpen(false); setAlertsOpen(true) }}
               alertsUnseen={news.filter((n) => !n.seen).length}
               hasAlerts={alerts.length > 0}
@@ -1232,6 +1248,7 @@ export default function App({ initialDb }) {
           zones={db.zones}
           listings={LISTINGS}
           sold={SOLD}
+          trends={trends}
           gbpEur={db.gbpEur}
           onPickZone={(z) => setFilters((f) => ({ ...f, zone: z }))}
           onClose={() => setStatsOpen(false)}
@@ -1266,6 +1283,10 @@ export default function App({ initialDb }) {
 
       {dealsOpen && (
         <DealsModal deals={deals} listings={LISTINGS} gbpEur={db.gbpEur} updated={LAST_UPDATED} favs={favs} onToggleFav={toggleFav} onOpen={openDetail} onClose={() => setDealsOpen(false)} />
+      )}
+
+      {tripOpen && (
+        <TripModal items={LISTINGS.filter((l) => favs.has(l.id))} gbpEur={db.gbpEur} onOpen={openDetail} onClose={() => setTripOpen(false)} />
       )}
 
       {compareOpen && (

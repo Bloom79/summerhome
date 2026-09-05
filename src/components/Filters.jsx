@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 
-const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
+const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [], epc: '' }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ zones, areas = [], searches = [], onSaveSearch, onApplySearch, onDeleteSearch, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, farmOnly, onToggleFarm, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
+export default function Filters({ zones, areas = [], searches = [], onSaveSearch, onApplySearch, onDeleteSearch, onOpenTrip, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, farmOnly, onToggleFarm, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
@@ -39,13 +39,13 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
     setDraft({
       smin: filters.smin ?? '', smax: filters.smax ?? '',
       rooms: filters.rooms || '', baths: filters.baths || '',
-      feats: [...filters.feats],
+      feats: [...filters.feats], epc: filters.epc || '',
     })
   }, [filters])
 
   const advCount =
     (filters.smin != null ? 1 : 0) + (filters.smax != null ? 1 : 0) +
-    (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length
+    (filters.rooms ? 1 : 0) + (filters.baths ? 1 : 0) + filters.feats.length + (filters.epc ? 1 : 0)
 
   const setD = (k, v) => setDraft((d) => ({ ...d, [k]: v }))
   const toggleFeat = (f) =>
@@ -53,12 +53,12 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
 
   const num = (v) => (v === '' ? null : +v)
   const apply = () => {
-    onApplyAdvanced({ smin: num(draft.smin), smax: num(draft.smax), rooms: draft.rooms, baths: draft.baths, feats: draft.feats })
+    onApplyAdvanced({ smin: num(draft.smin), smax: num(draft.smax), rooms: draft.rooms, baths: draft.baths, feats: draft.feats, epc: draft.epc })
     setOpen(false)
   }
   const reset = () => {
     setDraft(emptyAdv)
-    onApplyAdvanced({ smin: null, smax: null, rooms: '', baths: '', feats: [] })
+    onApplyAdvanced({ smin: null, smax: null, rooms: '', baths: '', feats: [], epc: '' })
   }
 
   return (
@@ -111,6 +111,12 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
             </div>
           )}
         </div>
+        <select className={'chip' + (filters.travel ? ' active' : '')} value={filters.travel || ''} title={t('travel_note')} onChange={(e) => onImmediate('travel', e.target.value)}>
+          <option value="">{t('travel_any')}</option>
+          <option value="90">{t('travel_90')}</option>
+          <option value="150">{t('travel_150')}</option>
+          <option value="240">{t('travel_240')}</option>
+        </select>
         <select className={'chip' + (filters.freshness ? ' active' : '')} value={filters.freshness} onChange={(e) => onImmediate('freshness', e.target.value)}>
           <option value="">{t('fresh_all')}</option>
           <option value="1">{t('fresh_1')}</option>
@@ -146,6 +152,9 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
         {favCount >= 2 && (
           <button className="chip" onClick={onOpenCompare}>⚖️ {t('cmp_chip')} ({favCount})</button>
         )}
+        {favCount >= 1 && onOpenTrip && (
+          <button className="chip" onClick={onOpenTrip}>🗺 {t('trip_chip')}</button>
+        )}
         <button className={'chip' + (hasAlerts ? ' active' : '')} onClick={onOpenAlerts}>
           🔔 {t('al_chip')}{alertsUnseen > 0 ? <span className="badge">{alertsUnseen}</span> : null}
         </button>
@@ -167,6 +176,12 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
             <label>{t('f_rooms')}</label>
             <select value={draft.rooms} onChange={(e) => setD('rooms', e.target.value)}>
               <option value="">{t('any')}</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div className="fgroup">
+            <label>{t('f_epc')}</label>
+            <select value={draft.epc} onChange={(e) => setD('epc', e.target.value)}>
+              <option value="">{t('any')}</option>{['A', 'B', 'C', 'D', 'E'].map((e) => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
           <div className="fgroup">
