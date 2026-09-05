@@ -265,7 +265,7 @@ export default {
       let body
       try { body = await request.json() } catch { return json({ error: 'invalid JSON' }, 400, cors) }
       const url2 = String(body?.url || '')
-      if (!/^https:\/\/(www\.rightmove\.co\.uk|www\.onthemarket\.com|www\.s1homes\.com|www\.myhome\.ie|tspc\.co\.uk|www\.futurepropertyauctions\.co\.uk|www\.auctionhouse\.co\.uk|primepropertyauctions\.co\.uk)\//.test(url2))
+      if (!/^https:\/\/(www\.rightmove\.co\.uk|www\.onthemarket\.com|www\.s1homes\.com|www\.myhome\.ie|tspc\.co\.uk|espc\.com|www\.futurepropertyauctions\.co\.uk|www\.auctionhouse\.co\.uk|primepropertyauctions\.co\.uk)\//.test(url2))
         return json({ error: 'unknown listing url' }, 400, cors)
       const addr = String(body?.addr || '').slice(0, 90)
       // Dedupe: an open analysis for the same url is the same request.
