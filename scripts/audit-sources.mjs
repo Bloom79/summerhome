@@ -117,7 +117,8 @@ const srcOf = (url) =>
 const bySrc = {}
 const findings = [] // {l, probs}
 const unreachable = []
-await pmap(db.listings, async (l) => {
+// Retired sources (TSPC, 403 to scripts) are dropped by the refresh; skip them here too.
+await pmap(db.listings.filter((x) => !/tspc\.co\.uk/.test(x.url)), async (l) => {
   const src = srcOf(l.url)
   bySrc[src] = bySrc[src] || { total: 0, bad: 0, gone: 0, unreachable: 0 }
   bySrc[src].total++

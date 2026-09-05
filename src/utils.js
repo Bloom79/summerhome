@@ -137,6 +137,24 @@ export const buyTax = (l) => {
   return { sym: '\u20ac', lbtt: Math.round(sd), ads: 0, total: Math.round(sd) }
 }
 
+// ---- Coastal areas inside the catch-all "Costa Scozia" zone ----
+// The zone is a 400-listing bucket; the town says where a house really
+// is. Area names are shown as a second filter when a zone spans several.
+const AREAS = [
+  [/^(Ayr|Troon|Prestwick|Largs|Girvan|Millport|Wemyss Bay|Skelmorlie)$/i, 'Ayrshire e Clyde'],
+  [/^(Aberdeen|Stonehaven|Portlethen|Newtonhill)$/i, 'Aberdeen e Kincardine'],
+  [/^(Nairn|Lossiemouth|Hopeman|Burghead|Elgin|Forres)$/i, 'Moray e Nairn'],
+  [/^(Arbroath|Montrose|Carnoustie|Auchmithie|Inverkeilor)$/i, 'Angus'],
+  [/^(Oban|Dunoon|Rothesay|Tarbert|Helensburgh|Campbeltown|Bute)$/i, 'Argyll'],
+  [/^(Kirkcudbright|Portpatrick|Stranraer|Dumfries)$/i, 'Dumfries e Galloway'],
+  [/^(Dunbar|Eyemouth|Coldingham|North Berwick|Gullane)$/i, 'Lothian e Borders'],
+  [/^(St ?Andrews|Leuchars|Anstruther|Crail|Elie|Pittenweem|St Monans)$/i, 'Fife'],
+]
+export const areaOf = (town) => {
+  for (const [re, name] of AREAS) if (re.test(town || '')) return name
+  return null
+}
+
 // ---- Satellite basemap (no API key) ----
 // Esri World Imagery for the aerial view, CARTO label overlay so towns and
 // roads stay readable on top of it. Shared by the main map and the detail

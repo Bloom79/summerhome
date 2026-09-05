@@ -4,16 +4,22 @@ import { useI18n, PRICE_RANGES } from '../i18n.jsx'
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [] }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 
-export default function Filters({ zones, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, farmOnly, onToggleFarm, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
+export default function Filters({ zones, areas = [], searches = [], onSaveSearch, onApplySearch, onDeleteSearch, zoneCounts, features, filters, onImmediate, onApplyAdvanced, favOnly, onToggleFavOnly, seaOnly, onToggleSea, gardenOnly, onToggleGarden, beachOnly, onToggleBeach, auctionOnly, onToggleAuction, farmOnly, onToggleFarm, dealsOnly, onToggleDeals, dealsCount, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, soldView, soldCount, onToggleSold, favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts }) {
   const { t, typeLabel, featLabel } = useI18n()
   const [open, setOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
   const priceRef = useRef(null)
+  const [srchOpen, setSrchOpen] = useState(false)
+  const [srchName, setSrchName] = useState('')
+  const srchRef = useRef(null)
   const [draft, setDraft] = useState(emptyAdv)
 
   // Close the price panel on outside click.
   useEffect(() => {
-    const onDoc = (e) => { if (priceRef.current && !priceRef.current.contains(e.target)) setPriceOpen(false) }
+    const onDoc = (e) => {
+      if (priceRef.current && !priceRef.current.contains(e.target)) setPriceOpen(false)
+      if (srchRef.current && !srchRef.current.contains(e.target)) setSrchOpen(false)
+    }
     document.addEventListener('click', onDoc)
     return () => document.removeEventListener('click', onDoc)
   }, [])
@@ -58,10 +64,35 @@ export default function Filters({ zones, zoneCounts, features, filters, onImmedi
   return (
     <>
       <div id="filterbar">
-        <select className="chip" value={filters.zone} onChange={(e) => onImmediate('zone', e.target.value)}>
+        <select className="chip" value={filters.zone} onChange={(e) => { onImmediate('zone', e.target.value); onImmediate('area', '') }}>
           <option value="">{t('all_zones')}</option>
           {zones.map((z) => <option key={z} value={z}>{z}{zoneCounts?.[z] ? ` (${zoneCounts[z]})` : ''}</option>)}
         </select>
+        {areas.length >= 2 && (
+          <select className={'chip' + (filters.area ? ' active' : '')} value={filters.area || ''} onChange={(e) => onImmediate('area', e.target.value)}>
+            <option value="">📍 {t('area_all')}</option>
+            {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
+        <div className="msel" ref={srchRef}>
+          <button className={'chip' + (searches.length ? ' active' : '')} onClick={() => setSrchOpen((o) => !o)}>📌 {t('searches_chip')}{searches.length ? ` (${searches.length})` : ''} ▾</button>
+          {srchOpen && (
+            <div className="mselpanel srchpanel">
+              <b>{t('searches_title')}</b>
+              {searches.length === 0 && <p className="srchempty">{t('searches_empty')}</p>}
+              {searches.map((s) => (
+                <div key={s.id} className="srchrow">
+                  <button className="srchapply" onClick={() => { onApplySearch(s.id); setSrchOpen(false) }}>{s.name}</button>
+                  <button className="srchdel" title="✕" onClick={() => onDeleteSearch(s.id)}>✕</button>
+                </div>
+              ))}
+              <div className="srchsave">
+                <input value={srchName} placeholder={t('searches_name_ph')} onChange={(e) => setSrchName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && srchName.trim()) { onSaveSearch(srchName); setSrchName('') } }} />
+                <button className="btn primary" disabled={!srchName.trim()} onClick={() => { onSaveSearch(srchName); setSrchName('') }}>{t('searches_save')}</button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="msel" ref={priceRef}>
           <button className={'chip' + (bands.length ? ' active' : '')} onClick={() => setPriceOpen((o) => !o)}>
             💶 {bands.length ? `${t('price_label')} (${bands.length})` : t('price_any')} ▾

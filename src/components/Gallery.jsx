@@ -11,6 +11,11 @@ import { imgUrl, handleImgError } from '../utils.js'
 // `fit="contain"` shows whole photos on a dark ground (fullscreen viewer).
 export default function Gallery({ imgs, index, onIndex, onTap, fit }) {
   const [inner, setInner] = useState(0)
+  // Only the first photo is in the DOM until the strip is touched, hovered
+  // or driven (thumbnail/keyboard): a page of cards stays a few hundred
+  // <img>s instead of thousands.
+  const [armed, setArmed] = useState(!!(index != null && index > 0) || fit === 'contain')
+  const arm = () => { if (!armed) setArmed(true) }
   const idx = index ?? inner
   const ref = useRef(null)
   const report = (i) => { setInner(i); if (onIndex) onIndex(i) }
@@ -22,13 +27,14 @@ export default function Gallery({ imgs, index, onIndex, onTap, fit }) {
   }
   // External index change (thumbnail, keyboard): bring the strip there.
   useEffect(() => {
+    if (index != null && index > 0) setArmed(true)
     const el = ref.current
     if (!el || index == null || !el.clientWidth) return
     const cur = Math.round(el.scrollLeft / el.clientWidth)
     // Instant: a smooth scroll can be cut short by the mandatory snap and
     // stop between two photos; the snap makes the jump land exactly.
     if (cur !== index) el.scrollTo({ left: index * el.clientWidth, behavior: 'auto' })
-  }, [index])
+  }, [index, armed])
   // A different photo set (another listing in the same sheet): back to the
   // start — but not on mount, where the controlled `index` (lightbox opened
   // on photo 5) must win over a reset to 0.
@@ -43,8 +49,9 @@ export default function Gallery({ imgs, index, onIndex, onTap, fit }) {
   }, [imgs])
   return (
     <>
-      <div className={'sgal' + (fit === 'contain' ? ' contain' : '')} ref={ref} onScroll={onScroll} onClick={onTap ? () => onTap(idx) : undefined}>
-        {imgs.map((src, i) => (
+      <div className={'sgal' + (fit === 'contain' ? ' contain' : '')} ref={ref} onScroll={onScroll} onClick={onTap ? () => onTap(idx) : undefined}
+        onPointerEnter={arm} onTouchStart={arm} onFocus={arm}>
+        {(armed ? imgs : imgs.slice(0, 1)).map((src, i) => (
           <img key={i} loading={i === 0 ? 'eager' : 'lazy'} src={imgUrl(src)} onError={(e) => handleImgError(e)} alt="" draggable={false} />
         ))}
       </div>

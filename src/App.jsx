@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { dist } from './utils.js'
+import { dist, areaOf } from './utils.js'
 import Header from './components/Header.jsx'
 import ListPanel from './components/ListPanel.jsx'
 import Filters from './components/Filters.jsx'
@@ -17,7 +17,7 @@ import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
 
 const initialFilters = {
-  zone: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
+  zone: '', area: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
   rooms: '', baths: '', feats: [], freshness: '',
 }
 
@@ -331,6 +331,7 @@ export default function App({ initialDb }) {
       if (!l.date || l.date < cutoff) return false
     }
     if (filters.zone && l.zone !== filters.zone) return false
+    if (filters.area && areaOf(l.town) !== filters.area) return false
     if (filters.contract && l.contract !== filters.contract) return false
     if (filters.type && l.type !== filters.type) return false
     if (!inPriceBands(l.price, filters.priceRanges)) return false
@@ -684,7 +685,9 @@ export default function App({ initialDb }) {
   useEffect(() => {
     const iv = setInterval(async () => {
       try {
-        const txt = await (await fetch(`${import.meta.env.BASE_URL}data.json?t=${Date.now()}`, { cache: 'no-store' })).text()
+        // 'no-cache' revalidates with the server (ETag): unchanged data is a
+        // 304 served from the browser cache, not a 2.6 MB download every poll.
+        const txt = await (await fetch(`${import.meta.env.BASE_URL}data.json`, { cache: 'no-cache' })).text()
         if (txt !== dbTextRef.current) { dbTextRef.current = txt; setDb(JSON.parse(txt)) }
       } catch { /* offline: retry next tick */ }
     }, 10 * 60000)
@@ -777,6 +780,39 @@ export default function App({ initialDb }) {
     setSort(v)
   }, [userPos, toast, t])
 
+  // Areas (from the town) inside the selected zone — a second-level filter
+  // for catch-all zones like "Costa Scozia"; hidden when a zone has one area.
+  const areas = useMemo(() => {
+    const set = new Set()
+    for (const l of LISTINGS) if (!filters.zone || l.zone === filters.zone) { const a = areaOf(l.town); if (a) set.add(a) }
+    return [...set].sort()
+  }, [LISTINGS, filters.zone])
+
+  // Saved searches: named snapshots of the whole filter state, same
+  // encoding as the share link, so a search can be re-applied in one tap.
+  const [searches, setSearches] = useState(() => loadJSON('ct_searches', []))
+  const searchState = () => ({ f: filters, s: seaOnly, g: gardenOnly, b: beachOnly, a: auctionOnly, fm: farmOnly, d: dealsOnly, r: reducedOnly, o: sort })
+  const applySearchState = useCallback((st) => {
+    setFilters({ ...initialFilters, ...(st.f || {}) })
+    setSeaOnly(!!st.s); setGardenOnly(!!st.g); setBeachOnly(!!st.b); setAuctionOnly(!!st.a)
+    setFarmOnly(!!st.fm); setDealsOnly(!!st.d); setReducedOnly(!!st.r)
+    if (st.o) setSort(st.o)
+  }, [])
+  const saveSearch = (name) => {
+    const n = (name || '').trim().slice(0, 40)
+    if (!n) return
+    setSearches((prev) => { const next = [{ id: Date.now().toString(36), name: n, q: encodeSearch(searchState()) }, ...prev].slice(0, 12); saveJSON('ct_searches', next); return next })
+    toast(t('t_search_saved'))
+  }
+  const applySearch = (id) => {
+    const s = searches.find((x) => x.id === id)
+    const st = s && decodeSearch(s.q)
+    if (!st) return
+    applySearchState(st)
+    toast(t('t_search_applied', { n: s.name }))
+  }
+  const deleteSearch = (id) => setSearches((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON('ct_searches', next); return next })
+
   // Listings per zone, shown in the zone dropdown labels.
   const zoneCounts = useMemo(() => {
     const m = {}
@@ -788,7 +824,8 @@ export default function App({ initialDb }) {
   // filter left on days ago must be visible, not a silent mystery.
   const activeFilters = []
   const af = (label, clear) => activeFilters.push({ label, clear })
-  if (filters.zone) af(filters.zone, () => setFilters((f) => ({ ...f, zone: '' })))
+  if (filters.zone) af(filters.zone, () => setFilters((f) => ({ ...f, zone: '', area: '' })))
+  if (filters.area) af(filters.area, () => setFilters((f) => ({ ...f, area: '' })))
   if (filters.freshness) af(t('fresh_' + filters.freshness).replace(/^📅 /, ''), () => setFilters((f) => ({ ...f, freshness: '' })))
   if (filters.priceRanges.length) af(`${t('price_label')} (${filters.priceRanges.length})`, () => setFilters((f) => ({ ...f, priceRanges: [] })))
   if (filters.type) af(typeLabel(filters.type), () => setFilters((f) => ({ ...f, type: '' })))
@@ -922,10 +959,7 @@ export default function App({ initialDb }) {
       u.searchParams.delete('q')
       window.history.replaceState(null, '', u)
       if (st) {
-        setFilters({ ...initialFilters, ...(st.f || {}) })
-        setSeaOnly(!!st.s); setGardenOnly(!!st.g); setBeachOnly(!!st.b); setAuctionOnly(!!st.a)
-        setFarmOnly(!!st.fm); setDealsOnly(!!st.d); setReducedOnly(!!st.r)
-        if (st.o) setSort(st.o)
+        applySearchState(st)
         setHomeOpen(false)
         toast(t('t_search_loaded'))
       }
@@ -1021,6 +1055,8 @@ export default function App({ initialDb }) {
           activeFilters={activeFilters}
           onClearFilters={clearAllFilters}
           onShareSearch={shareSearch}
+          areas={areas}
+          searches={searches} onSaveSearch={saveSearch} onApplySearch={applySearch} onDeleteSearch={deleteSearch}
           zones={db.zones}
           zoneCounts={zoneCounts}
           features={db.features}
@@ -1120,6 +1156,8 @@ export default function App({ initialDb }) {
             </div>
             <Filters
               zones={db.zones}
+              areas={areas}
+              searches={searches} onSaveSearch={saveSearch} onApplySearch={applySearch} onDeleteSearch={deleteSearch}
               zoneCounts={zoneCounts}
               features={db.features}
               filters={filters}

@@ -54,7 +54,7 @@ predefined checks — price per m² and absolute price vs zone medians,
 tracked reductions, time on the portal, seller-motivation wording on the
 source page (fixed price, closing date, no chain, quick sale), value-add
 potential — and writes `public/deals.json`. A listing is a deal only with
-a real price signal; tiers 💎 (45+) and 🔥 (70+). The portal shows them in
+a real price signal; tiers 💎 (45+) and 🔥 (60+). The portal shows them in
 the 💎 Occasioni view with the full check breakdown, as a card badge, as a
 filter chip, and in each deal's detail sheet.
 

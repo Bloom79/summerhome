@@ -15,7 +15,8 @@
 //   G. premium  (max 6)  — sea view or beachfront priced below the zone median
 //
 // A listing is a deal only if A+B+C ≥ 15 (a real price signal, not just age
-// or a fixer-upper). Tiers: score ≥ 70 → 'top' (🔥), ≥ 50 → 'good' (💎).
+// or a fixer-upper). Tiers: score ≥ 60 → 'top' (🔥), ≥ 45 → 'good' (💎).
+// (70 was never reached in a month of runs — the best real deal scored 64.)
 // Source pages are fetched once per url — results are cached in deals.json.
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'fs'
@@ -117,7 +118,7 @@ for (const l of sale) {
   const score = Math.min(100, checks.reduce((s, c) => s + c.pts, 0))
   const priceSignal = checks.filter((c) => ['sqm', 'comps', 'cuts'].includes(c.k)).reduce((s, c) => s + c.pts, 0)
   if (score >= 45 && priceSignal >= 15)
-    deals.push({ id: l.id, url: l.url, score, tier: score >= 70 ? 'top' : 'good', isNew: l.date === TODAY, checks })
+    deals.push({ id: l.id, url: l.url, score, tier: score >= 60 ? 'top' : 'good', isNew: l.date === TODAY, checks })
 }
 deals.sort((a, b) => b.score - a.score)
 

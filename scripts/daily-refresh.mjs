@@ -504,66 +504,12 @@ const otmEnrich = async (l) => {
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`onthemarket → ${z}: ${arr.length} candidati`) }
 }
 
-// ---- TSPC: the Tayside solicitors' portal (Angus coast) — like s1homes,
-// its listings are often absent from Rightmove. Search cards are
-// server-rendered with inline coords; detail pages are fetched only for
-// genuinely new listings (tspcEnrich). Canonical host has NO www; the
-// under-offer filter is applied server-side.
-const TSPC_AREAS = ['6', '5', '10'] // Arbroath+coast · Carnoustie/Easthaven · Montrose/St Cyrus
-const tspcCards = (html) => {
-  const cards = []
-  for (const block of html.split('class="property-card').slice(1)) {
-    const chunk = block.slice(0, 5000)
-    cards.push({
-      id: /data-property-id="(\d+)"/.exec(chunk)?.[1],
-      la: parseFloat(/data-lat="(-?[\d.]+)"/.exec(chunk)?.[1]),
-      ln: parseFloat(/data-lng="(-?[\d.]+)"/.exec(chunk)?.[1]),
-      href: /href="(\/property\/[^"]+)"/.exec(chunk)?.[1],
-      img: /src="(https:\/\/docs\.tspc\.co\.uk\/photos\/[^"]+)"/.exec(chunk)?.[1],
-      addr: /<h2>([^<]+)<\/h2>/.exec(chunk)?.[1]?.trim(),
-      bt: /<h3>([^<]+)<\/h3>/.exec(chunk)?.[1] || '',
-      price: +((/price-type-value">\s*£([\d,]+)/.exec(chunk)?.[1] || '').replace(/,/g, '')),
-    })
-  }
-  return cards
-}
-const tspcCandidate = (o) => {
-  if (!o.id || !o.href || !o.addr || !o.price || !/For-Sale/i.test(o.href)) return null
-  if (!validCoords(o.la, o.ln)) return null
-  const bt = o.bt.toLowerCase()
-  if (/land|plot|site|garage|parking/.test(bt)) return null
-  const zt = zoneOf(o.addr)
-  if (!zt) return null
-  return {
-    id: 0, title: o.addr, contract: 'sale',
-    type: /bungalow/.test(bt) ? 'Bungalow' : /flat|apartment|maisonette/.test(bt) ? 'Appartamento' : /cottage/.test(bt) ? 'Cottage' : 'Casa indipendente',
-    price: o.price, currency: 'GBP',
-    size: null, rooms: +(/(\d+)\s*bed/i.exec(o.bt)?.[1] || 0) || null, baths: null, floor: null, year: null, energy: null,
-    zone: zt.zone, town: zt.town, addr: o.addr, lat: o.la, lng: o.ln,
-    imgs: o.img ? [o.img] : [],
-    feats: [], seaView: false, desc: '', date: TODAY,
-    url: `https://tspc.co.uk${o.href}${o.href.endsWith('/') ? '' : '/'}`,
-  }
-}
-const tspcEnrich = async (l) => {
-  try {
-    const page = await get(l.url)
-    const gal = [...new Set([...page.matchAll(/https:\/\/docs\.tspc\.co\.uk\/galleries\/\d+\/[\w.]+\?r=\d+&maxwidth=1024/g)].map((x) => x[0]))].slice(0, 40)
-    if (gal.length) l.imgs = gal
-    const desc = (/property="og:description" content="([\s\S]*?)"/.exec(page)?.[1] || '') + ' ' + l.title
-    if (desc.trim()) { l.seaView = SEA.some((r) => r.test(desc)); l.feats = featsOf(desc) }
-  } catch { /* enrich is best-effort */ }
-  return l
-}
-{
-  const pages = await pmap(TSPC_AREAS, (a) => get(`https://tspc.co.uk/properties/?area=${a}&exclude-under-offer=on`).catch(() => ''), 3)
-  const cands = pages.flatMap(tspcCards).map(tspcCandidate).filter(Boolean)
-  const byZone = {}
-  for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
-  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`tspc → ${z}: ${arr.length} candidati`) }
-}
-
-
+// ---- TSPC (Tayside solicitors' portal): RETIRED 2026-09 — the site answers
+// 403 to every scripted request since mid-August (search and listings alike),
+// so its listings could neither refresh nor be verified. Rightmove already
+// covers Arbroath, Carnoustie and Montrose. Carried TSPC urls are dropped
+// below (not archived as sold: their fate is unknown).
+const RETIRED = /tspc\.co\.uk/
 // ---- Case all'asta (Scozia): Future Property Auctions + Auction House.
 // Guide/opening bids are teaser prices, not market prices: auction lots
 // carry the 'Asta' feat and an `auction` date, are EXCLUDED from zone
@@ -806,14 +752,15 @@ for (const [url, cand] of scraped) {
 // their search/brochure parse).
 await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), rmEnrich, 8)
 await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), otmEnrich, 8)
-await pmap(enrichQueue.filter((l) => /tspc\.co\.uk/.test(l.url)), tspcEnrich, 8)
 // Waterfront geo-tag for the new listings (text rules already ran).
 await pmap(enrichQueue.filter((l) => !l.feats.includes('Spiaggia')), async (l) => {
   if (await nearCoast(l.lat, l.lng)) l.feats.push('Spiaggia')
 }, 3)
 
 // Missing urls: verify on the source before archiving; live ones carry over.
-const missing = db.listings.filter((l) => !scraped.has(l.url))
+const retired = db.listings.filter((l) => RETIRED.test(l.url))
+if (retired.length) console.log(`sorgente ritirata: ${retired.length} annunci TSPC rimossi dal portale`)
+const missing = db.listings.filter((l) => !scraped.has(l.url) && !RETIRED.test(l.url))
 const soldNew = []
 await pmap(missing, async (l) => {
   if (/myhome\.ie/.test(l.url)) {
@@ -842,12 +789,6 @@ await pmap(missing, async (l) => {
     let page = ''
     try { page = await get(l.url) } catch { nextListings.push(l); return }
     if (!page.includes('"latitude"')) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
-  } else if (/tspc\.co\.uk/.test(l.url)) {
-    // TSPC soft-404s dead listings with a "Property Unavailable" title.
-    let page = ''
-    try { page = await get(l.url) } catch { nextListings.push(l); return }
-    if (/<title>\s*Property Unavailable/i.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/.test(l.url)) {
     // Auction lots: gone from the catalogue means sold or withdrawn; a
@@ -893,7 +834,7 @@ const isRelist = (l) => !prevByUrl.has(l.url) &&
 for (let i = nextListings.length - 1; i >= 0; i--) if (isRelist(nextListings[i])) nextListings.splice(i, 1)
 events.nuove = events.nuove.filter((l) => !isRelist(l))
 
-const changed = events.nuove.length || events.ribassi.length || events.rialzi.length || events.vendute.length
+const changed = events.nuove.length || events.ribassi.length || events.rialzi.length || events.vendute.length || retired.length
 if (!changed) {
   out('status', 'none')
   out('summary', 'nessuna novità: dati identici')

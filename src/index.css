@@ -548,3 +548,24 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .mnav .btn{padding:7px 12px;font-size:.82rem}
 .mnav .btn:disabled{opacity:.35;cursor:default}
 .mnavpos{font-size:.8rem;color:var(--muted);font-weight:700;white-space:nowrap}
+
+/* ---- Paged list ---- */
+#showmore{display:block;width:calc(100% - 32px);margin:6px 16px 18px;border:1.5px dashed var(--brand);background:#fff;color:var(--brand-dark);border-radius:12px;padding:12px;font-size:.9rem;font-weight:700;cursor:pointer}
+#showmore small{display:block;font-weight:500;color:var(--muted);margin-top:2px}
+#showmore:hover{background:var(--brand-light)}
+
+/* ---- Saved searches panel ---- */
+.srchpanel{min-width:260px;max-width:92vw}
+.srchpanel b{display:block;font-size:.8rem;margin-bottom:6px}
+.srchempty{font-size:.78rem;color:var(--muted);margin:4px 0 8px}
+.srchrow{display:flex;gap:6px;align-items:center;margin:4px 0}
+.srchapply{flex:1;text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer}
+.srchapply:hover{border-color:var(--brand);background:var(--brand-light)}
+.srchdel{border:0;background:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:4px 6px}
+.srchsave{display:flex;gap:6px;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+.srchsave input{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:.82rem;min-width:0}
+.srchsave .btn{padding:7px 10px;font-size:.78rem;white-space:nowrap}
+
+/* ---- Lightbox zoom overlay ---- */
+.lbzoom{position:absolute;inset:0;overflow:hidden;background:#000;touch-action:none;cursor:grab;z-index:1;display:flex;align-items:center;justify-content:center}
+.lbzoom img{max-width:100%;max-height:100%;object-fit:contain;will-change:transform;user-select:none;-webkit-user-drag:none}
