@@ -9,6 +9,10 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const isNew = l.date === updated
   const reduced = Array.isArray(l.hist) && l.hist.length > 1 && l.hist[l.hist.length - 1].p < l.hist[l.hist.length - 2].p
+  // Size of the latest cut, from the first tracked price (what a buyer asks).
+  const drop = reduced ? Math.round((1 - l.price / l.hist[0].p) * 100) : 0
+  const sea = !!l.seaView || l.feats.includes('Spiaggia')
+  const garden = l.feats.includes('Giardino')
   // Tooltip carries the other currency: the € conversion normally, the
   // original £ asking price when the global € display is on.
   const eur = l.currency === 'GBP' && gbpEur ? (fx ? fmtP(l) : '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT')) : null
@@ -24,8 +28,11 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         {hasImgs
           ? <Gallery imgs={l.imgs} />
           : <div className="cimg-ph">📷</div>}
-        {l.imgs && l.imgs.length > 1 && <span className="photob">📷 {l.imgs.length}</span>}
-        <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
+        <div className="ctags">
+          <span className={'tag' + (l.contract === 'rent' ? ' rent' : '')}>{l.contract === 'rent' ? t('tag_rent') : t('tag_sale')}</span>
+          {sea && <span className="fb" title={t('sea_view')}>🌊</span>}
+          {garden && <span className="fb" title={t('garden')}>🌳</span>}
+        </div>
         {seen && <span className="seenb">👁 {t('seen_badge')}</span>}
         <button className="fav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{fav ? '❤️' : '🤍'}</button>
         <div className="votebtns">
@@ -38,7 +45,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
       <div className="cbody">
         <div className="ctitle">
           {isNew && <span className="newb">✨ {t('new_badge')}</span>}
-          {reduced && <span className="newb redb">📉 {t('reduced_badge')}</span>}
+          {reduced && <span className="newb redb">📉 {t('reduced_badge')}{drop > 0 ? ` −${drop}%` : ''}</span>}
           {(l.auction || l.feats.includes('Asta')) && <span className="newb aucb">🔨 {t('auction_badge')}{l.auction ? ` ${l.auction.slice(8, 10)}/${l.auction.slice(5, 7)}` : ''}</span>}
           {deal && <span className={'newb dealb' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {t('deal_badge')} {deal.score}</span>}
           {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}

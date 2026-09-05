@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useI18n } from '../i18n.jsx'
-import { fmtP, imgUrl, handleImgError, srcOf } from '../utils.js'
+import { fmtP, srcOf } from '../utils.js'
+import Gallery from './Gallery.jsx'
 import { savingOf } from '../analyze.js'
 
 // Renders one analysis' check breakdown — shared between the Occasioni modal
@@ -50,7 +51,7 @@ export default function DealsModal({ deals, listings, gbpEur, updated, favs, onT
   const daysOn = (l) => updated ? Math.max(0, Math.round((new Date(updated) - new Date(l.date)) / 864e5)) : 0
   const Row = ({ d, l, save }) => (
     <div className="dealrow" onClick={() => { onClose(); onOpen(l.id) }}>
-      <div className="dimg">{l.imgs[0] ? <img loading="lazy" src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" /> : '🏠'}</div>
+      <div className="dimg">{l.imgs?.length ? <Gallery imgs={l.imgs} /> : '🏠'}</div>
       <div className="dbody">
         <div className="dhead">
           <span className={'dscore' + (d.tier === 'top' ? ' top' : '')}>{d.tier === 'top' ? '🔥' : '💎'} {d.score}</span>

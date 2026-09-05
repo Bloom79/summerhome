@@ -1,5 +1,6 @@
-import { fmtP, imgUrl, handleImgError, hostOf , buyTax } from '../utils.js'
+import { fmtP, ppm, hostOf, buyTax } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import Gallery from './Gallery.jsx'
 
 // Side-by-side comparison of the favourite listings.
 export default function CompareModal({ items, gbpEur, noteText, votes = {}, onOpen, onToggleFav, onClose }) {
@@ -14,6 +15,7 @@ export default function CompareModal({ items, gbpEur, noteText, votes = {}, onOp
 
   const rows = [
     [t('cmp_price'), (l) => <><b>{fmtP(l, fx)}</b>{eur(l) ? <div className="cmp-sub">{eur(l)}</div> : null}{lastDrop(l) ? <div className="cmp-sub">{lastDrop(l)}</div> : null}</>],
+    ['€/m²', (l) => ppm(l, fx) || '—'],
     [t('cmp_zone'), (l) => l.zone],
     [t('tax_title'), (l) => { const tx = buyTax(l); return tx ? tx.sym + tx.total.toLocaleString('it-IT') : '\u2014' }],
     [t('st_rooms'), (l) => l.rooms ?? '—'],
@@ -42,7 +44,7 @@ export default function CompareModal({ items, gbpEur, noteText, votes = {}, onOp
                 {items.map((l) => (
                   <th key={l.id}>
                     {l.imgs?.length
-                      ? <img src={imgUrl(l.imgs[0])} onError={(e) => handleImgError(e)} alt="" onClick={() => { onClose(); onOpen(l.id) }} />
+                      ? <div className="cmp-img" onClick={() => { onClose(); onOpen(l.id) }}><Gallery imgs={l.imgs} /></div>
                       : <div className="cmp-ph">🏠</div>}
                     <div className="cmp-addr" onClick={() => { onClose(); onOpen(l.id) }}>{(l.addr || '').split(',')[0]}</div>
                     <button className="cmp-x" title={t('cmp_remove')} onClick={() => onToggleFav(l.id)}>🗑</button>
