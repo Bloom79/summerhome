@@ -103,15 +103,15 @@ export default function MapPanel({
               eventHandlers={{ click: () => onMarkerClick(l.id) }}
             >
               <Popup>
-                <div className="pop">
+                <div className={'pop' + (soldView ? '' : ' openable')}>
                   {l.imgs && l.imgs.length
-                    ? <div className="popimg"><Gallery imgs={l.imgs} /></div>
+                    ? <div className="popimg"><Gallery imgs={l.imgs} onTap={soldView ? undefined : () => onOpen(l.id)} /></div>
                     : null}
-                  <div className="pb">
+                  <div className="pb" onClick={soldView ? undefined : () => onOpen(l.id)}>
                     <div className="pt">{l.title}</div>
                     <div className="pa">📍 {l.addr}</div>
                     <div className="pp">{fmtP(l, fx)}</div>
-                    {!soldView && <span className="plink" onClick={() => onOpen(l.id)}>{t('pop_full')}</span>}
+                    {!soldView && <button className="pbtn" onClick={(e) => { e.stopPropagation(); onOpen(l.id) }}>{t('pop_full')}</button>}
                     {soldView && l.url && (
                       <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer">
                         🔗 {t('view_on', { host: hostOf(l.url) })} →

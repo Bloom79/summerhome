@@ -247,7 +247,9 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .pop .pp{font-weight:800;color:var(--brand-dark)}
 .pop .psrc{display:block;margin-top:7px;font-size:.78rem;font-weight:800;color:#fff;background:var(--accent);border-radius:8px;padding:6px 10px;text-align:center;text-decoration:none}
 .pop .psrc:hover{filter:brightness(1.06)}
-.pop .plink{display:inline-block;margin-top:6px;font-size:.78rem;color:var(--brand);font-weight:700;cursor:pointer}
+.pop.openable .pb,.pop.openable .sgal{cursor:pointer}
+.pop .pbtn{display:block;width:100%;margin-top:8px;border:0;font-size:.84rem;font-weight:800;color:#fff;background:var(--brand);border-radius:9px;padding:10px 12px;text-align:center;cursor:pointer;font-family:inherit}
+.pop .pbtn:hover{background:var(--brand-dark)}
 
 /* ---------- Modal ---------- */
 #modal{position:fixed;inset:0;background:rgba(12,30,32,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:18px}
