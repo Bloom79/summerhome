@@ -75,6 +75,11 @@ const STR = {
     auction_note: "Il prezzo è la base d'asta, non il valore di mercato: in Scozia il realizzo tipico la supera del 20–50%. L'analisi live la confronta con i valori di zona e segnala rischi e costi specifici dell'asta.",
     live_done: 'Analisi live pronta ✓', auction_chip: 'Aste', farm_chip: 'Coltivabile',
     map_legend: '✨ nuova ≤3 gg · 💎 occasione con vista/giardino sotto media',
+    map_sat: '🛰 Satellite', map_sat_off: '🗺 Mappa', map_sat_title: 'Vista satellitare: verifica giardino, terreno e distanza dal mare',
+    loc_sat_inline: 'Dall’alto: giardino, terreno e mare a colpo d’occhio', loc_sat_map: 'Mappa', loc_sat_sat: 'Satellite', loc_sat_open: 'Apri a schermo intero',
+    eur_toggle: 'Mostra i prezzi in euro', eur_on: 'Prezzi in €: le sterline sono convertite al cambio del giorno ({fx})', eur_off: 'Prezzi nella valuta originale',
+    sort_ppm: '€/m² ↑', ppm_title: 'Prezzo al m² (superficie pubblicata)',
+    share_search: '🔗 Condividi ricerca', share_manual: 'Copia questo link e aprilo sull’altro dispositivo: ritrova esattamente questa ricerca.', t_search_copied: 'Link della ricerca copiato 📋 aprilo sull’altro dispositivo', t_search_loaded: 'Ricerca condivisa caricata ✅',
     deals_summary_btn: "Riepilogo e punteggi delle occasioni",
     home_title: 'Novità',
     home_sub: '{n} nuove case dall’ultima visita — vista mare e giardino in evidenza',
@@ -209,6 +214,11 @@ const STR = {
     auction_note: 'The listed price is the auction guide, not market value: Scottish hammer prices typically exceed it by 20–50%. The live analysis compares it with zone values and flags auction-specific risks and costs.',
     live_done: 'Live analysis ready ✓', auction_chip: 'Auctions', farm_chip: 'Smallholding',
     map_legend: '✨ new ≤3 days · 💎 deal with view/garden below median',
+    map_sat: '🛰 Satellite', map_sat_off: '🗺 Map', map_sat_title: 'Satellite view: check garden, land and distance to the sea',
+    loc_sat_inline: 'From above: garden, land and sea at a glance', loc_sat_map: 'Map', loc_sat_sat: 'Satellite', loc_sat_open: 'Open full screen',
+    eur_toggle: 'Show prices in euro', eur_on: 'Prices in €: sterling converted at today’s rate ({fx})', eur_off: 'Prices in the original currency',
+    sort_ppm: '€/m² ↑', ppm_title: 'Price per m² (published floor area)',
+    share_search: '🔗 Share search', share_manual: 'Copy this link and open it on the other device: it restores exactly this search.', t_search_copied: 'Search link copied 📋 open it on the other device', t_search_loaded: 'Shared search loaded ✅',
     deals_summary_btn: 'Deals summary and scores',
     home_title: 'What’s new',
     home_sub: '{n} new homes since your last visit — sea view and garden featured',
@@ -303,6 +313,10 @@ const LangContext = createContext(null)
 
 export function LangProvider({ children }) {
   const [lang, setLang] = useState('it')
+  // Global "€" display: sterling prices shown converted to euro everywhere
+  // (cards, pins, sheets). Persists like the language choice.
+  const [eur, setEurState] = useState(() => { try { return localStorage.getItem('ct_eur') === '1' } catch { return false } })
+  const setEur = (v) => { setEurState(v); try { localStorage.setItem('ct_eur', v ? '1' : '0') } catch { /* ignore */ } }
   const t = (k, vars) => {
     let s = STR[lang][k] ?? STR.it[k] ?? k
     if (typeof s === 'string' && vars) for (const [kk, vv] of Object.entries(vars)) s = s.replaceAll('{' + kk + '}', vv)
@@ -312,7 +326,7 @@ export function LangProvider({ children }) {
   const featLabel = (f) => (lang === 'en' ? (FEATS[f] || f) : f)
   const listingDesc = (l) => STR[lang].desc(l, typeLabel)
   return (
-    <LangContext.Provider value={{ lang, setLang, t, typeLabel, featLabel, listingDesc }}>
+    <LangContext.Provider value={{ lang, setLang, eur, setEur, t, typeLabel, featLabel, listingDesc }}>
       {children}
     </LangContext.Provider>
   )

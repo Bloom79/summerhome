@@ -1,14 +1,18 @@
-import { fmtP, hostOf, srcOf, dist, fmtDist } from '../utils.js'
+import { fmtP, ppm, hostOf, srcOf, dist, fmtDist } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
 export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, profile, onVote, onToggleSeen, fav, seen, highlighted, userPos, onOpen, onToggleFav, onSeen, onHover }) {
-  const { t, typeLabel } = useI18n()
+  const { t, typeLabel, eur: eurMode } = useI18n()
+  const fx = eurMode ? gbpEur : null
   const d = userPos ? dist(userPos[0], userPos[1], l.lat, l.lng) : null
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const isNew = l.date === updated
   const reduced = Array.isArray(l.hist) && l.hist.length > 1 && l.hist[l.hist.length - 1].p < l.hist[l.hist.length - 2].p
-  const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
+  // Tooltip carries the other currency: the € conversion normally, the
+  // original £ asking price when the global € display is on.
+  const eur = l.currency === 'GBP' && gbpEur ? (fx ? fmtP(l) : '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT')) : null
+  const perSqm = ppm(l, fx)
   return (
     <div
       className={'card' + (highlighted ? ' hl' : '') + (seen ? ' seen' : '')}
@@ -29,7 +33,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
           <button className={'vbtn' + (vote[profile] === -1 ? ' no' : '')} onClick={(e) => { e.stopPropagation(); onVote(l.url, -1) }}>👎</button>
           <button className={'vbtn' + (seen ? ' seendone' : '')} title={t(seen ? 'seen_unmark' : 'seen_mark')} onClick={(e) => { e.stopPropagation(); onToggleSeen(l.id) }}>👁</button>
         </div>
-        <span className="price" title={eur || undefined}>{fmtP(l)}</span>
+        <span className="price" title={eur || undefined}>{fmtP(l, fx)}</span>
       </div>
       <div className="cbody">
         <div className="ctitle">
@@ -46,6 +50,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         <div className="caddr">📍 {l.addr}</div>
         <div className="cstats">
           {l.size ? <span><b>{l.size}</b> m²</span> : null}
+          {perSqm ? <span className="ppm" title={t('ppm_title')}>{perSqm}</span> : null}
           {l.rooms ? <span dangerouslySetInnerHTML={{ __html: t(l.rooms === 1 ? 'bed_one' : 'bed_many', { n: `<b>${l.rooms}</b>` }) }} /> : null}
           {l.baths ? <span dangerouslySetInnerHTML={{ __html: t(l.baths === 1 ? 'bath_one' : 'bath_many', { n: `<b>${l.baths}</b>` }) }} /> : null}
           <span>{typeLabel(l.type)}</span>

@@ -4,7 +4,7 @@ import SoldCard from './SoldCard.jsx'
 import { useI18n } from '../i18n.jsx'
 
 export default function ListPanel({
-  items, activeFilters, onClearFilters, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
+  items, activeFilters, onClearFilters, onShareSearch, zones, zoneCounts, features, updated, gbpEur, notes, votes, profile, onVote, reducedOnly, onToggleReduced, bothOnly, onToggleBoth, filters, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, dealsCount, dealById, soldView, soldCount, favs, seen, userPos, sort, highlightId,
   onImmediate, onApplyAdvanced, onToggleFavOnly, onToggleSea, onToggleGarden, onToggleBeach, onToggleAuction, onToggleFarm, onToggleDeals, onToggleSold, onSortChange,
   favCount, onOpenCompare, onOpenAlerts, alertsUnseen, hasAlerts,
   seenFilter, seenCounts, onSeenFilter, onMarkAllSeen, onToggleSeen, onOpenDealsSummary,
@@ -76,6 +76,7 @@ export default function ListPanel({
           <option value="pasc">{t('sort_pasc')}</option>
           <option value="pdesc">{t('sort_pdesc')}</option>
           <option value="sdesc">{t('sort_sdesc')}</option>
+          <option value="ppm">{t('sort_ppm')}</option>
           <option value="new">{t('sort_new')}</option>
           <option value="deal">{t('sort_deal')}</option>
           <option value="dist">{t('sort_dist')}</option>
@@ -96,6 +97,9 @@ export default function ListPanel({
           ))}
           {activeFilters.length > 1 && (
             <button className="afclear" onClick={onClearFilters}>{t('af_clear_all')}</button>
+          )}
+          {onShareSearch && (
+            <button className="afshare" onClick={onShareSearch} title={t('share_search')}>{t('share_search')}</button>
           )}
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { fmtP, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax } from '../utils.js'
+import L from 'leaflet'
+import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
 import { analyzeListing } from '../analyze.js'
@@ -165,10 +166,60 @@ function LiveAnalysis({ l, toast }) {
   return <div className="lreport">{mdBlocks(st.report)}</div>
 }
 
-export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
-  const { t, featLabel, listingDesc } = useI18n()
+// Inline aerial view of the plot: the fastest way to check a "garden" or
+// "sea view" claim — the shoreline, the plot size and the neighbours are
+// all visible at zoom 17. Esri World Imagery needs no key; a labels
+// overlay keeps the place readable. Starts on satellite, one tap to the
+// street map, and a link to full-screen Google Maps imagery.
+function SatMini({ lat, lng, t }) {
+  const ref = useRef(null)
+  const mapRef = useRef(null)
+  const layersRef = useRef(null)
+  const [sat, setSat] = useState(true)
+  useEffect(() => {
+    if (!ref.current) return
+    const map = L.map(ref.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile })
+    map.attributionControl.setPrefix('')
+    const satL = L.tileLayer(SAT_URL, { maxZoom: 19, attribution: SAT_ATTR })
+    const lblL = L.tileLayer(SAT_LABELS, { maxZoom: 19, subdomains: 'abcd' })
+    const osmL = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' })
+    layersRef.current = { satL, lblL, osmL }
+    satL.addTo(map); lblL.addTo(map)
+    L.control.zoom({ position: 'bottomright' }).addTo(map)
+    L.circleMarker([lat, lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#e8553f', fillOpacity: 1 }).addTo(map)
+    map.setView([lat, lng], 17)
+    mapRef.current = map
+    setSat(true)
+    return () => { map.remove(); mapRef.current = null }
+  }, [lat, lng])
+  const toggle = (on) => {
+    const m = mapRef.current, ly = layersRef.current
+    if (!m || !ly) return
+    setSat(on)
+    if (on) { m.removeLayer(ly.osmL); ly.satL.addTo(m); ly.lblL.addTo(m) }
+    else { m.removeLayer(ly.satL); m.removeLayer(ly.lblL); ly.osmL.addTo(m) }
+  }
+  return (
+    <div className="satmini">
+      <div className="satmap" ref={ref} />
+      <div className="satbar">
+        <span className="sathint">{t('loc_sat_inline')}</span>
+        <span className="satseg">
+          <button className={sat ? 'on' : ''} onClick={() => toggle(true)}>🛰 {t('loc_sat_sat')}</button>
+          <button className={!sat ? 'on' : ''} onClick={() => toggle(false)}>🗺 {t('loc_sat_map')}</button>
+        </span>
+      </div>
+    </div>
+  )
+}
 
-  const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
+export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+  const { t, featLabel, listingDesc, eur: eurMode } = useI18n()
+  const fx = eurMode ? gbpEur : null
+
+  // Secondary line under the price: the € conversion, or — with the global
+  // € display on — the original sterling asking price.
+  const eur = l.currency === 'GBP' && gbpEur ? (fx ? fmtP(l) : '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT')) : null
 
   // Street View often has no imagery at the exact property point in rural
   // areas: snap to the nearest road first (OSRM), where coverage lives.
@@ -272,9 +323,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [l])
 
-  const ppm = l.contract === 'sale' && l.size
-    ? priceSym(l) + ' ' + Math.round(l.price / l.size).toLocaleString('en-GB') + '/m²'
-    : ''
+  const ppm = ppmOf(l, fx) || ''
 
   return (
     <div id="modal" onClick={(e) => { if (e.target.id === 'modal') onClose() }}>
@@ -314,7 +363,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
         <div className="mbody">
           <div className="mhead">
             <div><div className="mtitle">{l.title}</div></div>
-            <div className="mprice">{fmtP(l)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
+            <div className="mprice">{fmtP(l, fx)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
 
@@ -391,6 +440,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
 
           <div className="locbox">
             <h4>{t('loc_title')}</h4>
+            <SatMini lat={l.lat} lng={l.lng} t={t} />
             <div className="coords">{l.lat.toFixed(6)}, {l.lng.toFixed(6)}</div>
             {travel && <div className="travel">🚗 {t('travel_from', { t: fmtDur(travel.min), g: travel.g })}</div>}
             {poiLine && <div className="travel poi">{poiLine}</div>}
@@ -411,7 +461,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
                     {s.imgs?.length
                       ? <img src={imgUrl(s.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
                       : <div className="simph">🏠</div>}
-                    <div className="simp">{fmtP(s)}</div>
+                    <div className="simp">{fmtP(s, fx)}</div>
                     <div className="sima">{(s.addr || '').split(',')[0]}</div>
                   </div>
                 ))}

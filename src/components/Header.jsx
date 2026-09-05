@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 
-export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, onOpenSync, deskView, onDeskView, toast }) {
-  const { t, lang, setLang } = useI18n()
+export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, onOpenSync, deskView, onDeskView, toast }) {
+  const { t, lang, setLang, eur, setEur } = useI18n()
+  const fx = eur ? gbpEur : null
+  const toggleEur = () => {
+    const next = !eur
+    setEur(next)
+    toast(next ? t('eur_on', { fx: gbpEur ? gbpEur.toFixed(3) : '—' }) : t('eur_off'))
+  }
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [local, setLocal] = useState([])
@@ -96,7 +102,7 @@ export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onO
           <div className="suggestions">
             {local.map((l) => (
               <div key={'l' + l.id} onClick={() => pickListing(l)}>
-                🏠 {(l.addr || '').split(',').slice(0, 2).join(',')} — <b>{fmtP(l)}</b>
+                🏠 {(l.addr || '').split(',').slice(0, 2).join(',')} — <b>{fmtP(l, fx)}</b>
               </div>
             ))}
             {suggestions.map((r, i) => (
@@ -110,6 +116,7 @@ export default function Header({ listings, onOpenListing, onFlyTo, onNearMe, onO
       <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
       {dealsCount > 0 && <button className={'hbtn' + (dealsActive ? ' hbon' : '')} onClick={onToggleDeals} title={t('deals_title')}>💎</button>}
       <button className="hbtn" onClick={onOpenSync} title={t('sync_title')}>🔄</button>
+      <button className={'hbtn hbeur' + (eur ? ' hbon' : '')} onClick={toggleEur} title={t('eur_toggle')}>{eur ? '€' : '£'}</button>
       <div className="deskview">
         <button className={deskView === 'list' ? 'on' : ''} title={t('view_list')} onClick={() => onDeskView('list')}>☰</button>
         <button className={deskView === 'split' ? 'on' : ''} title={t('view_split')} onClick={() => onDeskView('split')}>◧</button>

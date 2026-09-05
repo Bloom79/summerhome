@@ -3,21 +3,37 @@ const SYMBOL = { EUR: '€', GBP: '£' }
 export const priceSym = (l) => SYMBOL[l.currency] || '€'
 const priceLocale = (l) => (l.currency === 'GBP' ? 'en-GB' : 'it-IT')
 
-export const fmtP = (l) => {
-  const s = priceSym(l)
-  const n = l.price.toLocaleString(priceLocale(l))
-  return l.contract === 'rent' ? `${s} ${n}/mese` : `${s} ${n}`
+// Optional `fx` (GBP→EUR rate): when given and the listing is priced in
+// sterling, the price is shown converted to euro, prefixed by ≈ so a
+// conversion is never mistaken for the asking price (global "€" toggle).
+const shown = (l, fx) => (fx && l.currency === 'GBP'
+  ? { sym: '€', n: Math.round(l.price * fx), locale: 'it-IT', approx: true }
+  : { sym: priceSym(l), n: l.price, locale: priceLocale(l), approx: false })
+
+export const fmtP = (l, fx) => {
+  const { sym, n, locale, approx } = shown(l, fx)
+  const s = `${approx ? '≈ ' : ''}${sym} ${n.toLocaleString(locale)}`
+  return l.contract === 'rent' ? `${s}/mese` : s
 }
 
 // Compact price used on map pins (es. £695k, €1.2M, £1.4k/m)
-export const shortP = (l) => {
-  const s = priceSym(l)
+export const shortP = (l, fx) => {
+  const { sym, n, approx } = shown(l, fx)
+  const pre = (approx ? '≈' : '') + sym
   if (l.contract === 'rent') {
-    return s + (l.price >= 1000 ? (l.price / 1000).toFixed(1).replace('.0', '') + 'k' : l.price) + '/m'
+    return pre + (n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k' : n) + '/m'
   }
-  return s + (l.price >= 1000000
-    ? (l.price / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M'
-    : Math.round(l.price / 1000) + 'k')
+  return pre + (n >= 1000000
+    ? (n / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M'
+    : Math.round(n / 1000) + 'k')
+}
+
+// Price per m² (sale listings with a published floor area), in the shown
+// currency — the number buyers compare across zones and portals.
+export const ppm = (l, fx) => {
+  if (l.contract !== 'sale' || !l.size || !l.price) return null
+  const { sym, n, locale, approx } = shown(l, fx)
+  return `${approx ? '≈' : ''}${sym}${Math.round(n / l.size).toLocaleString(locale)}/m²`
 }
 
 // ---- Immagini ----
@@ -119,3 +135,11 @@ export const buyTax = (l) => {
     : 20000 + (p - 1500000) * 0.06
   return { sym: '\u20ac', lbtt: Math.round(sd), ads: 0, total: Math.round(sd) }
 }
+
+// ---- Satellite basemap (no API key) ----
+// Esri World Imagery for the aerial view, CARTO label overlay so towns and
+// roads stay readable on top of it. Shared by the main map and the detail
+// sheet's inline mini-map.
+export const SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+export const SAT_LABELS = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png'
+export const SAT_ATTR = 'Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics, GIS User Community · labels &copy; <a href="https://carto.com/attributions">CARTO</a>'

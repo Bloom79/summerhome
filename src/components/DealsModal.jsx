@@ -35,7 +35,8 @@ export function DealChecks({ deal }) {
 // The dedicated bargain-analysis view: every current deal with its full
 // scoring breakdown, sortable, new-today ones first.
 export default function DealsModal({ deals, listings, gbpEur, updated, favs, onToggleFav, onOpen, onClose }) {
-  const { t } = useI18n()
+  const { t, eur: eurMode } = useI18n()
+  const fx = eurMode ? gbpEur : null
   const [order, setOrder] = useState('score')
   const byId = new Map(listings.map((l) => [l.id, l]))
   const rows = deals.map((d) => ({ d, l: byId.get(d.id), save: 0 })).filter((r) => r.l)
@@ -53,7 +54,7 @@ export default function DealsModal({ deals, listings, gbpEur, updated, favs, onT
       <div className="dbody">
         <div className="dhead">
           <span className={'dscore' + (d.tier === 'top' ? ' top' : '')}>{d.tier === 'top' ? '🔥' : '💎'} {d.score}</span>
-          <b>{fmtP(l)}</b>
+          <b>{fmtP(l, fx)}</b>
           {d.isNew && <span className="newb">✨ {t('new_badge')}</span>}
           <button className="dfav" onClick={(e) => { e.stopPropagation(); onToggleFav(l.id) }}>{favs.has(l.id) ? '❤️' : '🤍'}</button>
         </div>
