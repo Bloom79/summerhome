@@ -106,3 +106,31 @@ daily listings agent" routine*, or manage it from the Claude Code triggers UI.
   url,                                 // optional: source listing
 }
 ```
+
+## Analisi live (per casa, su richiesta)
+
+The detail sheet's **Analisi live** button files an `Analizza:` issue via the
+worker; `.github/workflows/analizza.yml` runs `scripts/analizza-live.mjs`
+within a minute and posts the Italian markdown report as the issue comment
+the portal polls for. Everything is computed from live sources — the agent
+(Anthropic API → OpenAI → Copilot CLI fallback) only writes the verdict on
+top of a JSON dossier of the numbers:
+
+- **the ad page now**: price, price formula, tenure, council tax band (→
+  estimated £/year), EPC (→ heating hint), real time on market, reductions,
+  closing date / no chain / motivated-seller wording;
+- **portal comparables** (same zone, same bedrooms, €/m²) with in-app links
+  to cheaper alternatives;
+- **prices actually paid** nearby from Rightmove house-prices (Registers of
+  Scotland data): 800 m radius / 3 years with a full postcode, the outcode
+  / 2 years otherwise; Ireland points to the Property Price Register;
+- **rental market** on OnTheMarket (same town) → gross yield;
+- a live **OnTheMarket second opinion** on asking prices;
+- the **sold archive** within 8 km, interpreted (median days before a house
+  disappears → fast/normal/slow market);
+- **coast and elevation**: distance to the OSM coastline and the EU 25 m DEM
+  elevation, with SEPA / Dynamic Coast (or OPW) links;
+- purchase costs (LBTT + ADS, or Irish stamp duty);
+- a deterministic **offer strategy** (opening and ceiling, each lever
+  explained) that feeds the agent's verdict. Auction lots keep their own
+  three-stage pipeline (dossier → indicators → verdict).
