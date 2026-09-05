@@ -22,6 +22,9 @@ const out = (k, v) => {
 const get = (url) => new Promise((resolve, reject) =>
   execFile('curl', ['-sf', '--max-time', '25', '-A', UA, url], { maxBuffer: 64e6 },
     (e, so) => (e ? reject(new Error(`curl ${url}`)) : resolve(so.toString()))))
+const getStatus = (url) => new Promise((resolve) =>
+  execFile('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '25', '-A', UA, url], {},
+    (e, so) => resolve(e ? 0 : +so.toString())))
 const pmap = async (items, fn, limit = 8) => {
   const res = new Array(items.length)
   let i = 0
@@ -83,6 +86,20 @@ const checks = {
     if (Number.isFinite(la) && Math.abs(la - l.lat) > 0.01) probs.push(`coordinate ${l.lat} ≠ ${la}`)
     return probs
   },
+  espc: async (l) => {
+    // 410 Gone for withdrawn listings (get() rejects on it → handled as
+    // unreachable by the caller, so probe the status first).
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) return ['gone']
+    const page = await get(l.url)
+    if (!page.includes('"latitude"')) return ['gone']
+    const probs = []
+    const price = +(/"price":"?([\d]+)/.exec(page)?.[1] || 0)
+    if (price && price !== l.price) probs.push(`prezzo ${l.price} ≠ ${price}`)
+    const la = parseFloat(/"latitude":"?(-?[\d.]+)/.exec(page)?.[1])
+    if (Number.isFinite(la) && Math.abs(la - l.lat) > 0.01) probs.push(`coordinate ${l.lat} ≠ ${la}`)
+    return probs
+  },
   myhome: async (l) => {
     const page = await get(l.url)
     const title = (/<title>([^<]*)/.exec(page)?.[1] || '').trim()
@@ -95,7 +112,7 @@ const checks = {
 }
 const srcOf = (url) =>
   /rightmove/.test(url) ? 'rightmove' : /onthemarket/.test(url) ? 'onthemarket' :
-  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : 'myhome'
+  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : /espc\.com/.test(url) ? 'espc' : 'myhome'
 
 const bySrc = {}
 const findings = [] // {l, probs}

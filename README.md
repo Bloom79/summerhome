@@ -30,7 +30,8 @@ brief and how to change/pause it.
 - [React 18](https://react.dev/) + [Vite 5](https://vite.dev/) (build tooling)
 - [Leaflet](https://leafletjs.com/) via
   [react-leaflet](https://react-leaflet.js.org/) for the interactive map
-- OpenStreetMap tiles + Nominatim geocoding
+- OpenStreetMap tiles + Nominatim geocoding, Esri World Imagery for the satellite view
+- Listing sources: Rightmove, OnTheMarket, s1homes, ESPC, TSPC (Scotland), MyHome.ie (Ireland)
 
 ## Project structure
 
