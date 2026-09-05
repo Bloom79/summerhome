@@ -12,7 +12,8 @@ export default function HomePanel({
   dealsOnly, onDeals, dealsCount, gbpEur, updated, onOpenListing,
   pushState, onCreateAlert,
 }) {
-  const { t, typeLabel } = useI18n()
+  const { t, typeLabel, eur: eurMode } = useI18n()
+  const fx = eurMode ? gbpEur : null
   if (!open) return null
 
   const zoneLabel = (z) => z.replace(/ \((Scozia|Irlanda|UK|Donegal, IE|Fife, Scozia)\)$/, '')
@@ -63,7 +64,7 @@ export default function HomePanel({
         {featured.length > 0 ? (
           <div className="homefeat">
             {featured.map((l) => {
-              const eur = l.currency === 'GBP' && gbpEur ? '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT') : null
+              const eur = l.currency === 'GBP' && gbpEur ? (fx ? fmtP(l) : '≈ €' + Math.round(l.price * gbpEur).toLocaleString('it-IT')) : null
               const src = srcOf(l.url)
               return (
                 <button key={l.id} className="homecard" onClick={() => onOpenListing(l.id)}>
@@ -76,7 +77,7 @@ export default function HomePanel({
                       {l.seaView && <span className="hcb sea">🌊</span>}
                       {l.feats.includes('Giardino') && <span className="hcb gar">🌳</span>}
                     </div>
-                    <span className="hcprice" title={eur || undefined}>{fmtP(l)}</span>
+                    <span className="hcprice" title={eur || undefined}>{fmtP(l, fx)}</span>
                   </div>
                   <div className="hcbody">
                     <div className="hctitle">{l.title}</div>

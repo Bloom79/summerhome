@@ -63,6 +63,12 @@ const EV_KEY = { nuova: 'nuove', ribasso: 'ribassi', venduta: 'vendute' }
 // Tags that qualify a home for the 🌱 Coltivabile macro-filter.
 const FARM_FEATS = ['Terreno', 'Annessi', 'Serra', 'Acqua']
 
+// ?q= payload: JSON → UTF-8 → base64url (short, no escaping issues in chat apps).
+const encodeSearch = (obj) => btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+const decodeSearch = (s) => {
+  try { return JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))))) } catch { return null }
+}
+
 const loadJSON = (key, fallback) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
 }
@@ -106,6 +112,8 @@ export default function App({ initialDb }) {
   const [seenFilter, setSeenFilter] = useState(ui?.seenFilter || '')
   // Desktop layout: list-only / split / map-only.
   const [deskView, setDeskView] = useState(ui?.deskView || 'split')
+  // Satellite basemap on the main map (verify gardens / shoreline).
+  const [satellite, setSatellite] = useState(!!ui?.satellite)
   // Notes per listing, per person: { url: { name: text } } (legacy: plain string).
   const [notes, setNotes] = useState(() => loadJSON('ct_notes', {}))
   // Couple mode: who is using this device, and everyone's 👍/👎 per listing.
@@ -192,8 +200,8 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView })
-  }, [filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView])
+    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView, satellite })
+  }, [filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView, satellite])
 
   const saveNote = useCallback((url, text) => {
     setNotes((prev) => {
@@ -368,13 +376,20 @@ export default function App({ initialDb }) {
     if (sort === 'pasc') arr.sort((a, b) => a.price - b.price)
     else if (sort === 'pdesc') arr.sort((a, b) => b.price - a.price)
     else if (sort === 'sdesc') arr.sort((a, b) => b.size - a.size)
+    else if (sort === 'ppm') {
+      // Price per m² in a common currency; homes without a published
+      // size (no €/m²) sink to the bottom instead of sorting as 0.
+      const fxr = db.gbpEur || 1.15
+      const k = (l) => (l.size && l.contract === 'sale' ? (l.currency === 'GBP' ? l.price * fxr : l.price) / l.size : Infinity)
+      arr.sort((a, b) => k(a) - k(b))
+    }
     else if (sort === 'new') arr.sort((a, b) => b.date.localeCompare(a.date))
     else if (sort === 'deal') arr.sort((a, b) => (dealById.get(b.id)?.score || 0) - (dealById.get(a.id)?.score || 0))
     else if (sort === 'dist' && userPos)
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
     return arr
-  }, [viewItems, seenFilter, seen, sort, userPos, dealById])
+  }, [viewItems, seenFilter, seen, sort, userPos, dealById, db.gbpEur])
 
   // Manual seen toggling + bulk triage of the current results.
   const toggleSeen = useCallback((id) => {
@@ -788,8 +803,27 @@ export default function App({ initialDb }) {
   if (advCount) af(`${t('adv_filters')} (${advCount})`, () => setFilters((f) => ({ ...f, smin: null, smax: null, rooms: '', baths: '', feats: [] })))
   const clearAllFilters = () => {
     setFilters(initialFilters)
-    setSeaOnly(false); setGardenOnly(false); setFavOnly(false); setReducedOnly(false); setBothOnly(false); setSeenFilter('')
+    setSeaOnly(false); setGardenOnly(false); setBeachOnly(false); setAuctionOnly(false); setFarmOnly(false); setDealsOnly(false)
+    setFavOnly(false); setReducedOnly(false); setBothOnly(false); setSeenFilter('')
   }
+
+  // Shareable search: the whole filter state packed into ?q= so a partner
+  // (or the phone) opens exactly this search. Personal toggles (favourites,
+  // seen, votes) are left out — they belong to the device.
+  const shareSearch = useCallback(async () => {
+    const state = { f: filters, s: seaOnly, g: gardenOnly, b: beachOnly, a: auctionOnly, fm: farmOnly, d: dealsOnly, r: reducedOnly, o: sort }
+    const q = encodeSearch(state)
+    const u = new URL(window.location.href)
+    u.search = ''
+    u.searchParams.set('q', q)
+    const url = u.toString()
+    if (navigator.share && window.innerWidth <= 840) {
+      try { await navigator.share({ title: 'CasaTrova', url }); return } catch { /* dismissed: fall through to copy */ }
+    }
+    try { await navigator.clipboard.writeText(url); toast(t('t_search_copied')) }
+    catch { setShareUrl(url) } // clipboard blocked: show the link to copy by hand
+  }, [filters, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, dealsOnly, reducedOnly, sort, toast, t])
+  const [shareUrl, setShareUrl] = useState('')
 
   // Device sync via the worker. With the same code saved on both devices it
   // runs by itself: merge-download on load and every 5 minutes, debounced
@@ -879,6 +913,19 @@ export default function App({ initialDb }) {
   // needs ?casa to persist.
   useEffect(() => {
     const u = new URL(window.location.href)
+    if (u.searchParams.has('q')) {
+      const st = decodeSearch(u.searchParams.get('q'))
+      u.searchParams.delete('q')
+      window.history.replaceState(null, '', u)
+      if (st) {
+        setFilters({ ...initialFilters, ...(st.f || {}) })
+        setSeaOnly(!!st.s); setGardenOnly(!!st.g); setBeachOnly(!!st.b); setAuctionOnly(!!st.a)
+        setFarmOnly(!!st.fm); setDealsOnly(!!st.d); setReducedOnly(!!st.r)
+        if (st.o) setSort(st.o)
+        setHomeOpen(false)
+        toast(t('t_search_loaded'))
+      }
+    }
     if (!u.searchParams.has('casa')) return
     const id = +u.searchParams.get('casa')
     u.searchParams.delete('casa')
@@ -932,6 +979,7 @@ export default function App({ initialDb }) {
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '') + ' desk-' + deskView}>
       <Header
         listings={LISTINGS}
+        gbpEur={db.gbpEur}
         onOpenListing={openDetail}
         onFlyTo={flyTo}
         onNearMe={onNearMe}
@@ -958,6 +1006,7 @@ export default function App({ initialDb }) {
           dealById={dealById}
           activeFilters={activeFilters}
           onClearFilters={clearAllFilters}
+          onShareSearch={shareSearch}
           zones={db.zones}
           zoneCounts={zoneCounts}
           features={db.features}
@@ -1025,6 +1074,9 @@ export default function App({ initialDb }) {
           seen={seen}
           soldView={soldView}
           pinClassOf={pinClassOf}
+          gbpEur={db.gbpEur}
+          satellite={satellite}
+          onToggleSatellite={() => setSatellite((v) => !v)}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
           onAgentSearchHere={onAgentSearchHere}
@@ -1188,6 +1240,17 @@ export default function App({ initialDb }) {
           onTestPush={testPush}
           onClose={() => setAlertsOpen(false)}
         />
+      )}
+
+      {shareUrl && (
+        <div id="agentmodal" onClick={() => setShareUrl('')}>
+          <div className="agentbox" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('share_search')}</h3>
+            <p className="agentexpl">{t('share_manual')}</p>
+            <input className="shareinput" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+            <button className="agentcancel" onClick={() => setShareUrl('')}>{t('agent_cancel')}</button>
+          </div>
+        </div>
       )}
 
       {agentReq && (
