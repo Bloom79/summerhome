@@ -3,6 +3,8 @@ import L from 'leaflet'
 import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
+import Gallery from './Gallery.jsx'
+import Lightbox from './Lightbox.jsx'
 import { analyzeListing } from '../analyze.js'
 import { CERCA_QUI_ENDPOINT } from '../config.js'
 
@@ -246,11 +248,12 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
     try { await navigator.clipboard.writeText(url); toast(t('t_link_copied')) } catch { /* clipboard denied */ }
   }
   const [idx, setIdx] = useState(0)
+  const [lightbox, setLightbox] = useState(false)
   const hasImgs = Array.isArray(l.imgs) && l.imgs.length > 0
   const move = (d) => { if (hasImgs) setIdx((i) => (i + d + l.imgs.length) % l.imgs.length) }
 
   // Reset gallery when a different listing opens.
-  useEffect(() => { setIdx(0) }, [l.id])
+  useEffect(() => { setIdx(0); setLightbox(false) }, [l.id])
 
   // Driving time from the nearest airport (one OSRM table request, cached).
   const [travel, setTravel] = useState(null)
@@ -327,20 +330,15 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
 
   return (
     <div id="modal" onClick={(e) => { if (e.target.id === 'modal') onClose() }}>
+      {lightbox && hasImgs && <Lightbox imgs={l.imgs} index={idx} onIndex={setIdx} onClose={() => setLightbox(false)} />}
       <div className="mcard">
         <button className="mclose" onClick={onClose}>✕</button>
 
         <div className="gal">
           {hasImgs ? (
-            <>
-              <img className="gmain" src={imgUrl(l.imgs[idx])} onError={(e) => handleImgError(e, l.imgs[idx])} alt="" />
-              {l.imgs.length > 1 && (
-                <>
-                  <button className="gnav prev" onClick={() => move(-1)}>‹</button>
-                  <button className="gnav next" onClick={() => move(1)}>›</button>
-                </>
-              )}
-            </>
+            <div className="gswipe" title={t('gal_zoom')}>
+              <Gallery imgs={l.imgs} index={idx} onIndex={setIdx} onTap={() => setLightbox(true)} />
+            </div>
           ) : (
             <div className="gmain gph">
               <div className="gph-ico">🏠</div>
@@ -436,7 +434,10 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
           )}
 
           <p className="mdesc">{listingDesc(l)}</p>
-          <div className="mfeats">{l.feats.map((f) => <span key={f}>✓ {featLabel(f)}</span>)}</div>
+          <div className="mfeats">
+            {l.seaView && <span className="seaf">🌊 {featLabel('Vista mare')}</span>}
+            {l.feats.map((f) => <span key={f}>✓ {featLabel(f)}</span>)}
+          </div>
 
           <div className="locbox">
             <h4>{t('loc_title')}</h4>
@@ -459,7 +460,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
                 {similar.map((s) => (
                   <div key={s.id} className="simcard" onClick={() => onOpenListing(s.id)}>
                     {s.imgs?.length
-                      ? <img src={imgUrl(s.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+                      ? <div className="simimg"><Gallery imgs={s.imgs} /></div>
                       : <div className="simph">🏠</div>}
                     <div className="simp">{fmtP(s, fx)}</div>
                     <div className="sima">{(s.addr || '').split(',')[0]}</div>

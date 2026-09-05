@@ -1,5 +1,6 @@
-import { fmtP, imgUrl, handleImgError, hostOf } from '../utils.js'
+import { fmtP, hostOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
+import Gallery from './Gallery.jsx'
 
 // Days between first-seen and removal — a lower bound (we only know the
 // listing since we started tracking it), hence the "≥" in the label.
@@ -11,7 +12,7 @@ export default function SoldCard({ s }) {
     <div className="card sold">
       <div className="cimg">
         {s.imgs && s.imgs.length
-          ? <img loading="lazy" src={imgUrl(s.imgs[0])} onError={(e) => handleImgError(e)} alt="" />
+          ? <Gallery imgs={s.imgs} />
           : <div className="cimg-ph">📷</div>}
         <span className={'tag st-' + s.status}>{t('st_' + s.status)}</span>
         <span className="price">{fmtP(s)}</span>
