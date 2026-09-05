@@ -215,7 +215,7 @@ function SatMini({ lat, lng, t }) {
   )
 }
 
-export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, toast }) {
+export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, nav, onNav, toast }) {
   const { t, featLabel, listingDesc, eur: eurMode } = useI18n()
   const fx = eurMode ? gbpEur : null
 
@@ -253,7 +253,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
   const move = (d) => { if (hasImgs) setIdx((i) => (i + d + l.imgs.length) % l.imgs.length) }
 
   // Reset gallery when a different listing opens.
-  useEffect(() => { setIdx(0); setLightbox(false) }, [l.id])
+  useEffect(() => { setIdx(0); setLightbox(false); document.querySelector('.mcard')?.scrollTo({ top: 0 }) }, [l.id])
 
   // Driving time from the nearest airport (one OSRM table request, cached).
   const [travel, setTravel] = useState(null)
@@ -359,6 +359,13 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
         )}
 
         <div className="mbody">
+          {nav && nav.n > 1 && (
+            <div className="mnav" title={t('nav_hint')}>
+              <button className="btn ghost" disabled={!nav.prevId} onClick={() => nav.prevId && onNav(nav.prevId)}>{t('nav_prev')}</button>
+              <span className="mnavpos">{t('nav_pos', { i: nav.i, n: nav.n })}</span>
+              <button className="btn ghost" disabled={!nav.nextId} onClick={() => nav.nextId && onNav(nav.nextId)}>{t('nav_next')}</button>
+            </div>
+          )}
           <div className="mhead">
             <div><div className="mtitle">{l.title}</div></div>
             <div className="mprice">{fmtP(l, fx)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>

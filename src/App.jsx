@@ -35,6 +35,9 @@ function trackVisit() {
 
 const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10)
 
+// Size of the reduction from the first tracked price, in % (0 if none).
+const dropPct = (l) => (Array.isArray(l.hist) && l.hist.length > 1 && l.hist[0].p > l.price ? (1 - l.price / l.hist[0].p) * 100 : 0)
+
 // True when the latest tracked price change was a reduction.
 const isReduced = (l) => Array.isArray(l.hist) && l.hist.length > 1 &&
   l.hist[l.hist.length - 1].p < l.hist[l.hist.length - 2].p
@@ -385,6 +388,7 @@ export default function App({ initialDb }) {
     }
     else if (sort === 'new') arr.sort((a, b) => b.date.localeCompare(a.date))
     else if (sort === 'deal') arr.sort((a, b) => (dealById.get(b.id)?.score || 0) - (dealById.get(a.id)?.score || 0))
+    else if (sort === 'drop') arr.sort((a, b) => dropPct(b) - dropPct(a))
     else if (sort === 'dist' && userPos)
       arr.sort((a, b) =>
         dist(userPos[0], userPos[1], a.lat, a.lng) - dist(userPos[0], userPos[1], b.lat, b.lng))
@@ -937,6 +941,16 @@ export default function App({ initialDb }) {
   const setView = (v) => setMobileView(v)
   const selected = selectedId != null ? LISTINGS.find((l) => l.id === selectedId) : null
 
+  // Previous/next house inside the sheet, following the current result
+  // order (filters + sort + map area). Hidden when the open house is not in
+  // the results (deep link, Novità with other filters).
+  const sheetNav = useMemo(() => {
+    if (!selected || soldView) return null
+    const i = items.findIndex((l) => l.id === selected.id)
+    if (i < 0) return null
+    return { i: i + 1, n: items.length, prevId: i > 0 ? items[i - 1].id : null, nextId: i < items.length - 1 ? items[i + 1].id : null }
+  }, [selected, items, soldView])
+
   // Same-zone alternatives within ±30% of the open listing's price.
   const similar = useMemo(() => {
     if (!selected) return []
@@ -1161,6 +1175,8 @@ export default function App({ initialDb }) {
           onClose={() => setSelectedId(null)}
           onToggleFav={toggleFav}
           onShowOnMap={onShowOnMap}
+          nav={sheetNav}
+          onNav={openDetail}
           toast={toast}
         />
       )}

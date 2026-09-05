@@ -233,6 +233,8 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .pricepin.fresh:not(.hl):not(.seen):after{border-top-color:#d97706}
 .pricepin.gem:not(.hl){background:linear-gradient(135deg,#7c3aed,#c026d3);border-color:#7c3aed;color:#fff;animation:gempulse 1.8s ease-in-out infinite}
 .pricepin.gem:not(.hl):after{border-top-color:#a21caf}
+.pricepin.sea:not(.hl):not(.seen):not(.gem){border-color:#1d7fd6;color:#0f4c81}
+.pricepin.sea:not(.hl):not(.seen):not(.gem):after{border-top-color:#1d7fd6}
 @keyframes gempulse{0%,100%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 0 rgba(192,38,211,.45)}50%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 8px rgba(192,38,211,0)}}
 .hbtn.hbon{background:#7c3aed;border-color:#7c3aed;color:#fff}
 #dealsummarybar{display:block;width:calc(100% - 20px);margin:8px 10px 0;padding:9px 12px;border:1.5px solid #7c3aed;background:#f5f0ff;color:#5b21b6;border-radius:10px;font-size:.84rem;font-weight:700;cursor:pointer;text-align:left}
@@ -535,3 +537,14 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .lbx{position:absolute;top:max(10px,env(safe-area-inset-top));right:12px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.2rem;cursor:pointer;z-index:2}
 .lbx:hover{background:rgba(255,255,255,.32)}
 .lbhint{color:rgba(255,255,255,.6);font-size:.74rem;text-align:center;padding:8px 12px max(10px,env(safe-area-inset-bottom))}
+
+/* ---- Map popup facts line ---- */
+.pop .pf{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:6px;font-size:.7rem;color:var(--muted);font-weight:600}
+.pop .pf span{background:#eef4f4;border-radius:6px;padding:2px 6px}
+.pop .pf span.on{background:#dbeefe;color:#1d4e89}
+
+/* ---- Previous / next house inside the sheet ---- */
+.mnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 12px}
+.mnav .btn{padding:7px 12px;font-size:.82rem}
+.mnav .btn:disabled{opacity:.35;cursor:default}
+.mnavpos{font-size:.8rem;color:var(--muted);font-weight:700;white-space:nowrap}

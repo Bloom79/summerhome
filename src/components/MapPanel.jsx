@@ -1,17 +1,19 @@
 import { useEffect, useMemo } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, ZoomControl, useMapEvents } from 'react-leaflet'
-import { fmtP, shortP, hostOf, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
+import { fmtP, shortP, ppm, hostOf, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
 // Price-pin divIcon (positioned via CSS transform on .pricepin).
 // `pc` marks the special pins: 'fresh' = added in the last 3 days,
 // 'gem' = curated deal with sea view/garden priced below the zone median.
+// `sea` (ad claims a sea view, or geo-verified waterfront) gives the pin a
+// blue border so sea-view homes stand out on the map at a glance.
 const pinIcon = (l, hl, seen, sold, pc, fx) =>
   L.divIcon({
     className: '',
-    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}${sold ? ' sold' : ''}${pc && !sold ? ' ' + pc : ''}">${pc === 'gem' && !sold ? '💎 ' : pc === 'fresh' && !sold ? '✨ ' : ''}${shortP(l, fx)}</div>`,
+    html: `<div class="pricepin${hl ? ' hl' : ''}${seen ? ' seen' : ''}${sold ? ' sold' : ''}${pc && !sold ? ' ' + pc : ''}${!sold && (l.seaView || (l.feats || []).includes('Spiaggia')) ? ' sea' : ''}">${pc === 'gem' && !sold ? '💎 ' : pc === 'fresh' && !sold ? '✨ ' : ''}${shortP(l, fx)}</div>`,
     iconSize: [0, 0],
   })
 
@@ -111,6 +113,15 @@ export default function MapPanel({
                     <div className="pt">{l.title}</div>
                     <div className="pa">📍 {l.addr}</div>
                     <div className="pp">{fmtP(l, fx)}</div>
+                    {!soldView && (
+                      <div className="pf">
+                        {(l.seaView || l.feats.includes('Spiaggia')) && <span className="on">{t('sea_view')}</span>}
+                        {l.feats.includes('Giardino') && <span className="on">{t('garden')}</span>}
+                        {l.rooms ? <span>🛏 {l.rooms}</span> : null}
+                        {l.size ? <span>{l.size} m²</span> : null}
+                        {ppm(l, fx) && <span>{ppm(l, fx)}</span>}
+                      </div>
+                    )}
                     {!soldView && <button className="pbtn" onClick={(e) => { e.stopPropagation(); onOpen(l.id) }}>{t('pop_full')}</button>}
                     {soldView && l.url && (
                       <a className="psrc" href={l.url} target="_blank" rel="noopener noreferrer">
