@@ -24,6 +24,11 @@ const out = (k, v) => {
 const get = (url) => new Promise((resolve, reject) =>
   execFile('curl', ['-sf', '--max-time', '25', '-A', UA, url], { maxBuffer: 64e6 },
     (e, so) => (e ? reject(new Error(`curl ${url}`)) : resolve(so.toString()))))
+// JSON POST (ESPC's search endpoints); rejects on transport errors, resolves
+// null on non-JSON so a callers' `?.` chain just sees an empty answer.
+const post = (url, body) => new Promise((resolve, reject) =>
+  execFile('curl', ['-sf', '--max-time', '25', '-A', UA, '-H', 'Content-Type: application/json', '-H', 'Accept: application/json', '-X', 'POST', url, '--data', JSON.stringify(body)], { maxBuffer: 64e6 },
+    (e, so) => { if (e) return reject(new Error(`curl ${url}`)); try { resolve(JSON.parse(so.toString())) } catch { resolve(null) } }))
 const getStatus = (url) => new Promise((resolve) =>
   execFile('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '25', '-A', UA, url], {},
     (e, so) => resolve(e ? 0 : +so.toString())))
@@ -127,7 +132,8 @@ const COSTA = {
   ],
 }
 const MH_BURTONPORT = {
-  zone: 'Burtonport (Donegal, IE)', county: 'donegal', cap: 30,
+  // cap 30 was saturated by 2026-09: every new Rosses listing got dropped.
+  zone: 'Burtonport (Donegal, IE)', county: 'donegal', cap: 60,
   towns: ['burtonport', 'dungloe', 'kincasslagh', 'annagry', 'gweedore', 'falcarragh'],
 }
 
@@ -340,6 +346,96 @@ const s1Candidate = (o, ztOverride) => {
   const byZone = {}
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 12); console.log(`s1homes → ${z}: ${arr.length} candidati`) }
+}
+
+// ---- ESPC: the Edinburgh Solicitors Property Centre — East Lothian, East
+// Fife, Perthshire and Argyll listings marketed by solicitor-estate agents,
+// a good share of which never reach Rightmove. The site is a JSON API in
+// disguise: POST /locations/autocomplete resolves a town to its key, POST
+// /properties/search/list returns full result objects (price, beds, baths,
+// type, 40 photos, blurb). Coordinates and the full description live on the
+// detail page, fetched only for urls new to the portal.
+const ESPC_TOWNS = [
+  'North Berwick', 'Gullane', 'Dirleton', 'Aberlady', 'Dunbar',
+  'Anstruther', 'Crail', 'Pittenweem', 'Elie', 'St Monans', 'Cellardyke', 'St Andrews', 'Leuchars',
+  'Rosemarkie', 'Fortrose', 'Avoch', 'Nairn',
+  'Aberfeldy', 'Kenmore', 'Killin',
+  'Oban', 'Dunoon', 'Tarbert', 'Largs', 'Helensburgh', 'Rothesay', 'Stonehaven', 'Eyemouth', 'Kirkcudbright',
+]
+const espcKey = async (town) => {
+  try {
+    const a = await post('https://espc.com/locations/autocomplete', { query: town, size: 5, pastsales: false })
+    // Town-level keys have two segments ("east-lothian/north-berwick");
+    // streets have three. First town-level hit whose name starts with the query.
+    const hit = (Array.isArray(a) ? a : []).find((x) => x.key && x.key.split('/').length <= 2 &&
+      (x.displayText || '').toLowerCase().startsWith(town.toLowerCase().replace(/^st /, 'st')))
+      || (Array.isArray(a) ? a : []).find((x) => x.key && x.key.split('/').length <= 2)
+    return hit ? { displayText: hit.displayText, key: hit.key, category: hit.category || 0 } : null
+  } catch { return null }
+}
+const espcSearch = async (loc) => {
+  const all = []
+  for (let p = 1; p <= 4; p++) {
+    let j
+    try {
+      j = await post('https://espc.com/properties/search/list', {
+        locations: [loc], radiuses: [], school: null, view: null, p, ps: 50, sortBy: null, rental: false,
+        maxPrice: null, minPrice: null, minBeds: null, underOffer: false, new: null, fixedPrice: false,
+      })
+    } catch { break }
+    const rs = j?.results || []
+    all.push(...rs)
+    if (all.length >= (j?.totalResults || 0) || rs.length < 50) break
+  }
+  return all
+}
+const espcCandidate = async (r) => {
+  if (!r || !r.url || !r.priceRaw || r.priceRaw < 20000) return null
+  if (/rent|pcm|per month/i.test(r.offerType || '') || /rent/i.test(r.priceDescription || '')) return null
+  const ptype = (r.propertyType || '').toLowerCase()
+  if (/land|plot|site|garage|parking|commercial/.test(ptype)) return null
+  const url = 'https://espc.com' + r.url.replace(/[?#].*$/, '')
+  const addr = String(r.address || '').replace(/\s*\r?\n\s*/g, ', ').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim()
+  const zt = zoneOf(addr)
+  if (!zt) return null
+  const prev = prevByUrl.get(url)
+  let la = prev?.lat, ln = prev?.lng
+  let text = `${r.summary || ''} ${r.description || ''}`
+  if (!validCoords(la, ln)) {
+    // New to the portal: the detail page carries the coordinates and the
+    // full blurb (search results truncate it).
+    let page = ''
+    try { page = await get(url) } catch { return null }
+    la = parseFloat(/"latitude":"?(-?[\d.]+)/.exec(page)?.[1])
+    ln = parseFloat(/"longitude":"?(-?[\d.]+)/.exec(page)?.[1])
+    if (!validCoords(la, ln)) return null
+    text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
+  }
+  const imgs = (r.propertyImages || []).filter((u) => typeof u === 'string' && u.startsWith('https://espc.com/images?')).slice(0, 40)
+  return {
+    id: 0, title: addr, contract: 'sale',
+    type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
+    price: +r.priceRaw, currency: 'GBP',
+    size: null, rooms: r.bedrooms >= 1 && r.bedrooms <= 12 ? r.bedrooms : null,
+    baths: r.bathrooms >= 1 && r.bathrooms <= 10 ? r.bathrooms : null,
+    floor: null, year: null, energy: null,
+    zone: zt.zone, town: zt.town, addr, lat: la, lng: ln, imgs,
+    feats: featsOf(text), seaView: SEA.some((x) => x.test(text)), desc: '',
+    date: prev?.date || TODAY, url,
+  }
+}
+{
+  const keys = (await pmap(ESPC_TOWNS, espcKey, 4)).filter(Boolean)
+  const seenKeys = new Set()
+  const locs = keys.filter((k) => !seenKeys.has(k.key) && seenKeys.add(k.key))
+  const results = (await pmap(locs, espcSearch, 3)).flat()
+  const byId = new Map()
+  for (const r of results) if (r?.id && !byId.has(r.id)) byId.set(r.id, r)
+  const cands = (await pmap([...byId.values()], espcCandidate, 6)).filter(Boolean)
+  const byZone = {}
+  for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 25); console.log(`espc → ${z}: ${arr.length} candidati`) }
+  console.log(`espc: ${locs.length} località, ${byId.size} risultati, ${cands.length} candidati`)
 }
 
 // ---- OnTheMarket: agent-fed UK portal whose "Only With Us" exclusives are
@@ -670,12 +766,14 @@ for (const z of extra) {
     }
   } else {
     const county = z.searchKeys[0]
+    // `countyPages: false` keeps a coastal zone coastal: the county-wide
+    // pages (newest 60 in the county) would pull in inland towns.
     const urls2 = [
       ...z.searchKeys.slice(1).map((ts) => `https://www.myhome.ie/residential/${county}/house-for-sale-in-${ts}`),
-      ...[1, 2, 3].map((pg) => `https://www.myhome.ie/residential/${county}/house-for-sale${pg > 1 ? `?page=${pg}` : ''}`),
+      ...(z.countyPages === false ? [] : [1, 2, 3].map((pg) => `https://www.myhome.ie/residential/${county}/house-for-sale${pg > 1 ? `?page=${pg}` : ''}`)),
     ]
     const pages = await pmap(urls2, (u) => get(u).catch(() => ''), 4)
-    const brochureUrls = [...new Set(pages.flatMap((h) => [...mhBrochures(h)]))].slice(0, 60)
+    const brochureUrls = [...new Set(pages.flatMap((h) => [...mhBrochures(h)]))].slice(0, z.maxBrochures || 60)
     const parsed = (await pmap(brochureUrls, (u) => mhParse(u, z.zone, townName), 8)).filter((x) => x && x !== 'gone')
     addCapped(parsed.filter((l) => inb(l.lat, l.lng)), z.cap || 20)
     console.log(`${z.zone}: ok`)
@@ -735,6 +833,15 @@ await pmap(missing, async (l) => {
     let page = ''
     try { page = await get(`https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`) } catch { nextListings.push(l); return }
     if (/property="og:title" content="s1homes \|/.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
+  } else if (/espc\.com/.test(l.url)) {
+    // ESPC answers 410 Gone for withdrawn/sold listings; a live page
+    // carries the "latitude" JSON. Transport errors keep the listing.
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
+    let page = ''
+    try { page = await get(l.url) } catch { nextListings.push(l); return }
+    if (!page.includes('"latitude"')) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   } else if (/tspc\.co\.uk/.test(l.url)) {
     // TSPC soft-404s dead listings with a "Property Unavailable" title.

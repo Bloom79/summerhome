@@ -22,8 +22,8 @@ const STR = {
   it: {
     search_ph: 'Cerca zona o indirizzo… (es. Burtonport, North Berwick, Crail)',
     near_me: '📍 Vicino a me',
-    banner: '🌊 Annunci reali da 5 portali (Rightmove, OnTheMarket, s1homes, TSPC, MyHome.ie) — coste e laghi di Scozia + Donegal (Irlanda) · aggiornato {date}',
-    banner_short: '🌊 {n} case da 5 portali · agg. {date}',
+    banner: '🌊 Annunci reali da 6 portali (Rightmove, OnTheMarket, s1homes, ESPC, TSPC, MyHome.ie) — coste e laghi di Scozia + costa del Donegal (Irlanda) · aggiornato {date}',
+    banner_short: '🌊 {n} case da 6 portali · agg. {date}',
     all_zones: 'Tutte le zone', sale_rent: 'Vendita e affitto', for_sale: 'In vendita', for_rent: 'In affitto',
     all_types: 'Tutti i tipi', adv_filters: 'Filtri avanzati', favourites: 'Preferiti', sea_view: '🌊 Vista mare',
     garden: '🌳 Giardino', beach: '🏖 Spiaggia', seen_badge: 'Vista', new_badge: 'Nuovo',
@@ -164,8 +164,8 @@ const STR = {
   en: {
     search_ph: 'Search area or address… (e.g. Burtonport, North Berwick, Crail)',
     near_me: '📍 Near me',
-    banner: '🌊 Real listings from 5 portals (Rightmove, OnTheMarket, s1homes, TSPC, MyHome.ie) — Scotland coasts & lochs + Donegal (Ireland) · updated {date}',
-    banner_short: '🌊 {n} homes from 5 portals · upd. {date}',
+    banner: '🌊 Real listings from 6 portals (Rightmove, OnTheMarket, s1homes, ESPC, TSPC, MyHome.ie) — Scotland coasts & lochs + the Donegal coast (Ireland) · updated {date}',
+    banner_short: '🌊 {n} homes from 6 portals · upd. {date}',
     all_zones: 'All areas', sale_rent: 'Sale & rent', for_sale: 'For sale', for_rent: 'To rent',
     all_types: 'All types', adv_filters: 'Advanced filters', favourites: 'Favourites', sea_view: '🌊 Sea view',
     garden: '🌳 Garden', beach: '🏖 Beachfront', seen_badge: 'Seen', new_badge: 'New',

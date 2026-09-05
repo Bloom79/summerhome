@@ -36,16 +36,37 @@
     "country": "IE",
     "portal": "myhome",
     "searchKeys": [
-      "donegal"
+      "donegal",
+      "ardara",
+      "portnoo",
+      "narin",
+      "glenties",
+      "lettermacaward",
+      "derrybeg",
+      "bunbeg",
+      "dunfanaghy",
+      "creeslough",
+      "downings",
+      "carrigart",
+      "milford",
+      "ramelton",
+      "rathmullan",
+      "killybegs",
+      "kilcar",
+      "glencolumbkille",
+      "bundoran"
     ],
     "filter": "Donegal",
-    "cap": 20,
+    "cap": 120,
     "bounds": {
-      "north": 55.06758,
-      "south": 54.95694,
-      "east": -8.36071,
-      "west": -8.4898
-    }
+      "north": 55.45,
+      "south": 54.45,
+      "east": -7.25,
+      "west": -8.85
+    },
+    "countyPages": false,
+    "maxBrochures": 200,
+    "note": "Costa del Donegal: paesi costieri su MyHome (le pagine di contea sono escluse: portano annunci interni come Letterkenny)"
   },
   {
     "zone": "Highland (Scozia)",

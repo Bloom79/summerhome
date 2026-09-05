@@ -15,9 +15,17 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
    (built-in + user-requested), using public sources (**MyHome.ie** for
    Ireland; **Rightmove**, **s1homes** and **TSPC** — the Scottish and
    Tayside solicitors' portals, whose listings are often absent from
-   Rightmove — and **OnTheMarket**, whose "Only With Us" exclusives don't
-   appear elsewhere, for Scotland/UK; TSPC covers the Angus coast:
-   Arbroath, Carnoustie, Montrose and their coastal villages).
+   Rightmove — **ESPC**, the Edinburgh Solicitors Property Centre, whose
+   East Lothian / East Fife / Perthshire / Argyll listings are marketed by
+   solicitor-agents and often never reach Rightmove (JSON search API,
+   detail page fetched only for new urls) — and **OnTheMarket**, whose
+   "Only With Us" exclusives don't appear elsewhere, for Scotland/UK; TSPC
+   covers the Angus coast: Arbroath, Carnoustie, Montrose and their coastal
+   villages). Ireland: MyHome.ie for the Rosses (Burtonport zone, cap 60)
+   plus the whole Donegal coast as the `Donegal (Irlanda)` extra zone
+   (coastal town pages only — `countyPages: false` — cap 120). Daft.ie,
+   Property.ie and Zoopla sit behind bot protection and cannot be fetched
+   without a real browser; HSPC blocks scripted requests outright.
    The same house found on two portals is de-duplicated by address+price,
    price+coordinates, and address-prefix+coordinates (the last one catches a
    house dual-listed by two agents at different asking prices).
