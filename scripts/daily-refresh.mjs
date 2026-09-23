@@ -135,11 +135,14 @@ const clip = (str, max = 500) => {
 }
 
 // ---- Zone configurations ----
+// Rightmove result pages read per search (24 each, newest first): deep
+// enough to reach the older listings of a zone, not just this week's.
+const RM_PAGES = [0, 24, 48, 72, 96]
 const RM_ZONES = [
-  { zone: 'North Berwick (Scozia)', town: 'North Berwick', codes: ['1008'], pages: [0, 24], filter: /North Berwick|Gullane|Dirleton|Aberlady|EH39|EH31/i, cap: 30 },
-  { zone: 'East Neuk (Fife, Scozia)', town: 'Anstruther', codes: ['97068'], pages: [0, 24], filter: /Anstruther|Crail|Pittenweem|St Monans|Elie|Cellardyke|KY10|KY9/i, cap: 30 },
-  { zone: 'Rosemarkie (Scozia)', town: 'Rosemarkie', codes: ['94460'], pages: [0, 24], filter: /Rosemarkie|Fortrose|Avoch|IV10/i, cap: 16 },
-  { zone: 'Loch Tay (Scozia)', town: 'Kenmore', codes: ['6', '13772', '738'], pages: [0, 24], filter: /Kenmore|Aberfeldy|Killin|Acharn|Fearnan|Lawers|Fortingall|Weem|Dull|Loch Tay|PH15/i, cap: 22 },
+  { zone: 'North Berwick (Scozia)', town: 'North Berwick', codes: ['1008'], pages: RM_PAGES, filter: /North Berwick|Gullane|Dirleton|Aberlady|EH39|EH31/i, cap: 30 },
+  { zone: 'East Neuk (Fife, Scozia)', town: 'Anstruther', codes: ['97068'], pages: RM_PAGES, filter: /Anstruther|Crail|Pittenweem|St Monans|Elie|Cellardyke|KY10|KY9/i, cap: 30 },
+  { zone: 'Rosemarkie (Scozia)', town: 'Rosemarkie', codes: ['94460'], pages: RM_PAGES, filter: /Rosemarkie|Fortrose|Avoch|IV10/i, cap: 16 },
+  { zone: 'Loch Tay (Scozia)', town: 'Kenmore', codes: ['6', '13772', '738'], pages: RM_PAGES, filter: /Kenmore|Aberfeldy|Killin|Acharn|Fearnan|Lawers|Fortingall|Weem|Dull|Loch Tay|PH15/i, cap: 22 },
 ]
 const COSTA = {
   zone: 'Costa Scozia (≤4h da Edimburgo)', cap: 48, perTown: 4,
@@ -269,6 +272,62 @@ const prevByUrl = new Map(db.listings.map((l) => [l.url, l]))
 const prevSoldUrls = new Set(db.sold.map((s) => s.url).filter(Boolean))
 const extra = existsSync(ROOT + 'docs/extra-zones.json') ? JSON.parse(readFileSync(ROOT + 'docs/extra-zones.json', 'utf8')) : []
 
+// ---- Zone geography: every zone is an area on the map ----
+// A listing belongs to the zone whose area contains its coordinates, whatever
+// source found it, so any portal can feed any zone — including the ones added
+// from the map ("Trova nuove case qui", saved with their bounds in
+// docs/extra-zones.json). Built-in zones get fixed boxes; Costa Scozia is a
+// box around each of its towns. Tier 1 (built-in + map zones) beats tier 2
+// (Costa); inside a tier an area whose town the address names wins (map
+// areas overlap: Leuchars' covers west St Andrews), else the smallest one,
+// so a zone drawn inside another one keeps its houses.
+const boxAt = (la, ln, dLa = 0.07, dLn = 0.12) => ({ s: la - dLa, n: la + dLa, w: ln - dLn, e: ln + dLn })
+const COSTA_AT = {
+  Dunbar: [55.992, -2.524], 'St Andrews': [56.336, -2.803], Oban: [56.416, -5.471], Largs: [55.797, -4.863],
+  Ayr: [55.456, -4.623], Stonehaven: [56.963, -2.211], Nairn: [57.579, -3.907], Kirkcudbright: [54.836, -4.050],
+  Portpatrick: [54.843, -5.115], Tarbert: [55.861, -5.414], Lossiemouth: [57.716, -3.294], Dunoon: [55.961, -4.928],
+  Rothesay: [55.836, -5.058], Girvan: [55.242, -4.855], Eyemouth: [55.870, -2.090], Arbroath: [56.560, -2.585],
+  Montrose: [56.708, -2.467], Helensburgh: [56.003, -4.733], Millport: [55.755, -4.927], 'Wemyss Bay': [55.876, -4.889],
+  Carnoustie: [56.502, -2.715],
+}
+const AREAS = [
+  { zone: 'North Berwick (Scozia)', town: 'North Berwick', tier: 1, s: 55.99, n: 56.08, w: -2.92, e: -2.62 },
+  { zone: 'East Neuk (Fife, Scozia)', town: 'Anstruther', tier: 1, s: 56.17, n: 56.30, w: -2.87, e: -2.58 },
+  { zone: 'Rosemarkie (Scozia)', town: 'Rosemarkie', tier: 1, s: 57.54, n: 57.63, w: -4.22, e: -4.05 },
+  { zone: 'Loch Tay (Scozia)', town: 'Kenmore', tier: 1, s: 56.42, n: 56.67, w: -4.40, e: -3.80 },
+  { zone: MH_BURTONPORT.zone, town: 'Burtonport', tier: 1, s: 54.92, n: 55.17, w: -8.52, e: -8.00 },
+  // Map zones: the visible map area when requested, padded 30% as the
+  // instant handler does.
+  ...extra.filter((z) => z.bounds).map((z) => {
+    const b = z.bounds, pLa = (b.north - b.south) * 0.3, pLn = (b.east - b.west) * 0.3
+    return { zone: z.zone, town: z.zone.replace(/ \((Scozia|Irlanda|UK)\)$/, ''), tier: 1, s: b.south - pLa, n: b.north + pLa, w: b.west - pLn, e: b.east + pLn }
+  }),
+  ...Object.entries(COSTA_AT).map(([town, [la, ln]]) => ({ zone: COSTA.zone, town, tier: 2, ...boxAt(la, ln) })),
+  { zone: COSTA.zone, town: 'Aberdeen', tier: 2, ...boxAt(57.146, -2.125, 0.09, 0.2) },
+].map((a) => ({ ...a, size: (a.n - a.s) * (a.e - a.w) }))
+const townRe = (t) => new RegExp(`\\b${t.replace(/^St /i, 'St\\.? ?')}\\b`, 'i')
+for (const a of AREAS) a.re = townRe(a.town)
+const zoneAt = (la, ln, addr = '') => {
+  if (!validCoords(la, ln)) return null
+  const hits = AREAS.filter((a) => la >= a.s && la <= a.n && ln >= a.w && ln <= a.e)
+  if (!hits.length) return null
+  const tier = Math.min(...hits.map((a) => a.tier))
+  const inTier = hits.filter((a) => a.tier === tier)
+  const best = inTier.find((a) => a.re.test(addr)) || inTier.reduce((x, y) => (y.size < x.size ? y : x))
+  return { zone: best.zone, town: best.town }
+}
+// Town names inside the map zones, searched on every town-based portal
+// (ESPC, OnTheMarket, s1homes) on top of their built-in lists. The instant
+// handler stores the towns it found in the area as otmSlugs / s1Towns.
+const GENERIC_TOWN = /^(highland|argyll(-| )e(-| )bute|scotland|scozia)$/i
+const extraTowns = extra.filter((z) => z.country === 'UK').flatMap((z) => [
+  z.zone.replace(/ \((Scozia|UK)\)$/, ''),
+  ...(z.s1Towns || []).map((t) => t.replace(/-/g, ' ')),
+  ...(z.otmSlugs || []).map((t) => t.replace(/-/g, ' ')),
+]).filter((t) => t && !GENERIC_TOWN.test(t))
+const titleCase = (t) => t.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+const uniqCI = (arr) => [...new Map(arr.map((t) => [t.toLowerCase(), t])).values()]
+
 // ---- Scrape all zones into `scraped` (url → candidate), capped per zone ----
 const scraped = new Map()
 // Cross-source dedupe: the same house listed on two portals shares its
@@ -287,24 +346,29 @@ const placed = []
 // (and today's price) for listings we already carry, so they skip the
 // one-by-one source verification. Never used to add NEW listings.
 const overflow = new Map()
+// `cap` limits the NEW listings a search adds per day, not the total:
+// listings already on the portal always pass, so a zone's backlog comes in
+// a batch a day until every house in it is covered.
 const addCapped = (items, cap) => {
   let n = 0
   for (const l of items) {
     if (!l || scraped.has(l.url)) continue
-    if (n >= cap) { overflow.set(l.url, l); continue }
+    const isNew = !prevByUrl.has(l.url)
+    if (isNew && n >= cap) { overflow.set(l.url, l); continue }
     const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
     if (dedupKeys.has(k) || placed.some((p) => nearPt(p, l))) { overflow.set(l.url, l); continue }
     dedupKeys.add(k)
     placed.push({ price: l.price, lat: l.lat, lng: l.lng })
     scraped.set(l.url, l)
-    n++
+    if (isNew) n++
   }
 }
 
 // Rightmove fixed zones
 for (const z of RM_ZONES) {
   const pages = await pmap(z.codes.flatMap((c) => z.pages.map((idx) => [c, idx])), ([c, idx]) => rmSearch(c, idx), 4)
-  const cands = pages.flat().filter((p) => z.filter.test(p.displayAddress || '')).map((p) => rmCandidate(p, z.zone, z.town)).filter(Boolean)
+  const cands = pages.flat().map((p) => rmCandidate(p, z.zone, z.town))
+    .filter((l) => l && (z.filter.test(l.addr) || zoneAt(l.lat, l.lng, l.addr)?.zone === z.zone))
   addCapped(cands, z.cap)
   console.log(`${z.zone}: ${cands.length} candidati`)
 }
@@ -363,7 +427,7 @@ const s1Candidate = (o, ztOverride) => {
   const ptype = (o.propertyType?.name || '').toLowerCase()
   if (/land|plot|site|garage|parking/.test(ptype)) return null
   const addr = [o.houseNameNumber, o.address2, o.address3, o.town, o.postcode].filter(Boolean).join(', ')
-  const zt = ztOverride || zoneOf(addr)
+  const zt = ztOverride || zoneAt(la, ln, addr)
   if (!zt) return null
   const featStr = (o.features || []).join(' ')
   const text = `${o.summary || ''} ${o.description || ''}`.replace(/<[^>]+>/g, ' ')
@@ -383,7 +447,9 @@ const s1Candidate = (o, ztOverride) => {
   }
 }
 {
-  const pages = await pmap(S1_PATHS, (path) => get(`https://www.s1homes.com/property-for-sale/${path}/`).catch(() => ''), 6)
+  const known = new Set(S1_PATHS.map((p) => p.split('/')[1].toLowerCase()))
+  const paths = [...S1_PATHS, ...uniqCI(extraTowns).map((t) => titleCase(t).replace(/ /g, '-')).filter((t) => !known.has(t.toLowerCase())).map((t) => `Scotland/${t}`)]
+  const pages = await pmap(paths, (path) => get(`https://www.s1homes.com/property-for-sale/${path}/`).catch(() => ''), 6)
   const cands = pages.flatMap((h) => s1Parse(h)).map((o) => s1Candidate(o)).filter(Boolean)
   const byZone = {}
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
@@ -397,13 +463,16 @@ const s1Candidate = (o, ztOverride) => {
 // /properties/search/list returns full result objects (price, beds, baths,
 // type, 40 photos, blurb). Coordinates and the full description live on the
 // detail page, fetched only for urls new to the portal.
-const ESPC_TOWNS = [
+const ESPC_TOWNS_BUILTIN = [
   'North Berwick', 'Gullane', 'Dirleton', 'Aberlady', 'Dunbar',
   'Anstruther', 'Crail', 'Pittenweem', 'Elie', 'St Monans', 'Cellardyke', 'St Andrews', 'Leuchars',
   'Rosemarkie', 'Fortrose', 'Avoch', 'Nairn',
   'Aberfeldy', 'Kenmore', 'Killin',
   'Oban', 'Dunoon', 'Tarbert', 'Largs', 'Helensburgh', 'Rothesay', 'Stonehaven', 'Eyemouth', 'Kirkcudbright',
 ]
+const ESPC_TOWNS = uniqCI([...ESPC_TOWNS_BUILTIN, ...extraTowns.map(titleCase)])
+// Cheap pre-filter before a detail fetch: the address names a searched town.
+const espcTownRe = new RegExp(ESPC_TOWNS.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/^St /i, 'St\\.? ?')).join('|'), 'i')
 const espcKey = async (town) => {
   try {
     const a = await post('https://espc.com/locations/autocomplete', { query: town, size: 5, pastsales: false })
@@ -438,10 +507,9 @@ const espcCandidate = async (r) => {
   if (/land|plot|site|garage|parking|commercial/.test(ptype)) return null
   const url = 'https://espc.com' + r.url.replace(/[?#].*$/, '')
   const addr = String(r.address || '').replace(/\s*\r?\n\s*/g, ', ').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim()
-  const zt = zoneOf(addr)
-  if (!zt) return null
   const prev = prevByUrl.get(url)
   let la = prev?.lat, ln = prev?.lng
+  if (!validCoords(la, ln) && !zoneOf(addr) && !espcTownRe.test(addr)) return null
   let text = `${r.summary || ''} ${r.description || ''}`
   let desc = prev?.desc || '', energy = prev?.energy || null, ctax = prev?.ctax || null, enr = prev?.enr || null
   if (!validCoords(la, ln)) {
@@ -452,11 +520,14 @@ const espcCandidate = async (r) => {
     la = parseFloat(/"latitude":"?(-?[\d.]+)/.exec(page)?.[1])
     ln = parseFloat(/"longitude":"?(-?[\d.]+)/.exec(page)?.[1])
     if (!validCoords(la, ln)) return null
+    if (!zoneAt(la, ln)) return null
     text = page.replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ')
     const hl = /<strong>Property highlight:<\/strong>([\s\S]*?)<\/p>\s*<p>([\s\S]*?)<\/p>/.exec(page)
     desc = clip(hl ? `${hl[1]} ${hl[2]}` : (r.description || r.summary || ''))
     energy = epcOf(text); ctax = ctaxOf(text); enr = TODAY
   }
+  const zt = zoneAt(la, ln, addr)
+  if (!zt) return null
   const imgs = (r.propertyImages || []).filter((u) => typeof u === 'string' && u.startsWith('https://espc.com/images?')).slice(0, 40)
   return {
     id: 0, title: addr, contract: 'sale',
@@ -499,7 +570,7 @@ const aspcCandidate = (p) => {
   if (!validCoords(la, ln)) return null
   const loc = p.Location
   const addr = [loc.AddressLine1, loc.City, loc.Postcode].filter(Boolean).join(', ')
-  const zt = zoneOf(addr)
+  const zt = zoneAt(la, ln, addr)
   if (!zt) return null
   const text = p.CategorisationDescription || ''
   const url = `https://www.aspc.co.uk/search/property/${p.Id}`
@@ -568,7 +639,7 @@ const otmCandidate = (o, ztOverride) => {
   const ptype = (o['humanised-property-type'] || '').toLowerCase()
   if (/land|plot|site|garage|parking|mooring/.test(ptype)) return null
   const addr = o.address || ''
-  const zt = ztOverride || zoneOf(addr)
+  const zt = ztOverride || zoneAt(la, ln, addr)
   if (!zt) return null
   const text = `${o['property-title'] || ''} ${(o.features || []).join(' ')}`
   return {
@@ -604,7 +675,8 @@ const otmEnrich = async (l) => {
   return l
 }
 {
-  const pages = await pmap(OTM_TOWNS, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 6)
+  const slugs = uniqCI([...OTM_TOWNS, ...extraTowns.map((t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-'))])
+  const pages = await pmap(slugs, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 6)
   const cands = pages.flatMap((h) => otmNext(h)?.results?.list || []).map((o) => otmCandidate(o)).filter(Boolean)
   const byZone = {}
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
@@ -797,26 +869,12 @@ for (const z of extra) {
   const inb = (la, ln) => la >= z.bounds.south - pad.latPad && la <= z.bounds.north + pad.latPad && ln >= z.bounds.west - pad.lngPad && ln <= z.bounds.east + pad.lngPad
   const townName = z.zone.replace(/ \((Scozia|Irlanda|UK)\)$/, '')
   if (z.portal === 'rightmove') {
-    const pages = await pmap(z.searchKeys.flatMap((c) => [0, 24].map((idx) => [c, idx])), ([c, idx]) => rmSearch(c, idx), 4)
+    const pages = await pmap(z.searchKeys.flatMap((c) => RM_PAGES.map((idx) => [c, idx])), ([c, idx]) => rmSearch(c, idx), 4)
     const cands = pages.flat().map((p) => rmCandidate(p, z.zone, townName)).filter((l) => l && inb(l.lat, l.lng))
     addCapped(cands, z.cap || 20)
     console.log(`${z.zone}: ${cands.length} candidati`)
-    // The instant handler records which OnTheMarket slugs / s1homes towns
-    // answered for this area, so every source keeps refreshing the zone.
-    if (z.otmSlugs?.length) {
-      const p2 = await pmap(z.otmSlugs, (t) => get(`https://www.onthemarket.com/for-sale/property/${t}/`).catch(() => ''), 4)
-      const c2 = p2.flatMap((h) => otmNext(h)?.results?.list || []).map((o) => otmCandidate(o, { zone: z.zone, town: townName })).filter((l) => l && inb(l.lat, l.lng))
-      addCapped(c2, z.cap || 20)
-      console.log(`onthemarket → ${z.zone}: ${c2.length} candidati`)
-    }
-    if (z.s1Towns?.length) {
-      // s1homes ignores the region segment of the search path, so a fixed
-      // placeholder works for any town.
-      const p3 = await pmap(z.s1Towns, (t) => get(`https://www.s1homes.com/property-for-sale/Scotland/${t}/`).catch(() => ''), 4)
-      const c3 = p3.flatMap(s1Parse).map((o) => s1Candidate(o, { zone: z.zone, town: townName })).filter((l) => l && inb(l.lat, l.lng))
-      addCapped(c3, z.cap || 20)
-      console.log(`s1homes → ${z.zone}: ${c3.length} candidati`)
-    }
+    // OnTheMarket / s1homes / ESPC / ASPC cover this zone in their own passes
+    // above (its towns are in extraTowns, its area in AREAS).
   } else {
     const county = z.searchKeys[0]
     // `countyPages: false` keeps a coastal zone coastal: the county-wide

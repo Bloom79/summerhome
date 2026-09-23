@@ -53,6 +53,24 @@ Aberdeen, Stonehaven and Montrose in the Costa zone from its public JSON API
 pages; max 8 per town, 25 per zone per day). Withdrawn listings answer `null`
 on `GetProperty/<id>`.
 
+### Zones are map areas; every source searches every zone
+
+Each zone is an area on the map: the built-in ones have fixed boxes (Costa
+Scozia one box per town) and the zones added with "Trova nuove case qui" use
+the bounds saved in `docs/extra-zones.json` (padded 30%). A listing goes to
+the zone whose area contains its coordinates, whichever portal found it
+(`zoneAt` in `scripts/daily-refresh.mjs`); where areas overlap, the zone whose
+town the address names wins, else the smaller area. The towns of the map
+zones (`otmSlugs` / `s1Towns` / zone name) are added to the town searches of
+ESPC, OnTheMarket and s1homes; ASPC and Rightmove cover them through their
+catalogue / region searches. So a zone added from the UI is searched on every
+source from the next daily run.
+
+Per-source caps limit only the NEW listings added per zone per day: listings
+already on the portal always pass, so a zone's backlog is ingested a batch a
+day until all of its houses are covered. Rightmove reads 5 result pages
+(120 newest) per region instead of 2.
+
 ### Run time and verification
 
 The script has a wall-clock budget (`BUDGET_MIN`, default 14 min, inside the
