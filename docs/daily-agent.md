@@ -47,6 +47,22 @@ the "Trova nuove case qui" button** (see [Cerca qui](#cerca-qui-user-requested-a
 6. If a source can't be fetched for a zone, it keeps that zone's previous
    listings rather than emptying it, and makes no commit if nothing changed.
 
+**ASPC** (Aberdeen & North-East Scotland Solicitors Property Centre) feeds
+Aberdeen, Stonehaven and Montrose in the Costa zone from its public JSON API
+(`api.aspc.co.uk/Property/GetProperties`, the whole ~3.8k catalogue in 200-item
+pages; max 8 per town, 25 per zone per day). Withdrawn listings answer `null`
+on `GetProperty/<id>`.
+
+### Run time and verification
+
+The script has a wall-clock budget (`BUDGET_MIN`, default 14 min, inside the
+job's 30-min timeout). Listings we carry that today's searches still return
+beyond a zone's cap count as live (their price change is tracked) without a
+page fetch. The rest of the missing ones are verified on the source, at most
+every `VERIFY_DAYS` (default 3) days each, least-recently-checked first
+(`chk`); what the budget doesn't reach carries over to the next run. A
+cancelled or failed run opens a `⚠️ Daily refresh fallito` issue.
+
 ## Ad facts, backfill, travel time, trends
 
 Every new listing carries, from its detail page, a ≤500-char excerpt of the

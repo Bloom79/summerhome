@@ -103,6 +103,7 @@ const SOURCES = [
   [/tspc/, 'tspc', 'TSPC'],
   [/myhome/, 'myhome', 'MyHome'],
   [/espc\.com/, 'espc', 'ESPC'],
+  [/aspc\.co\.uk/, 'aspc', 'ASPC'],
   [/futurepropertyauctions/, 'auction', 'Future PA'],
   [/auctionhouse/, 'auction', 'Auction House'],
   [/primepropertyauctions/, 'auction', 'Prime'],

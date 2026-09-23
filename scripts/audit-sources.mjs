@@ -100,6 +100,16 @@ const checks = {
     if (Number.isFinite(la) && Math.abs(la - l.lat) > 0.01) probs.push(`coordinate ${l.lat} ≠ ${la}`)
     return probs
   },
+  aspc: async (l) => {
+    // Public API: `null` for withdrawn listings.
+    const p = JSON.parse(await get(`https://api.aspc.co.uk/Property/GetProperty/${l.url.split('/').pop()}`))
+    if (!p || !p.IsOpen || p.UnderOffer) return ['gone']
+    const probs = []
+    if (Math.round(p.Price) !== l.price) probs.push(`prezzo ${l.price} ≠ ${Math.round(p.Price)}`)
+    const la = +(/POINT \((-?[\d.]+) (-?[\d.]+)\)/.exec(p.Location?.Spatial?.Geography?.WellKnownText || '')?.[2])
+    if (Number.isFinite(la) && Math.abs(la - l.lat) > 0.01) probs.push(`coordinate ${l.lat} ≠ ${la}`)
+    return probs
+  },
   myhome: async (l) => {
     const page = await get(l.url)
     const title = (/<title>([^<]*)/.exec(page)?.[1] || '').trim()
@@ -112,7 +122,7 @@ const checks = {
 }
 const srcOf = (url) =>
   /rightmove/.test(url) ? 'rightmove' : /onthemarket/.test(url) ? 'onthemarket' :
-  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : /espc\.com/.test(url) ? 'espc' : 'myhome'
+  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : /espc\.com/.test(url) ? 'espc' : /aspc\.co\.uk/.test(url) ? 'aspc' : 'myhome'
 
 const bySrc = {}
 const findings = [] // {l, probs}

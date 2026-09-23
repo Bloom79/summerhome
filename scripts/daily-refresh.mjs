@@ -283,13 +283,17 @@ const nearPt = (p, l) => p.price === l.price &&
   Math.abs(p.lat - l.lat) < 0.0015 && Math.abs(p.lng - l.lng) < 0.003
 const dedupKeys = new Set()
 const placed = []
+// Candidates a search returned but the cap/dedupe left out: proof of life
+// (and today's price) for listings we already carry, so they skip the
+// one-by-one source verification. Never used to add NEW listings.
+const overflow = new Map()
 const addCapped = (items, cap) => {
   let n = 0
   for (const l of items) {
-    if (!l || n >= cap) continue
-    if (scraped.has(l.url)) continue
+    if (!l || scraped.has(l.url)) continue
+    if (n >= cap) { overflow.set(l.url, l); continue }
     const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
-    if (dedupKeys.has(k) || placed.some((p) => nearPt(p, l))) continue
+    if (dedupKeys.has(k) || placed.some((p) => nearPt(p, l))) { overflow.set(l.url, l); continue }
     dedupKeys.add(k)
     placed.push({ price: l.price, lat: l.lat, lng: l.lng })
     scraped.set(l.url, l)
@@ -308,8 +312,9 @@ for (const z of RM_ZONES) {
 {
   const perTown = await pmap(COSTA.towns, async ([code, town, filter]) => {
     const props = await rmSearch(code, 0)
-    return props.filter((p) => filter.test(p.displayAddress || '')).slice(0, COSTA.perTown + 2)
-      .map((p) => rmCandidate(p, COSTA.zone, town)).filter(Boolean).slice(0, COSTA.perTown)
+    const all = props.filter((p) => filter.test(p.displayAddress || '')).map((p) => rmCandidate(p, COSTA.zone, town)).filter(Boolean)
+    for (const l of all.slice(COSTA.perTown)) overflow.set(l.url, l)
+    return all.slice(0, COSTA.perTown)
   }, 6)
   addCapped(perTown.flat(), COSTA.cap)
   console.log(`${COSTA.zone}: ${perTown.flat().length} candidati`)
@@ -477,6 +482,64 @@ const espcCandidate = async (r) => {
   for (const l of cands) (byZone[l.zone] = byZone[l.zone] || []).push(l)
   for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 25); console.log(`espc → ${z}: ${arr.length} candidati`) }
   console.log(`espc: ${locs.length} località, ${byId.size} risultati, ${cands.length} candidati`)
+}
+
+// ---- ASPC: Aberdeen & North-East Scotland Solicitors Property Centre —
+// solicitor-agent listings for Aberdeen, Stonehaven, Montrose and the
+// Aberdeenshire coast that often never reach Rightmove. Its public JSON API
+// returns the whole catalogue (~3.8k homes, 200 per page) with address,
+// coords, price, rooms, floor area and photos, so no per-listing fetch.
+const ASPC_API = 'https://api.aspc.co.uk/Property'
+const aspcCandidate = (p) => {
+  // PropertyType 1 = residential; PriceType 3 = rent. Under offer is gone
+  // for a buyer, as on the other portals.
+  if (!p || p.PropertyType !== 1 || p.PriceType === 3 || p.UnderOffer || !p.IsOpen || !(p.Price >= 20000)) return null
+  const pt = /POINT \((-?[\d.]+) (-?[\d.]+)\)/.exec(p.Location?.Spatial?.Geography?.WellKnownText || '')
+  const la = pt ? +pt[2] : NaN, ln = pt ? +pt[1] : NaN
+  if (!validCoords(la, ln)) return null
+  const loc = p.Location
+  const addr = [loc.AddressLine1, loc.City, loc.Postcode].filter(Boolean).join(', ')
+  const zt = zoneOf(addr)
+  if (!zt) return null
+  const text = p.CategorisationDescription || ''
+  const url = `https://www.aspc.co.uk/search/property/${p.Id}`
+  const prev = prevByUrl.get(url)
+  return {
+    id: 0, title: addr, contract: 'sale',
+    type: p.PropertyIconKey === 'FLAT' ? 'Appartamento' : /bungalow/i.test(text) ? 'Bungalow' : /cottage/i.test(text) ? 'Cottage' : 'Casa indipendente',
+    price: Math.round(p.Price), currency: 'GBP',
+    size: p.FloorArea > 15 && p.FloorArea < 2000 ? p.FloorArea : null,
+    rooms: p.Bedrooms >= 1 && p.Bedrooms <= 12 ? p.Bedrooms : null,
+    baths: p.Bathrooms >= 1 && p.Bathrooms <= 10 ? p.Bathrooms : null,
+    floor: null, year: null,
+    zone: zt.zone, town: zt.town, addr, lat: la, lng: ln,
+    imgs: (p.Photos || []).slice(0, 40).map((ph) => `https://cdn.aspc.co.uk/resources/office/Property/${p.OfficePropertyId}/Image/${ph.Id}.${ph.Image?.Extension || 'jpg'}`),
+    feats: featsOf(text), seaView: SEA.some((x) => x.test(text)), desc: clip(text),
+    // ASPC abbreviates: "(EPC band - B)", "(CT band - E)".
+    energy: (/EPC band\s*-\s*([A-G])\b/i.exec(text) || [])[1] || epcOf(text),
+    ctax: (/CT band\s*-\s*([A-H])\b/i.exec(text) || [])[1] || ctaxOf(text),
+    enr: TODAY, date: prev?.date || TODAY, url,
+  }
+}
+{
+  let count = 0
+  try { count = JSON.parse(await get(`${ASPC_API}/GetPropertyCount?PrimaryPropertyType=Buy`))?.count || 0 } catch { /* source down */ }
+  const pages = Array.from({ length: Math.min(30, Math.ceil(count / 200)) }, (_, k) => k + 1)
+  const results = (await pmap(pages, async (pg) => {
+    try { return JSON.parse(await get(`${ASPC_API}/GetProperties?PrimaryPropertyType=Buy&Sort=PublishedDesc&Page=${pg}&PageSize=200`)) } catch { return [] }
+  }, 4)).flat()
+  // Newest first (ids grow), and a per-town cap so Aberdeen's ~2k flats
+  // don't crowd Stonehaven and Montrose out of the Costa zone.
+  const cands = results.sort((a, b) => b.Id - a.Id).map(aspcCandidate).filter(Boolean)
+  const byZone = {}, perTown = {}
+  for (const l of cands) {
+    const t = `${l.zone}|${l.town}`
+    if ((perTown[t] = (perTown[t] || 0) + 1) > 8) { overflow.set(l.url, l); continue }
+    if (!byZone[l.zone]) byZone[l.zone] = []
+    byZone[l.zone].push(l)
+  }
+  for (const [z, arr] of Object.entries(byZone)) { addCapped(arr, 25); console.log(`aspc → ${z}: ${arr.length} candidati`) }
+  console.log(`aspc: ${results.length} annunci in catalogo, ${cands.length} nelle zone`)
 }
 
 // ---- OnTheMarket: agent-fed UK portal whose "Only With Us" exclusives are
@@ -772,6 +835,12 @@ for (const z of extra) {
 console.log(`scrape totale: ${scraped.size} annunci`)
 if (scraped.size < 60) { out('status', 'error'); out('summary', `scrape sospetto: solo ${scraped.size} annunci — non tocco i dati`); process.exit(0) }
 
+// Carried listings seen in today's searches beyond the caps are live: diff
+// them like scraped ones (price tracking included) instead of verifying.
+let seenOverCap = 0
+for (const [url, cand] of overflow) if (prevByUrl.has(url) && !scraped.has(url)) { scraped.set(url, cand); seenOverCap++ }
+console.log(`[${elapsed()}] già in portale, visti oltre il tetto: ${seenOverCap}`)
+
 // ---- Diff against previous data ----
 const events = { nuove: [], ribassi: [], rialzi: [], vendute: [] }
 const nextListings = []
@@ -784,7 +853,7 @@ for (const [url, cand] of scraped) {
   // detail page. Without the size comparison every refresh downgraded old
   // listings back to 6 photos (enrichment runs on NEW urls only) — the root
   // cause of the recurring "too few images" complaint.
-  const merged = { ...old, price: cand.price, imgs: cand.imgs.length > old.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths }
+  const merged = { ...old, price: cand.price, imgs: cand.imgs.length > old.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths, chk: TODAY }
   if (cand.price !== old.price)
     merged.hist = [...(old.hist || [{ d: old.date, p: old.price }]), { d: TODAY, p: cand.price }].slice(-10)
   if (cand.price < old.price) events.ribassi.push({ ...merged, oldPrice: old.price })
@@ -811,13 +880,20 @@ const missing = db.listings.filter((l) => !scraped.has(l.url) && !RETIRED.test(l
   .sort((a, b) => (a.chk || '').localeCompare(b.chk || ''))
 console.log(`[${elapsed()}] da verificare alla fonte: ${missing.length}`)
 const soldNew = []
-let unverified = 0
+let unverified = 0, recent = 0
+const VERIFY_DAYS = +(process.env.VERIFY_DAYS || 3)
+const VERIFY_AFTER = new Date(Date.now() - VERIFY_DAYS * 864e5).toISOString().slice(0, 10)
 await pmap(missing, async (l) => {
+  // Verified live in the last few days: carry over, re-check later. A sold
+  // house then leaves the portal up to VERIFY_DAYS late, in exchange for a
+  // third of the daily source fetches.
+  if (l.chk && l.chk > VERIFY_AFTER) { nextListings.push(l); recent++; return }
   if (pastBudget(0.8)) { nextListings.push(l); unverified++; return }
   const pushed = nextListings.length
   await verifyMissing(l)
   if (nextListings.length > pushed) l.chk = TODAY
 }, 8)
+console.log(`[${elapsed()}] verificati di recente, non ricontrollati: ${recent}`)
 if (unverified) console.log(`[${elapsed()}] budget esaurito: ${unverified} annunci mancanti riportati senza verifica (domani per primi)`)
 async function verifyMissing(l) {
   if (/myhome\.ie/.test(l.url)) {
@@ -846,6 +922,13 @@ async function verifyMissing(l) {
     let page = ''
     try { page = await get(l.url) } catch { nextListings.push(l); return }
     if (!page.includes('"latitude"')) soldNew.push({ ...toSold(l), status: 'removed' })
+    else nextListings.push(l)
+  } else if (/aspc\.co\.uk/.test(l.url)) {
+    // The API answers `null` for a withdrawn listing; under offer = agreed.
+    let p
+    try { p = JSON.parse(await get(`${ASPC_API}/GetProperty/${l.url.split('/').pop()}`)) } catch { nextListings.push(l); return }
+    if (!p || !p.IsOpen) soldNew.push({ ...toSold(l), status: 'removed' })
+    else if (p.UnderOffer) soldNew.push({ ...toSold(l), status: 'sale_agreed' })
     else nextListings.push(l)
   } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/.test(l.url)) {
     // Auction lots: gone from the catalogue means sold or withdrawn; a
