@@ -15,6 +15,15 @@ import { execFile } from 'child_process'
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 const ROOT = new URL('..', import.meta.url).pathname
 const TODAY = new Date().toISOString().slice(0, 10)
+// Wall-clock budget for the whole script. The workflow kills the job at its
+// timeout, and a killed run publishes nothing (15–22 Sep 2026: ~630 carried
+// listings re-verified one by one ran past it every day). Past a phase's
+// share of the budget the optional work is skipped and the run still
+// publishes: unverified listings carry over, backfill waits for tomorrow.
+const STARTED = Date.now()
+const BUDGET_MIN = +(process.env.BUDGET_MIN || 14)
+const pastBudget = (share) => Date.now() - STARTED > BUDGET_MIN * 60e3 * share
+const elapsed = () => `${Math.round((Date.now() - STARTED) / 1000)}s`
 
 const out = (k, v) => {
   console.log(`${k}=${v}`)
@@ -785,19 +794,32 @@ for (const [url, cand] of scraped) {
 // Enrich only genuinely new listings with their detail page, per source
 // (MyHome and s1homes candidates already carry full-text enrichment from
 // their search/brochure parse).
-await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), rmEnrich, 8)
-await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), otmEnrich, 8)
+console.log(`[${elapsed()}] nuove da arricchire: ${enrichQueue.length}`)
+await pmap(enrichQueue.filter((l) => /rightmove\.co\.uk/.test(l.url)), (l) => !pastBudget(0.5) && rmEnrich(l), 8)
+await pmap(enrichQueue.filter((l) => /onthemarket\.com/.test(l.url)), (l) => !pastBudget(0.5) && otmEnrich(l), 8)
 // Waterfront geo-tag for the new listings (text rules already ran).
 await pmap(enrichQueue.filter((l) => !l.feats.includes('Spiaggia')), async (l) => {
-  if (await nearCoast(l.lat, l.lng)) l.feats.push('Spiaggia')
+  if (!pastBudget(0.55) && await nearCoast(l.lat, l.lng)) l.feats.push('Spiaggia')
 }, 3)
 
 // Missing urls: verify on the source before archiving; live ones carry over.
 const retired = db.listings.filter((l) => RETIRED.test(l.url))
 if (retired.length) console.log(`sorgente ritirata: ${retired.length} annunci TSPC rimossi dal portale`)
+// Least-recently-verified first (`chk` = last day seen live), so when the
+// budget cuts the pass short the listings not checked today go first tomorrow.
 const missing = db.listings.filter((l) => !scraped.has(l.url) && !RETIRED.test(l.url))
+  .sort((a, b) => (a.chk || '').localeCompare(b.chk || ''))
+console.log(`[${elapsed()}] da verificare alla fonte: ${missing.length}`)
 const soldNew = []
+let unverified = 0
 await pmap(missing, async (l) => {
+  if (pastBudget(0.8)) { nextListings.push(l); unverified++; return }
+  const pushed = nextListings.length
+  await verifyMissing(l)
+  if (nextListings.length > pushed) l.chk = TODAY
+}, 8)
+if (unverified) console.log(`[${elapsed()}] budget esaurito: ${unverified} annunci mancanti riportati senza verifica (domani per primi)`)
+async function verifyMissing(l) {
   if (/myhome\.ie/.test(l.url)) {
     const code = await getStatus(l.url)
     if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
@@ -848,7 +870,7 @@ await pmap(missing, async (l) => {
     if (gone) soldNew.push({ ...toSold(l), status: 'removed' })
     else nextListings.push(l)
   }
-}, 8)
+}
 function toSold(l) {
   return {
     title: l.title, zone: l.zone, town: l.town, addr: l.addr, price: l.price, currency: l.currency,
@@ -878,6 +900,7 @@ const BACKFILL = +(process.env.BACKFILL || 80)
 const backfillQueue = nextListings.filter((l) => !l.enr && prevByUrl.has(l.url) && /rightmove\.co\.uk|onthemarket\.com/.test(l.url)).slice(0, BACKFILL)
 let enriched = 0
 await pmap(backfillQueue, async (l) => {
+  if (pastBudget(0.9)) return // not marked enr: retried tomorrow
   const keep = { date: l.date, spiaggia: l.feats.includes('Spiaggia'), imgs: l.imgs }
   if (/rightmove\.co\.uk/.test(l.url)) await rmEnrich(l)
   else await otmEnrich(l)
@@ -895,7 +918,7 @@ if (enriched) console.log(`arricchite (descrizione/EPC/council tax): ${enriched}
 const GATES = [['Edimburgo', 55.9508, -3.3615], ['Glasgow', 55.8642, -4.4331], ['Inverness', 57.5425, -4.0475], ['Aberdeen', 57.2019, -2.1978], ['Dublino', 53.4264, -6.2499], ['Donegal', 55.0442, -8.3410]]
 const travelQueue = nextListings.filter((l) => !l.travel)
 let travelled = 0
-for (let i = 0; i < travelQueue.length && i < 94 * 15; i += 94) {
+for (let i = 0; i < travelQueue.length && i < 94 * 15 && !pastBudget(0.95); i += 94) {
   const batch = travelQueue.slice(i, i + 94)
   const coords = [...GATES.map((g) => `${g[2]},${g[1]}`), ...batch.map((l) => `${l.lng},${l.lat}`)].join(';')
   try {
