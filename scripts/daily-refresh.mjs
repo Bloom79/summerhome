@@ -528,7 +528,9 @@ const espcCandidate = async (r) => {
   }
   const zt = zoneAt(la, ln, addr)
   if (!zt) return null
-  const imgs = (r.propertyImages || []).filter((u) => typeof u === 'string' && u.startsWith('https://espc.com/images?')).slice(0, 40)
+  // Photos were plain urls until Sep 2026, now {smallUrl, largeUrl} objects.
+  const imgs = (r.propertyImages || []).map((u) => (typeof u === 'string' ? u : u?.largeUrl || u?.smallUrl))
+    .filter((u) => typeof u === 'string' && u.startsWith('https://espc.com/images?')).slice(0, 40)
   return {
     id: 0, title: addr, contract: 'sale',
     type: /bungalow/.test(ptype) ? 'Bungalow' : /flat|apartment|maisonette/.test(ptype) ? 'Appartamento' : /cottage/.test(ptype) ? 'Cottage' : 'Casa indipendente',
