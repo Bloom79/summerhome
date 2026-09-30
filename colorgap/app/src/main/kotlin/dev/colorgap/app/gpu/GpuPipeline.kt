@@ -11,6 +11,8 @@ import android.opengl.GLES30.GL_LINEAR
 import android.opengl.GLES30.GL_MAP_READ_BIT
 import android.opengl.GLES30.GL_NEAREST
 import android.opengl.GLES30.GL_PIXEL_PACK_BUFFER
+import android.opengl.GLES30.GL_R8
+import android.opengl.GLES30.GL_RED
 import android.opengl.GLES30.GL_READ_FRAMEBUFFER
 import android.opengl.GLES30.GL_RGBA
 import android.opengl.GLES30.GL_RGBA16F
@@ -19,7 +21,6 @@ import android.opengl.GLES30.GL_STREAM_READ
 import android.opengl.GLES30.GL_TEXTURE_2D
 import android.opengl.GLES30.GL_TRIANGLES
 import android.opengl.GLES30.GL_UNPACK_ALIGNMENT
-import android.opengl.GLES30.GL_UNPACK_ROW_LENGTH
 import android.opengl.GLES30.GL_UNSIGNED_BYTE
 import android.opengl.GLES30.glBindBuffer
 import android.opengl.GLES30.glBindFramebuffer
@@ -57,7 +58,7 @@ import kotlin.math.roundToInt
 /**
  * The perception pipeline on the GPU (OpenGL ES 3.0), GL thread only.
  *
- * Camera buffer (RGBA8, sensor orientation) → at map resolution: lab (MRT) →
+ * Camera YUV planes → RGBA8 (sensor orientation) → at map resolution: lab (MRT) →
  * blur (MRT) → edges → contrast → score, all half-float except the RGBA8
  * score → display at screen resolution. Same shaders and pass order as
  * tools/gpu-check, which verifies them against colorcore.
@@ -116,18 +117,47 @@ class GpuPipeline(sources: ShaderSources) {
     private var heatLo = floatArrayOf(0f, 0f, 0f)
     private var heatHi = floatArrayOf(0f, 0f, 0f)
 
-    /** Uploads a camera frame (RGBA_8888 ImageProxy) into the source texture. */
+    // Camera planes (raw bytes, R8) and the RGBA frame converted from them.
+    private val yuv = GlProgram(sources.vertex, sources.fragment("yuv.frag"), "yuv")
+    private val planeTextures = arrayOfNulls<GlTexture>(3)
+    private var padded: ByteBuffer? = null
+    private var sourceFbo: GlFramebuffer? = null
+
+    /**
+     * Uploads a camera frame (YUV_420_888 ImageProxy) and converts it to RGBA
+     * on the GPU (pass 0), in buffer orientation.
+     */
     fun upload(image: ImageProxy) {
-        val plane = image.planes[0]
         val w = image.width
         val h = image.height
-        val src = source?.takeIf { it.width == w && it.height == h }
-            ?: GlTexture(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR).also { source?.release(); source = it }
-        glBindTexture(GL_TEXTURE_2D, src.id)
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, plane.rowStride / plane.pixelStride)
+        val planes = image.planes
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        for (i in 0..2) {
+            val rows = if (i == 0) h else (h + 1) / 2
+            val stride = planes[i].rowStride
+            val tex = planeTextures[i]?.takeIf { it.width == stride && it.height == rows }
+                ?: GlTexture(stride, rows, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_NEAREST).also {
+                    planeTextures[i]?.release()
+                    planeTextures[i] = it
+                }
+            glBindTexture(GL_TEXTURE_2D, tex.id)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, stride, rows, GL_RED, GL_UNSIGNED_BYTE, fullRows(planes[i].buffer, stride * rows))
+        }
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, plane.buffer.rewind())
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+
+        val fbo = sourceFbo?.takeIf { it.width == w && it.height == h }
+            ?: GlFramebuffer(GlTexture(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR)).also {
+                sourceFbo?.release()
+                sourceFbo = it
+            }
+        glBindVertexArray(vao)
+        pass(yuv, fbo) {
+            sampler("uY", 0, planeTextures[0]!!.id)
+            sampler("uU", 1, planeTextures[1]!!.id)
+            sampler("uV", 2, planeTextures[2]!!.id)
+            ivec3("uPixelStride", planes[0].pixelStride, planes[1].pixelStride, planes[2].pixelStride)
+        }
+        source = fbo.targets[0]
 
         crop.set(image.cropRect)
         rotation = image.imageInfo.rotationDegrees
@@ -135,6 +165,20 @@ class GpuPipeline(sources: ShaderSources) {
         frameWidth = if (sideways) crop.height() else crop.width()
         frameHeight = if (sideways) crop.width() else crop.height()
         ensureMapTargets()
+    }
+
+    /**
+     * The plane's bytes as a buffer of at least [size] bytes: the last row of
+     * a camera plane is often shorter than the row stride, so pad a copy then.
+     */
+    private fun fullRows(buffer: ByteBuffer, size: Int): ByteBuffer {
+        val b = buffer.duplicate().apply { rewind() }
+        if (b.remaining() >= size) return b
+        val out = padded?.takeIf { it.capacity() >= size } ?: ByteBuffer.allocateDirect(size).also { padded = it }
+        out.clear()
+        out.put(b)
+        out.rewind()
+        return out
     }
 
     private fun ensureMapTargets() {
@@ -345,8 +389,10 @@ class GpuPipeline(sources: ShaderSources) {
     /** Frees GL objects; call on the GL thread while the context is current. */
     fun release() {
         releaseMapTargets()
-        source?.release()
+        sourceFbo?.release()
+        sourceFbo = null
         source = null
+        planeTextures.forEach { it?.release() }
         probeFbo.release()
         glDeleteBuffers(2, pbos, 0)
         glDeleteVertexArrays(1, intArrayOf(vao), 0)

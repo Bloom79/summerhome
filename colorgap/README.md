@@ -47,6 +47,10 @@ Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna li
 - **Profilo**: Deutan/Protan/Tritan + gravità a passi del 5 %, dal pulsante in
   alto a destra (per ora in memoria; DataStore arriva nella milestone 5).
 - UI italiano/inglese, controlli in basso e alti ≥ 60 dp.
+- **Lingua**: segue il telefono, oppure si sceglie dentro l'app (⚙ in alto a
+  destra → Lingua: Sistema · English · Italiano). Su Android 13+ la scelta è
+  anche in Impostazioni → App → ColorGap → Lingua. Su Android < 13 è salvata
+  nell'app. Il bundle non divide le lingue, così il cambio funziona anche da Play.
 
 ## Camera live, percorso GPU (milestone 4)
 
@@ -54,13 +58,17 @@ Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna li
 640×480, contro 160–480 px del percorso CPU, e l'immagine si disegna a piena
 risoluzione.
 
-- **Ingresso**: gli stessi fotogrammi CameraX `ImageAnalysis` RGBA del percorso
-  CPU, caricati così come sono in una texture (row stride incluso), senza copie
-  né rotazioni in CPU. Rotazione e crop li applicano gli shader. Ho scelto questo
-  ingresso invece di una Preview su texture esterna perché ha la stessa
+- **Ingresso**: gli stessi fotogrammi CameraX `ImageAnalysis` del percorso CPU,
+  nel formato nativo YUV_420_888. Nessuna conversione dentro CameraX: quella in
+  RGBA passa da una libreria nativa e su alcuni telefoni fallisce in silenzio.
+  I tre piani vengono caricati così come sono (texture R8 larghe quanto il row
+  stride, qualunque pixel stride) e convertiti in RGB dal passaggio `yuv`
+  (BT.601 full range, JFIF). Rotazione e crop li applicano gli shader. Ho scelto
+  questo ingresso invece di una Preview su texture esterna perché ha la stessa
   semantica di orientamento già verificata per la CPU; il limite di fps è quello
   della camera (di solito 30).
 - **Passaggi** (`app/src/main/assets/shaders/`):
+  0. `yuv`: dai piani YUV della camera a RGB;
   1. `lab`: media a blocchi, Lab di originale e simulato, perdita di colore;
   2. `blur`: sfocatura 3×3;
   3. `edges`: bordi Sobel misurati in ΔE2000;
@@ -76,7 +84,11 @@ risoluzione.
 - **Congela**: ricampiona il fotogramma raddrizzato a 960 px e lo apre nella
   schermata foto, come nel percorso CPU.
 - **Fallback automatico su CPU**: senza OpenGL ES 3.0, senza render target
-  half-float, o se uno shader non compila o fallisce su quel driver. Toccando
+  half-float, se uno shader non compila o fallisce su quel driver, oppure se
+  arrivano fotogrammi (20) ma la GPU non produce nulla.
+- **Diagnosi a schermo**: se la camera resta buia, dopo 3 secondi l'app dice
+  cosa succede (errore della fotocamera con codice, nessun fotogramma, fotogrammi
+  non analizzati), con motore, numero di fotogrammi e un pulsante "Riprova". Toccando
   l'indicatore "GPU · fps · mappa" si passa da GPU a CPU e viceversa, per
   confrontarli.
 
@@ -100,7 +112,8 @@ Controlla:
 - mappa rispetto alla CPU (differenza media 0,0007; pixel critici in disaccordo ≤ 0,05 %);
 - rotazioni 90/180/270 con crop e riduzione 2×: identiche al caso diritto;
 - heatmap e righe rispetto agli overlay CPU;
-- freeze frame e colore al tap.
+- freeze frame e colore al tap;
+- conversione YUV → RGB della camera (righe con padding, crominanza interleaved).
 
 Ho verificato che lo strumento se ne accorge quando un errore viene introdotto
 apposta, nella rotazione o in una costante di ΔE2000. Richiede Node e Playwright
@@ -211,7 +224,7 @@ Requisiti: JDK 17+. Il wrapper Gradle scarica il resto.
 
 ```bash
 cd colorgap
-./gradlew :colorcore:test          # 44 unit test
+./gradlew :colorcore:test          # 48 unit test
 
 # grafico di prova (coppie di confusione, tavola tipo Ishihara, linee)
 ./gradlew :cli:run --args="chart samples/confusion-chart.png"
@@ -229,6 +242,7 @@ Le immagini finiscono in `colorgap/out/`: `-heatmap`, `-stripes` (righe diagonal
   ogni voce trova sé stessa, colori vicini trovano il nome atteso in IT ed EN.
 - `BulkSimulationTest`: encoder a tabella entro ±1 livello da quello esatto,
   simulazione in blocco = simulazione per pixel.
+- `YuvTest`: grigi, valori JFIF noti, andata e ritorno RGB → YUV → RGB, stride e crominanza 2×2.
 - `ResampleTest`: media a blocchi, blocchi parziali scartati, scacchiera → grigio (niente aliasing).
 - `AdaptiveFactorTest` (app): più lento → più grossolano (solo dopo la finestra),
   più veloce → più fine, limiti, banda di isteresi, picco di warm-up ignorato.

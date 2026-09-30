@@ -6,11 +6,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,14 +30,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import dev.colorgap.app.AppLanguage
 import dev.colorgap.app.R
 import dev.colorgap.colorcore.CvdProfile
 import dev.colorgap.colorcore.CvdType
 import kotlin.math.roundToInt
 
 @Composable
-fun ProfileDialog(initial: CvdProfile, onDismiss: () -> Unit, onConfirm: (CvdProfile) -> Unit) {
+fun ProfileDialog(
+    initial: CvdProfile,
+    initialLanguage: AppLanguage,
+    onDismiss: () -> Unit,
+    onConfirm: (CvdProfile, AppLanguage) -> Unit,
+) {
     var type by remember { mutableStateOf(initial.type) }
+    var language by remember { mutableStateOf(initialLanguage) }
     var severity by remember { mutableFloatStateOf(initial.severity.toFloat()) }
     val types = listOf(
         CvdType.DEUTAN to R.string.type_deutan,
@@ -42,9 +54,10 @@ fun ProfileDialog(initial: CvdProfile, onDismiss: () -> Unit, onConfirm: (CvdPro
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.profile_title)) },
+        title = { Text(stringResource(R.string.settings_title)) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.titleMedium)
                 Column(Modifier.selectableGroup()) {
                     types.forEach { (t, label) ->
                         Row(
@@ -65,13 +78,40 @@ fun ProfileDialog(initial: CvdProfile, onDismiss: () -> Unit, onConfirm: (CvdPro
                 // 5 % steps: fine enough for anomalous trichromacy, easy to hit with a thumb.
                 Slider(value = severity, onValueChange = { severity = it }, steps = 19)
                 Text(stringResource(R.string.severity_hint), style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.size(20.dp))
+                LanguagePicker(language, onSelect = { language = it })
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(CvdProfile(type, severity.toDouble().coerceIn(0.0, 1.0))) }) {
+            TextButton(onClick = { onConfirm(CvdProfile(type, severity.toDouble().coerceIn(0.0, 1.0)), language) }) {
                 Text(stringResource(R.string.ok))
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
+}
+
+/**
+ * Language choice. The label is bilingual and each language is named in
+ * itself, so it can be found whatever language the app is currently in.
+ */
+@Composable
+private fun LanguagePicker(selected: AppLanguage, onSelect: (AppLanguage) -> Unit) {
+    val options = listOf(
+        AppLanguage.SYSTEM to stringResource(R.string.language_system),
+        AppLanguage.ENGLISH to "English",
+        AppLanguage.ITALIAN to "Italiano",
+    )
+    Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.size(8.dp))
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        options.forEachIndexed { i, (lang, label) ->
+            SegmentedButton(
+                selected = selected == lang,
+                onClick = { onSelect(lang) },
+                shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                modifier = Modifier.heightIn(min = 56.dp),
+            ) { Text(label, maxLines = 1) }
+        }
+    }
 }

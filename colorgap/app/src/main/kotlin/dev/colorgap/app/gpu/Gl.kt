@@ -44,6 +44,7 @@ import android.opengl.GLES30.glUniform1i
 import android.opengl.GLES30.glUniform2f
 import android.opengl.GLES30.glUniform2i
 import android.opengl.GLES30.glUniform3f
+import android.opengl.GLES30.glUniform3i
 import android.opengl.GLES30.glUniform4f
 import android.opengl.GLES30.glUniform4i
 import android.opengl.GLES30.glUniformMatrix3fv
@@ -106,6 +107,7 @@ class GlProgram(vertexSource: String, fragmentSource: String, private val name: 
     fun ivec2(u: String, x: Int, y: Int) = glUniform2i(loc(u), x, y)
     fun vec3(u: String, x: Float, y: Float, z: Float) = glUniform3f(loc(u), x, y, z)
     fun vec4(u: String, x: Float, y: Float, z: Float, w: Float) = glUniform4f(loc(u), x, y, z, w)
+    fun ivec3(u: String, x: Int, y: Int, z: Int) = glUniform3i(loc(u), x, y, z)
     fun ivec4(u: String, x: Int, y: Int, z: Int, w: Int) = glUniform4i(loc(u), x, y, z, w)
 
     /** [rowMajor] 3×3 matrix (colorcore's layout), transposed by GL into a GLSL mat3. */

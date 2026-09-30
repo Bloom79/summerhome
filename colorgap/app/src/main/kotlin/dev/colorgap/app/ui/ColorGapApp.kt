@@ -1,5 +1,6 @@
 package dev.colorgap.app.ui
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -19,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import dev.colorgap.app.AppLanguage
 import dev.colorgap.app.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -66,10 +68,16 @@ fun ColorGapApp(vm: MainViewModel) {
     }
 
     if (showProfile) {
+        val activity = context as Activity
         ProfileDialog(
             initial = vm.profile,
+            initialLanguage = AppLanguage.current(context),
             onDismiss = { showProfile = false },
-            onConfirm = { vm.updateProfile(it); showProfile = false },
+            onConfirm = { profile, language ->
+                vm.updateProfile(profile)
+                showProfile = false
+                AppLanguage.apply(activity, language)
+            },
         )
     }
 }

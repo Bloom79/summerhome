@@ -34,7 +34,7 @@
     <string name="split_you">You</string>
     <string name="tap_hint">Tap a point to name its color · pinch or double-tap to zoom</string>
     <string name="image_description">Analyzed photo</string>
-    <string name="change_profile">Change color vision profile</string>
+    <string name="change_profile">Settings: color vision profile and language</string>
     <string name="camera">Camera</string>
     <string name="freeze">Freeze</string>
     <string name="camera_description">Live camera with the areas you perceive differently</string>
@@ -46,4 +46,13 @@
     <string name="engine_gpu" translatable="false">GPU</string>
     <string name="engine_cpu" translatable="false">CPU</string>
     <string name="switch_engine">switch between GPU and CPU</string>
+    <string name="camera_starting">Starting the camera…</string>
+    <string name="camera_no_frames">The camera is not sending images. Close other apps that may be using it and tap Retry.</string>
+    <string name="camera_no_output">Frames arrive (%1$d) but none could be analyzed. Tap Retry or switch engine.</string>
+    <string name="camera_error">Camera error (code %1$d). Close other apps that may be using the camera and tap Retry.</string>
+    <string name="camera_diagnostics">Engine %1$s · frames %2$d · camera bound %3$s</string>
+    <string name="retry">Retry</string>
+    <string name="settings_title">Settings</string>
+    <string name="language_title">Language · Lingua</string>
+    <string name="language_system">System</string>
 </resources>

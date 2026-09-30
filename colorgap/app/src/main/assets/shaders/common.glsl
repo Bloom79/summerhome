@@ -134,3 +134,13 @@ vec2 sourceUv(vec2 up, vec4 crop, int rot, vec2 srcSize) {
 }
 
 ivec2 clampTexel(ivec2 p, ivec2 size) { return clamp(p, ivec2(0), size - 1); }
+
+// ---- Camera YUV_420_888, full-range BT.601 / JFIF (colorcore Yuv.toArgb) ----
+// Inputs are 0..255; returns sRGB 0..1 rounded to 8 bits like the CPU path.
+
+vec3 yuvToRgb(float y, float u, float v) {
+    float cb = u - 128.0;
+    float cr = v - 128.0;
+    vec3 rgb = vec3(y + 1.402 * cr, y - 0.344136 * cb - 0.714136 * cr, y + 1.772 * cb);
+    return clamp(floor(rgb + 0.5), 0.0, 255.0) / 255.0;
+}

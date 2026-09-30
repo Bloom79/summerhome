@@ -33,7 +33,7 @@
     <string name="split_you">Tu</string>
     <string name="tap_hint">Tocca un punto per sapere il colore · pizzica o tocca due volte per ingrandire</string>
     <string name="image_description">Foto analizzata</string>
-    <string name="change_profile">Cambia il profilo della visione dei colori</string>
+    <string name="change_profile">Impostazioni: profilo della visione dei colori e lingua</string>
     <string name="camera">Fotocamera</string>
     <string name="freeze">Congela</string>
     <string name="camera_description">Fotocamera dal vivo con le zone che percepisci diversamente</string>
@@ -43,4 +43,13 @@
     <string name="open_settings">Apri le impostazioni dell\'app</string>
     <string name="camera_unavailable">Nessuna fotocamera disponibile. Puoi comunque analizzare le foto della galleria.</string>
     <string name="switch_engine">passa da GPU a CPU e viceversa</string>
+    <string name="camera_starting">Avvio della fotocamera…</string>
+    <string name="camera_no_frames">La fotocamera non invia immagini. Chiudi le altre app che potrebbero usarla e tocca Riprova.</string>
+    <string name="camera_no_output">Arrivano fotogrammi (%1$d) ma nessuno è stato analizzato. Tocca Riprova o cambia motore.</string>
+    <string name="camera_error">Errore della fotocamera (codice %1$d). Chiudi le altre app che potrebbero usarla e tocca Riprova.</string>
+    <string name="camera_diagnostics">Motore %1$s · fotogrammi %2$d · fotocamera collegata %3$s</string>
+    <string name="retry">Riprova</string>
+    <string name="settings_title">Impostazioni</string>
+    <string name="language_title">Lingua · Language</string>
+    <string name="language_system">Sistema</string>
 </resources>

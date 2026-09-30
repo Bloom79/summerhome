@@ -14,8 +14,8 @@ android {
         applicationId = "dev.colorgap.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.4.0"
+        versionCode = 4
+        versionName = "0.4.1"
         // Only Italian and English are translated; keep library resources in line.
         resourceConfigurations += listOf("en", "it")
     }
@@ -35,6 +35,10 @@ android {
     }
 
     buildFeatures { compose = true }
+
+    // The language can be switched inside the app: keep every translation in
+    // the install instead of letting Play split them by device language.
+    bundle { language { enableSplit = false } }
 }
 
 kotlin {

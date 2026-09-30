@@ -5,6 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
+import androidx.camera.core.Camera
+import kotlinx.coroutines.delay
+import java.util.concurrent.atomic.AtomicInteger
 import android.opengl.GLSurfaceView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -116,6 +121,23 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
     val cpuFrame by live.frames.collectAsState()
     val gpuState by gpu.state.collectAsState()
     val info = if (useGpu) gpuState?.let { LiveInfo.of(it) } else cpuFrame?.let { LiveInfo.of(it) }
+    val diagnostics = remember { CameraDiagnostics() }
+    var retryKey by remember { mutableIntStateOf(0) }
+
+    // Watchdog: frames reach the GPU renderer but nothing comes out (driver
+    // quirk, surface never created...): fall back to the CPU path.
+    if (useGpu) {
+        LaunchedEffect(Unit) {
+            while (gpu.state.value == null) {
+                delay(500)
+                if (diagnostics.frames.get() >= GPU_WATCHDOG_FRAMES && gpu.state.value == null) {
+                    Log.w(TAG, "GPU produced no output after ${diagnostics.frames.get()} frames, falling back to CPU")
+                    vm.markGpuFailed()
+                    break
+                }
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         Box(
@@ -127,6 +149,8 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
             if (granted && !unavailable) {
                 CameraBinding(
                     analyzer = if (useGpu) gpu else live,
+                    diagnostics = diagnostics,
+                    retryKey = retryKey,
                     onUnavailable = { unavailable = true },
                     onUnbound = gpu::dropPending,
                 )
@@ -136,6 +160,9 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
                     LiveView(cpuFrame, vm.split, onTap = vm::setLiveProbe, Modifier.fillMaxSize())
                 }
                 info?.probe?.let { ProbeCard(it, onClose = { vm.setLiveProbe(null) }, Modifier.align(Alignment.TopCenter)) }
+                if (info == null) {
+                    WaitingForCamera(diagnostics, useGpu, onRetry = { retryKey++ }, Modifier.align(Alignment.Center))
+                }
                 info?.let {
                     StatusChip(
                         it,
@@ -208,13 +235,30 @@ private data class LiveInfo(
     }
 }
 
-/** Binds an RGBA ImageAnalysis use case (no Preview: we draw the analyzed frames) to the lifecycle. */
+/** Whether frames actually arrive, and why not: shown on screen when the camera stays dark. */
+private class CameraDiagnostics {
+    val frames = AtomicInteger(0)
+    @Volatile var errorCode: Int? = null
+    @Volatile var bound = false
+}
+
+/**
+ * Binds an ImageAnalysis use case (no Preview: we draw the analyzed frames)
+ * to the lifecycle. Frames stay in the camera's native YUV_420_888: no
+ * conversion inside CameraX, which fails silently on some devices.
+ */
 @Composable
-private fun CameraBinding(analyzer: ImageAnalysis.Analyzer, onUnavailable: () -> Unit, onUnbound: () -> Unit) {
+private fun CameraBinding(
+    analyzer: ImageAnalysis.Analyzer,
+    diagnostics: CameraDiagnostics,
+    retryKey: Int,
+    onUnavailable: () -> Unit,
+    onUnbound: () -> Unit,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val rotation = LocalView.current.display?.rotation ?: ViewSurface.ROTATION_0
-    DisposableEffect(lifecycleOwner, rotation, analyzer) {
+    DisposableEffect(lifecycleOwner, rotation, analyzer, retryKey) {
         val executor = Executors.newSingleThreadExecutor()
         val analysis = ImageAnalysis.Builder()
             .setResolutionSelector(
@@ -226,13 +270,19 @@ private fun CameraBinding(analyzer: ImageAnalysis.Analyzer, onUnavailable: () ->
                     .build(),
             )
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .setTargetRotation(rotation)
             .build()
-        analysis.setAnalyzer(executor, analyzer)
+        diagnostics.frames.set(0)
+        diagnostics.errorCode = null
+        diagnostics.bound = false
+        analysis.setAnalyzer(executor) { image ->
+            diagnostics.frames.incrementAndGet()
+            analyzer.analyze(image)
+        }
 
         val future = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
+        var camera: Camera? = null
         var disposed = false
         future.addListener({
             if (disposed) return@addListener
@@ -245,20 +295,68 @@ private fun CameraBinding(analyzer: ImageAnalysis.Analyzer, onUnavailable: () ->
                     return@addListener
                 }
                 cameras.unbindAll()
-                cameras.bindToLifecycle(lifecycleOwner, selector, analysis)
+                camera = cameras.bindToLifecycle(lifecycleOwner, selector, analysis).also { cam ->
+                    cam.cameraInfo.cameraState.observe(lifecycleOwner) { state ->
+                        state.error?.let {
+                            Log.w(TAG, "Camera error ${it.code}", it.cause)
+                            diagnostics.errorCode = it.code
+                        }
+                    }
+                }
                 provider = cameras
+                diagnostics.bound = true
             } catch (e: Exception) {
                 // CameraX reports missing/busy cameras through several exception types.
+                Log.w(TAG, "Cannot bind the camera", e)
                 onUnavailable()
             }
         }, ContextCompat.getMainExecutor(context))
 
         onDispose {
             disposed = true
+            camera?.cameraInfo?.cameraState?.removeObservers(lifecycleOwner)
             provider?.unbind(analysis)
             analysis.clearAnalyzer()
             executor.shutdown()
             onUnbound()
+        }
+    }
+}
+
+/**
+ * Shown while no analyzed frame is available: "starting" at first, then what
+ * is wrong (camera error, no frames at all) with a retry button.
+ */
+@Composable
+private fun WaitingForCamera(diagnostics: CameraDiagnostics, useGpu: Boolean, onRetry: () -> Unit, modifier: Modifier) {
+    var elapsed by remember { mutableIntStateOf(0) }
+    var frames by remember { mutableIntStateOf(0) }
+    var error by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(diagnostics) {
+        while (true) {
+            frames = diagnostics.frames.get()
+            error = diagnostics.errorCode
+            delay(500)
+            elapsed += 500
+        }
+    }
+    Column(modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val message = when {
+            error != null -> stringResource(R.string.camera_error, error!!)
+            elapsed < 3000 -> stringResource(R.string.camera_starting)
+            frames == 0 -> stringResource(R.string.camera_no_frames)
+            else -> stringResource(R.string.camera_no_output, frames)
+        }
+        Text(message, color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        if (elapsed >= 3000 || error != null) {
+            Text(
+                stringResource(R.string.camera_diagnostics, if (useGpu) "GPU" else "CPU", frames, if (diagnostics.bound) "✓" else "✗"),
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            OutlinedButton(onClick = { elapsed = 0; onRetry() }, modifier = Modifier.heightIn(min = BigTouch)) {
+                Text(stringResource(R.string.retry), color = Color.White)
+            }
         }
     }
 }
@@ -424,6 +522,9 @@ private fun PermissionPrompt(onAllow: () -> Unit, showSettings: Boolean, modifie
         }
     }
 }
+
+private const val TAG = "ColorGapCamera"
+private const val GPU_WATCHDOG_FRAMES = 20
 
 private fun hasCameraPermission(context: android.content.Context) =
     ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED

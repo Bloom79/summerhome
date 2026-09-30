@@ -67,7 +67,7 @@ internal fun TopBar(profile: CvdProfile, onProfileClick: () -> Unit) {
                     .heightIn(min = 48.dp)
                     .semantics { contentDescription = changeProfile },
             ) {
-                Text("${shortName(profile.type)} ${(profile.severity * 100).roundToInt()}%")
+                Text("⚙  ${shortName(profile.type)} ${(profile.severity * 100).roundToInt()}%")
             }
         }
     }

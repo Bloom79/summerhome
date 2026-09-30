@@ -11,7 +11,8 @@
 //   3. buffer geometry: rotation 90/180/270 + crop + 2x box downscale must
 //      reproduce the upright factor-1 result exactly;
 //   4. the display pass (heatmap, stripes) against the CPU-baked overlays;
-//   5. freeze frame (upright.frag) and tap probe (probe.frag) on a rotated buffer.
+//   5. freeze frame (upright.frag) and tap probe (probe.frag) on a rotated buffer;
+//   6. camera YUV_420_888 -> RGB (yuv.frag) with padded rows and interleaved chroma.
 //
 // Usage (from colorgap/):
 //   ./gradlew -q :cli:run --args="dump samples/confusion-chart.png --out out/dump/chart"
@@ -36,7 +37,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const shaderDir = join(here, '../../app/src/main/assets/shaders');
 const shader = (name) => readFileSync(join(shaderDir, name), 'utf8');
 const sources = Object.fromEntries(
-  ['common.glsl', 'fullscreen.vert', 'lab.frag', 'blur.frag', 'edges.frag', 'contrast.frag', 'score.frag', 'display.frag', 'upright.frag', 'probe.frag']
+  ['common.glsl', 'fullscreen.vert', 'yuv.frag', 'lab.frag', 'blur.frag', 'edges.frag', 'contrast.frag', 'score.frag', 'display.frag', 'upright.frag', 'probe.frag']
     .map((n) => [n, shader(n)]),
 );
 
@@ -161,7 +162,7 @@ function pageMain({ sources, SHARMA, dumps }) {
   const progs = {
     lab: program('lab.frag'), blur: program('blur.frag'), edges: program('edges.frag'),
     contrast: program('contrast.frag'), score: program('score.frag'), display: program('display.frag'),
-    upright: program('upright.frag'), probe: program('probe.frag'),
+    upright: program('upright.frag'), probe: program('probe.frag'), yuv: program('yuv.frag'),
   };
 
   // The analysis passes, as GpuPipeline.analyze runs them.
@@ -260,6 +261,40 @@ function pageMain({ sources, SHARMA, dumps }) {
       }
     }
 
+    // 6. Camera YUV_420_888 (NV12-like: padded rows, interleaved chroma) -> RGB,
+    //    against the same formulas as colorcore's Yuv (JFIF, round half up).
+    let yuvDiff = 0;
+    {
+      const ch = (x) => Math.min(255, Math.max(0, Math.floor(x + 0.5)));
+      const fromRgb = (r, g, b) => [ch(0.299 * r + 0.587 * g + 0.114 * b), ch(128 - 0.168736 * r - 0.331264 * g + 0.5 * b), ch(128 + 0.5 * r - 0.418688 * g - 0.081312 * b)];
+      const toRgb = (y, u, v) => { const cb = u - 128, cr = v - 128; return [ch(y + 1.402 * cr), ch(y - 0.344136 * cb - 0.714136 * cr), ch(y + 1.772 * cb)]; };
+      const yStride = w + 8, cw = Math.ceil(w / 2), chH = Math.ceil(h / 2), cStride = 2 * cw + 8;
+      const Y = new Uint8Array(yStride * h), UV = new Uint8Array(cStride * chH);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const [yy, uu, vv] = fromRgb(input[i], input[i + 1], input[i + 2]);
+        Y[y * yStride + x] = yy;
+        if (x % 2 === 0 && y % 2 === 0) { UV[(y / 2) * cStride + x] = uu; UV[(y / 2) * cStride + x + 1] = vv; }
+      }
+      const V = UV.subarray(1); // interleaved: V starts one byte after U, same strides
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      const r8 = (data, width, height) => texture(width, height, gl.R8, gl.RED, gl.UNSIGNED_BYTE, data);
+      const tY = r8(Y, yStride, h), tU = r8(UV, cStride, chH);
+      const vPadded = new Uint8Array(cStride * chH); vPadded.set(V);
+      const tV = r8(vPadded, cStride, chH);
+      const outTex = texture(w, h, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE);
+      const f = fbo(outTex);
+      run(progs.yuv, f, w, h, { uY: tY, uU: tU, uV: tV }, { uPixelStride: ['3i', 1, 2, 2] });
+      const got = readBytes(f, w, h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const o = (y * w + x) * 4;
+        const c = ((y >> 1) * cStride) + (x >> 1) * 2;
+        const exp = toRgb(Y[y * yStride + x], UV[c], UV[c + 1]);
+        for (let k = 0; k < 3; k++) yuvDiff = Math.max(yuvDiff, Math.abs(got[o + k] - exp[k]));
+      }
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    }
+
     // 4. Display pass into an image-sized target (score texels align with pixels).
     const display = {};
     for (const [mode, name] of [[0, 'heatmap'], [1, 'stripes']]) {
@@ -278,7 +313,7 @@ function pageMain({ sources, SHARMA, dumps }) {
       for (let y = 0; y < h; y++) flipped.set(bytes.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
       display[name] = Array.from(flipped);
     }
-    return { name: d.name, w, h, uprightDiff, probeDiff, colorDelta: Array.from(base.colorDelta), score: Array.from(base.scoreBytes.filter((_, i) => i % 4 === 0)), geometry, display };
+    return { name: d.name, w, h, yuvDiff, uprightDiff, probeDiff, colorDelta: Array.from(base.colorDelta), score: Array.from(base.scoreBytes.filter((_, i) => i % 4 === 0)), geometry, display };
   });
   return results;
 }
@@ -331,6 +366,7 @@ try {
       check(g.maxScoreDiff === 0, `${d.name}: rotation ${g.rotation} + crop + 2x downscale (${g.size.join('x')}) reproduces the upright map (max diff ${g.maxScoreDiff}/255)`);
     }
 
+    check(d.yuvDiff === 0, `${d.name}: camera YUV (padded rows, interleaved chroma) -> RGB matches colorcore's formula (max diff ${d.yuvDiff})`);
     check(d.uprightDiff === 0, `${d.name}: freeze frame from a 90-degree buffer equals the input (max diff ${d.uprightDiff})`);
     // The CPU averages with integer division, the GPU rounds: up to one level apart.
     check(d.probeDiff <= 1, `${d.name}: tap probe 5x5 average vs CPU (max diff ${d.probeDiff.toFixed(2)} levels)`);

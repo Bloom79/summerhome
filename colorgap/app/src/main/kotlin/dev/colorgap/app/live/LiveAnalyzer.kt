@@ -15,6 +15,7 @@ import dev.colorgap.colorcore.CvdSimulator
 import dev.colorgap.colorcore.Overlays
 import dev.colorgap.colorcore.PerceptionAnalyzer
 import dev.colorgap.colorcore.Resample
+import dev.colorgap.colorcore.Yuv
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.max
@@ -53,8 +54,8 @@ class LiveFrame(
 }
 
 /**
- * CPU pipeline for CameraX frames (RGBA_8888):
- * rotate/scale into an upright display frame → box-downscale by an adaptive
+ * CPU pipeline for CameraX frames (YUV_420_888):
+ * convert to RGB, rotate/scale into an upright display frame → box-downscale by an adaptive
  * integer factor → perception map → heat layer or stripe mask.
  *
  * The downscale factor adapts to keep processing near [TARGET_MILLIS], so slow
@@ -81,6 +82,7 @@ class LiveAnalyzer : ImageAnalysis.Analyzer {
     private var simulatedPixels = IntArray(0)
     private var layerPixels = IntArray(0)
     private var smallPixels = IntArray(0)
+    private var yuvPixels = IntArray(0)
 
     private val resolution = AdaptiveFactor(targetMillis = TARGET_MILLIS)
     private var avgInterval = 0f
@@ -161,21 +163,17 @@ class LiveAnalyzer : ImageAnalysis.Analyzer {
         )
     }
 
-    /** Copies the RGBA plane into a bitmap and draws it rotated upright and scaled to [DISPLAY_LONG_SIDE]. */
+    /** Converts the YUV frame to RGB and draws it rotated upright and scaled to [DISPLAY_LONG_SIDE]. */
     private fun uprightFrame(image: ImageProxy): Bitmap? {
-        val plane = image.planes.firstOrNull() ?: return null
-        val rowPixels = plane.rowStride / plane.pixelStride
-        val buffer = plane.buffer.apply { rewind() }
-        val src = source?.takeIf { it.width == rowPixels && it.height == image.height }
-            ?: Bitmap.createBitmap(rowPixels, image.height, Bitmap.Config.ARGB_8888).also { source = it }
-        if (buffer.remaining() >= src.byteCount) {
-            src.copyPixelsFromBuffer(buffer)
-        } else {
-            // Last row not padded to the full stride: let CameraX do the copy.
-            val converted = image.toBitmap()
-            Canvas(src).drawBitmap(converted, 0f, 0f, null)
-            converted.recycle()
-        }
+        val planes = image.planes
+        if (planes.size < 3) return null
+        val w = image.width
+        val h = image.height
+        if (yuvPixels.size != w * h) yuvPixels = IntArray(w * h)
+        Yuv.toArgb(plane(planes[0]), plane(planes[1]), plane(planes[2]), w, h, yuvPixels)
+        val src = source?.takeIf { it.width == w && it.height == h }
+            ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { source = it }
+        src.setPixels(yuvPixels, 0, w, 0, 0, w, h)
 
         val crop = image.cropRect
         val rotation = image.imageInfo.rotationDegrees
@@ -196,6 +194,8 @@ class LiveAnalyzer : ImageAnalysis.Analyzer {
         Canvas(out).drawBitmap(src, matrix, filterPaint)
         return out
     }
+
+    private fun plane(p: ImageProxy.PlaneProxy) = Yuv.Plane(p.buffer, p.rowStride, p.pixelStride)
 
     private fun roundDown(v: Int) = (v / LCM_FACTORS) * LCM_FACTORS
 
