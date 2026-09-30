@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.colorgap.app.ColorProbe
+import dev.colorgap.app.ProbeReason
 import dev.colorgap.app.R
 import dev.colorgap.app.ViewMode
 import dev.colorgap.colorcore.Argb
@@ -76,7 +77,7 @@ internal fun TopBar(profile: CvdProfile, onProfileClick: () -> Unit) {
                     .heightIn(min = 48.dp)
                     .semantics { contentDescription = changeProfile },
             ) {
-                Text("⚙  ${shortName(profile.type)} ${(profile.severity * 100).roundToInt()}%")
+                Text("⚙  ${profileLabel(profile)}")
             }
         }
     }
@@ -139,7 +140,7 @@ internal fun ModeSlider(
 }
 
 @Composable
-internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, onDetails: () -> Unit, modifier: Modifier = Modifier) {
     val language = LocalConfiguration.current.locales[0].language
     Surface(
         // Polite live region: TalkBack reads the names when they change (e.g. while panning the camera).
@@ -151,14 +152,22 @@ internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, modifier: Modifie
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SwatchRow(stringResource(R.string.real_color), probe.realArgb, probe.realName.color.name(language))
             SwatchRow(stringResource(R.string.you_see), probe.seenArgb, probe.seenName.color.name(language))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    // The verdict is spelled out, never signalled by color alone.
-                    stringResource(if (probe.critical) R.string.critical_here else R.string.not_critical_here),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (probe.critical) FontWeight.Bold else FontWeight.Normal,
-                    modifier = Modifier.weight(1f),
-                )
+            Text(
+                // The verdict is spelled out, with its reason, never signalled by color alone.
+                stringResource(
+                    when (probe.reason) {
+                        ProbeReason.NONE -> R.string.not_critical_here
+                        ProbeReason.COLOR -> R.string.critical_color
+                        ProbeReason.EDGE -> R.string.critical_edge
+                    },
+                ),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (probe.critical) FontWeight.Bold else FontWeight.Normal,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onDetails, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.details))
+                }
                 TextButton(onClick = onClose, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.close))
                 }
@@ -225,6 +234,10 @@ internal fun CornerLabel(text: String, modifier: Modifier) {
         Text(text, Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelLarge)
     }
 }
+
+/** "Deutan 100%". */
+@Composable
+internal fun profileLabel(profile: CvdProfile) = "${shortName(profile.type)} ${(profile.severity * 100).roundToInt()}%"
 
 @Composable
 private fun shortName(type: CvdType): String = stringResource(

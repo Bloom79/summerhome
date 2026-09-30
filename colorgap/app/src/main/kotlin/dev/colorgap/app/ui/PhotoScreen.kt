@@ -53,7 +53,9 @@ fun PhotoScreen(vm: MainViewModel, onCamera: () -> Unit, onGallery: () -> Unit, 
                     modifier = Modifier.fillMaxSize(),
                 )
             }
-            vm.probe?.let { ProbeCard(it, onClose = vm::dismissProbe, Modifier.align(Alignment.TopCenter)) }
+            vm.probe?.let {
+                ProbeCard(it, onClose = vm::dismissProbe, onDetails = { vm.showColorDetail(it.realArgb) }, Modifier.align(Alignment.TopCenter))
+            }
             if (vm.busy) BusyIndicator(Modifier.align(Alignment.Center))
         }
         Surface(tonalElevation = 3.dp) {

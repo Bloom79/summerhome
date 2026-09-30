@@ -17,6 +17,7 @@ Usage: colorgap <image> [--type deutan|protan|tritan] [--severity 0..100]
                 [--threshold 0..1] [--max-size px] [--out dir]
 
        colorgap chart [out.png]
+       colorgap plate <#RRGGBB> [--type t] [--severity s] [--digit 2..9] [--out file.png]
        colorgap dump <image> [--out dir] [--max-size px] [--type t] [--severity s] [--threshold t]
 
 Writes <name>-heatmap.png, -stripes.png, -split.png, -simulated.png and
@@ -26,6 +27,17 @@ Writes <name>-heatmap.png, -stripes.png, -split.png, -simulated.png and
 fun main(args: Array<String>) {
     if (args.isEmpty() || args[0] == "--help") { println(USAGE.trim()); exitProcess(if (args.isEmpty()) 1 else 0) }
     if (args[0] == "chart") { writeConfusionChart(File(args.getOrElse(1) { "samples/confusion-chart.png" })); return }
+    if (args[0] == "plate") {
+        val o = args.drop(2).chunked(2).associate { it[0] to it.getOrElse(1) { "" } }
+        writePlateDemo(
+            args[1],
+            CvdType.valueOf((o["--type"] ?: "deutan").uppercase()),
+            (o["--severity"]?.toDouble() ?: 100.0) / 100.0,
+            o["--digit"]?.toInt() ?: 7,
+            File(o["--out"] ?: "out/plate.png"),
+        )
+        return
+    }
     if (args[0] == "dump") {
         val o = args.drop(2).chunked(2).associate { it[0] to it.getOrElse(1) { "" } }
         dump(

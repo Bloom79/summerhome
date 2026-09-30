@@ -54,6 +54,15 @@ fun ColorGapApp(vm: MainViewModel) {
         // Wait for the saved settings: no flash of the welcome screen or of default values.
         !vm.settingsLoaded -> Box(Modifier.fillMaxSize().background(Color.Black))
         !vm.onboarded -> WelcomeScreen(onStart = vm::completeOnboarding)
+        vm.detailColor != null -> {
+            BackHandler { vm.closeColorDetail() }
+            ColorDetailScreen(
+                color = vm.detailColor!!,
+                profile = vm.profile,
+                onBack = vm::closeColorDetail,
+                onOpenSettings = { vm.closeColorDetail(); showSettings = true },
+            )
+        }
         showSettings -> {
             BackHandler { showSettings = false }
             SettingsScreen(vm, gpuAvailable && !vm.gpuFailed, onBack = { showSettings = false })

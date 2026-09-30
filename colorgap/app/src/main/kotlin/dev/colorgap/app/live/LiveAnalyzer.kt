@@ -140,7 +140,7 @@ class LiveAnalyzer : ImageAnalysis.Analyzer {
             ?.let { (x, y) ->
                 val mx = (x / f).coerceAtMost(sw - 1)
                 val my = (y / f).coerceAtMost(sh - 1)
-                ColorProbe.at(framePixels, w, h, x, y, simulator!!, critical = map.score[my * sw + mx] >= s.threshold)
+                ColorProbe.at(framePixels, w, h, x, y, simulator!!, map.score[my * sw + mx], s.threshold, s.config)
             }
 
         val critical = map.criticalFraction(s.threshold)

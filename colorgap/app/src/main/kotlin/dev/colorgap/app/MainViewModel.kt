@@ -52,6 +52,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var gpuFailed by mutableStateOf(false)
         private set
 
+    /** Color shown in the detail screen (big swatches, what changes, plate), or null. */
+    var detailColor by mutableStateOf<Int?>(null)
+        private set
+
     /** Point named continuously on the live camera, in frame pixels. */
     var liveProbePoint by mutableStateOf<Pair<Int, Int>?>(null)
         private set
@@ -167,6 +171,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setLiveProbe(point: Pair<Int, Int>?) { liveProbePoint = point }
+
+    fun showColorDetail(argb: Int) { detailColor = argb }
+
+    fun closeColorDetail() { detailColor = null }
 
     fun updatePreferGpu(value: Boolean) {
         if (value == preferGpu) return

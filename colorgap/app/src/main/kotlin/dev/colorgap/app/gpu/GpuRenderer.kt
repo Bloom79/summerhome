@@ -14,7 +14,6 @@ import dev.colorgap.app.ColorProbe
 import dev.colorgap.app.ViewMode
 import dev.colorgap.app.live.LiveAnalyzer
 import dev.colorgap.app.live.LiveSettings
-import dev.colorgap.colorcore.ColorNames
 import dev.colorgap.colorcore.CvdProfile
 import dev.colorgap.colorcore.CvdSimulator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -166,9 +165,7 @@ class GpuRenderer(
             ?.takeIf { (x, y) -> x in 0 until p.frameWidth && y in 0 until p.frameHeight }
             ?.let { (x, y) ->
                 val sim = simulator?.takeIf { it.profile == s.profile } ?: CvdSimulator(s.profile).also { simulator = it }
-                val real = p.probeColor(x, y)
-                val seen = sim.simulateArgb(real)
-                ColorProbe(x, y, real, seen, ColorNames.nearest(real), ColorNames.nearest(seen), p.scoreAt(x, y) >= s.threshold)
+                ColorProbe.of(x, y, p.probeColor(x, y), sim, p.scoreAt(x, y), s.threshold, s.config)
             }
         _state.value = GpuLiveState(p.frameWidth, p.frameHeight, p.mapWidth, p.mapHeight, fps, critical, probe)
     }

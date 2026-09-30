@@ -52,6 +52,41 @@ Tutte le dipendenze sono state confermate milestone per milestone. Nessuna libre
   anche in Impostazioni → App → ColorGap → Lingua. Su Android < 13 è salvata
   nell'app. Il bundle non divide le lingue, così il cambio funziona anche da Play.
 
+## Dettaglio del colore e tavola del numero
+
+Tocca un punto e poi **Dettagli** nella scheda del colore:
+
+- **I due colori in grande**, reale e come lo vedi tu. Toccandoli si aprono a
+  tutto schermo, uno sopra l'altro.
+- **Quanto sono diversi per una visione tipica**: ΔE2000 e una parola
+  (praticamente identici < 2, leggermente diversi < 5, diversi < 10,
+  chiaramente diversi < 25, completamente diversi).
+- **Cosa cambia per te**: luminosità, saturazione (croma) e tinta, da reale a
+  percepita. Per esempio verde felce `#417056` → grigio `#686458` in deutan
+  100 %: luminosità invariata, saturazione 24 → 7, tinta spostata di 61°.
+- **Test del numero** (stile Ishihara, `Confusion` e `Plate` in `colorcore`):
+  - l'app trova il "gemello" del colore toccato: un colore che una visione
+    tipica vede chiaramente diverso ma che per il tuo profilo resta quasi
+    uguale. Per trovarlo sposta il colore, restando dentro la gamma sRGB, lungo
+    la direzione che la matrice di Machado schiaccia di più (autovettore di MᵀM
+    con l'autovalore minimo: per i dicromati è la linea di confusione);
+  - disegna una tavola a puntini: il numero con il colore toccato, lo sfondo con
+    il gemello, e ogni puntino con una luminosità casuale uguale per entrambi,
+    così solo il colore può rivelare il numero;
+  - la tavola si vede in due versioni, "Tavola reale" e "Come la vedi tu"
+    (simulata), con i pulsanti "Mostra il numero" e "Nuova tavola";
+  - vincoli sul gemello: differenza per te ≤ 4 (sotto il rumore di luminosità
+    della tavola), per la visione tipica ≥ 8 e ≥ 2,5 volte la tua. Se non esiste
+    un gemello così, l'app lo dice: quel colore lo distingui bene. Succede per
+    esempio in deutan 30 %;
+  - è anche una **verifica della gravità**: se riesci a leggere una tavola
+    costruita per il tuo profilo, il profilo è più forte della tua visione
+    reale, e l'app suggerisce di abbassare la gravità;
+  - da desktop: `./gradlew :cli:run --args="plate #417056 --severity 70 --digit 5"`.
+- **Il verdetto della scheda dice il perché**: "qui il colore ti appare diverso"
+  (prevale la perdita di colore), "qui per te sparisce il bordo tra due colori"
+  (prevale il contrasto perso) oppure "qui vedi come tutti gli altri".
+
 ## Interfaccia e impostazioni (milestone 5)
 
 - **Primo avvio**: una schermata di benvenuto spiega in una frase cosa fa l'app.
@@ -268,7 +303,7 @@ Requisiti: JDK 17+. Il wrapper Gradle scarica il resto.
 
 ```bash
 cd colorgap
-./gradlew :colorcore:test          # 48 unit test
+./gradlew :colorcore:test          # 57 unit test
 
 # grafico di prova (coppie di confusione, tavola tipo Ishihara, linee)
 ./gradlew :cli:run --args="chart samples/confusion-chart.png"
@@ -286,6 +321,15 @@ Le immagini finiscono in `colorgap/out/`: `-heatmap`, `-stripes` (righe diagonal
   ogni voce trova sé stessa, colori vicini trovano il nome atteso in IT ed EN.
 - `BulkSimulationTest`: encoder a tabella entro ±1 livello da quello esatto,
   simulazione in blocco = simulazione per pixel.
+- `ConfusionTest`:
+  - l'asse di confusione è quasi annullato dalle matrici protan e deutan;
+  - il verde felce ha un gemello chiaro per la visione tipica e identico per il deutan;
+  - nessun gemello con visione tipica, né in deutan 30 %;
+  - in deutan 70 % il gemello rientra nel rumore della tavola;
+  - il numero della tavola è visibile per la visione tipica (ΔE > 6) e
+    nascosto nella simulazione (ΔE < 1,5);
+  - le tavole sono riproducibili.
+- `ProbeReasonTest` (app): verdetto nessuno / colore / bordo, anche con "colori diversi" spento.
 - `YuvTest`: grigi, valori JFIF noti, andata e ritorno RGB → YUV → RGB, stride e crominanza 2×2.
 - `ResampleTest`: media a blocchi, blocchi parziali scartati, scacchiera → grigio (niente aliasing).
 - `AdaptiveFactorTest` (app): più lento → più grossolano (solo dopo la finestra),

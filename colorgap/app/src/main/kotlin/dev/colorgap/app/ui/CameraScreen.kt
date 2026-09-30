@@ -165,7 +165,14 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit, onSettings: () -> Uni
                 } else {
                     LiveView(cpuFrame, vm.split, onTap = vm::setLiveProbe, Modifier.fillMaxSize())
                 }
-                info?.probe?.let { ProbeCard(it, onClose = { vm.setLiveProbe(null) }, Modifier.align(Alignment.TopCenter)) }
+                info?.probe?.let {
+                    ProbeCard(
+                        it,
+                        onClose = { vm.setLiveProbe(null) },
+                        onDetails = { vm.showColorDetail(it.realArgb) },
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
+                }
                 if (info == null) {
                     WaitingForCamera(diagnostics, useGpu, onRetry = { retryKey++ }, Modifier.align(Alignment.Center))
                 }
