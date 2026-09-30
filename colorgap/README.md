@@ -87,6 +87,47 @@ Tocca un punto e poi **Dettagli** nella scheda del colore:
   (prevale la perdita di colore), "qui per te sparisce il bordo tra due colori"
   (prevale il contrasto perso) oppure "qui vedi come tutti gli altri".
 
+## Test di calibrazione (tipo e gravità automatici)
+
+Si apre da Impostazioni, dalla schermata di benvenuto o dal dettaglio del colore.
+Mostra circa 20 tavole a puntini; per ognuna si risponde con una di 4 cifre o
+"Non vedo nessun numero". Alla fine propone il profilo e lo applica con un tocco.
+
+Algoritmo (`CalibrationSession` in `colorcore`, puro e testato):
+
+- **Principio**: una tavola costruita per il profilo *s* nasconde il numero a
+  chi ha quel deficit con gravità *s* **o superiore**, e lo mostra a chi ha una
+  visione più lieve o tipica. Il gemello deve restare entro ΔE 4 per il
+  profilo bersaglio ed essere ≥ 10 per la visione tipica.
+- **Tipo**: 2 tavole per tipo al 40 %. Vince il tipo che si sbaglia di più;
+  se si leggono tutte, il risultato è "visione tipica o più lieve del 40 %".
+  In caso di parità tra protan e deutan si usano tavole **discriminanti**
+  (nascoste a un tipo, ben visibili all'altro), che però esistono solo vicino
+  al 100 %: sotto, i due tipi non si separano con le tavole (stesso limite
+  delle tavole Ishihara cliniche).
+- **Gravità**: una bisezione tra 40 % e 100 %, con 2 tavole per livello (3 in
+  caso di pareggio), serve a mettere le tavole dove danno più informazione.
+  Poi il **fit di massima verosimiglianza** sceglie il profilo il cui occhio
+  simulato risponde più come l'utente. Si leggono le tavole con una curva
+  psicometrica attorno a ΔE 6 e si usa un prior per la frequenza: deutan circa
+  3 volte protan, tritan raro. Se due tipi sono quasi alla pari, il tipo è
+  "incerto" e la gravità è la media pesata.
+- **Controlli**: 2 tavole leggibili da tutti (il numero differisce solo in
+  luminosità). Mancarle entrambe rende il test "non affidabile".
+- **Validazione con osservatori virtuali** (`CalibrationTest`): deutan e protan
+  al 100/80/60/50 % su più sequenze di tavole. Su 112 test simulati l'errore
+  medio è 3,8 %:
+  - deutan: tipo giusto ed errore di gravità ≤ 10 %;
+  - protan sotto il 90 %: a volte risultano "deutan?" con gravità sottostimata
+    fino al 20 %, sempre segnalata come tipo incerto.
+
+  Inoltre la visione tipica legge tutto; il 20 % risulta tipico; rispondere
+  "nessun numero" a tutto viene segnalato come non affidabile; la stessa
+  sessione dà sempre lo stesso risultato.
+
+Limiti: è una stima, non una diagnosi. La soglia di lettura (ΔE 6) è
+un'ipotesi del modello, e schermo e luce influiscono sul risultato.
+
 ## Interfaccia e impostazioni (milestone 5)
 
 - **Primo avvio**: una schermata di benvenuto spiega in una frase cosa fa l'app.
@@ -303,7 +344,7 @@ Requisiti: JDK 17+. Il wrapper Gradle scarica il resto.
 
 ```bash
 cd colorgap
-./gradlew :colorcore:test          # 57 unit test
+./gradlew :colorcore:test          # 65 unit test
 
 # grafico di prova (coppie di confusione, tavola tipo Ishihara, linee)
 ./gradlew :cli:run --args="chart samples/confusion-chart.png"

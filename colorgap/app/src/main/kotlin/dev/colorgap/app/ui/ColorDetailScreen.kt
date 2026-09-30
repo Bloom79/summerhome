@@ -84,7 +84,7 @@ private const val PLATE_SIZE = 720
  * user, and an Ishihara-style plate hiding a digit in exactly that confusion.
  */
 @Composable
-fun ColorDetailScreen(color: Int, profile: CvdProfile, onBack: () -> Unit, onOpenSettings: () -> Unit) {
+fun ColorDetailScreen(color: Int, profile: CvdProfile, onBack: () -> Unit, onOpenSettings: () -> Unit, onCalibrate: () -> Unit) {
     val language = LocalConfiguration.current.locales[0].language
     val simulator = remember(profile) { CvdSimulator(profile) }
     val seen = remember(color, profile) { simulator.simulateArgb(color) }
@@ -154,6 +154,7 @@ fun ColorDetailScreen(color: Int, profile: CvdProfile, onBack: () -> Unit, onOpe
                         onReveal = { revealed = !revealed },
                         onNewPlate = { revealed = false; seed += 1 },
                         onOpenSettings = onOpenSettings,
+                        onCalibrate = onCalibrate,
                     )
                 }
             }
@@ -190,6 +191,7 @@ private fun PlateSection(
     onReveal: () -> Unit,
     onNewPlate: () -> Unit,
     onOpenSettings: () -> Unit,
+    onCalibrate: () -> Unit,
 ) {
     val language = LocalConfiguration.current.locales[0].language
     Text(
@@ -234,6 +236,9 @@ private fun PlateSection(
         }
     }
     Text(stringResource(R.string.plate_calibration, profileLabel(profile)), style = MaterialTheme.typography.bodyMedium)
+    Button(onClick = onCalibrate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+        Text(stringResource(R.string.calib_open))
+    }
     OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
         Text(stringResource(R.string.change_severity))
     }

@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
@@ -14,6 +15,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.colorgap.app.settings.AppSettings
 import dev.colorgap.app.settings.SettingsStore
+import dev.colorgap.colorcore.CalibrationSession
 import dev.colorgap.colorcore.CvdProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,6 +52,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var preferGpu by mutableStateOf(true)
         private set
     var gpuFailed by mutableStateOf(false)
+        private set
+
+    /** True while the calibration test is shown. */
+    var showingCalibration by mutableStateOf(false)
+        private set
+
+    /** The running calibration test (null on its intro screen), and a counter bumped on each answer. */
+    var calibration by mutableStateOf<CalibrationSession?>(null)
+        private set
+    var calibrationStep by mutableIntStateOf(0)
         private set
 
     /** Color shown in the detail screen (big swatches, what changes, plate), or null. */
@@ -173,6 +185,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun setLiveProbe(point: Pair<Int, Int>?) { liveProbePoint = point }
 
     fun showColorDetail(argb: Int) { detailColor = argb }
+
+    fun openCalibration() {
+        detailColor = null
+        calibration = null
+        showingCalibration = true
+    }
+
+    fun closeCalibration() {
+        showingCalibration = false
+        calibration = null
+    }
+
+    fun startCalibration() {
+        calibration = CalibrationSession()
+        calibrationStep = 0
+    }
+
+    fun answerCalibration(choice: Int?) {
+        calibration?.answer(choice)
+        calibrationStep++
+    }
+
+    /** Uses the profile estimated by the test (on first launch, it also completes the welcome screen). */
+    fun applyCalibration(estimated: CvdProfile) {
+        if (onboarded) updateProfile(estimated) else completeOnboarding(estimated)
+    }
 
     fun closeColorDetail() { detailColor = null }
 

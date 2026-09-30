@@ -43,7 +43,7 @@ import dev.colorgap.colorcore.CvdProfile
 
 /** Full-screen settings; every change applies (and is saved) immediately. */
 @Composable
-fun SettingsScreen(vm: MainViewModel, gpuAvailable: Boolean, onBack: () -> Unit) {
+fun SettingsScreen(vm: MainViewModel, gpuAvailable: Boolean, onBack: () -> Unit, onCalibrate: () -> Unit) {
     val activity = LocalContext.current as Activity
     // Local while dragging; the profile (and any re-analysis) updates on release.
     var severity by remember(vm.profile) { mutableFloatStateOf(vm.profile.severity.toFloat()) }
@@ -68,6 +68,10 @@ fun SettingsScreen(vm: MainViewModel, gpuAvailable: Boolean, onBack: () -> Unit)
                 )
 
                 Section(stringResource(R.string.profile_title))
+                // The test comes first: most people don't know their type and severity.
+                Button(onClick = onCalibrate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(stringResource(R.string.calib_open))
+                }
                 TypePicker(vm.profile.type, onSelect = { vm.updateProfile(vm.profile.copy(type = it)) })
                 SeverityControl(severity, onChange = { severity = it }, onChangeFinished = {
                     vm.updateProfile(CvdProfile(vm.profile.type, severity.toDouble().coerceIn(0.0, 1.0)))

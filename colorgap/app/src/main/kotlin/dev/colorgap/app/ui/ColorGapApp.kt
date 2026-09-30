@@ -53,7 +53,11 @@ fun ColorGapApp(vm: MainViewModel) {
     when {
         // Wait for the saved settings: no flash of the welcome screen or of default values.
         !vm.settingsLoaded -> Box(Modifier.fillMaxSize().background(Color.Black))
-        !vm.onboarded -> WelcomeScreen(onStart = vm::completeOnboarding)
+        vm.showingCalibration -> {
+            BackHandler { vm.closeCalibration() }
+            CalibrationScreen(vm, onClose = vm::closeCalibration)
+        }
+        !vm.onboarded -> WelcomeScreen(onStart = vm::completeOnboarding, onCalibrate = vm::openCalibration)
         vm.detailColor != null -> {
             BackHandler { vm.closeColorDetail() }
             ColorDetailScreen(
@@ -61,11 +65,12 @@ fun ColorGapApp(vm: MainViewModel) {
                 profile = vm.profile,
                 onBack = vm::closeColorDetail,
                 onOpenSettings = { vm.closeColorDetail(); showSettings = true },
+                onCalibrate = vm::openCalibration,
             )
         }
         showSettings -> {
             BackHandler { showSettings = false }
-            SettingsScreen(vm, gpuAvailable && !vm.gpuFailed, onBack = { showSettings = false })
+            SettingsScreen(vm, gpuAvailable && !vm.gpuFailed, onBack = { showSettings = false }, onCalibrate = vm::openCalibration)
         }
         else -> {
             BackHandler(enabled = vm.showingPhoto) { vm.closePhoto() }

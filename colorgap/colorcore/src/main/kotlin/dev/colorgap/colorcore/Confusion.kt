@@ -34,6 +34,9 @@ object Confusion {
      * typical vision than for the user (then the user tells them apart too:
      * e.g. mild anomalies, or colors near the gamut edge).
      *
+     * With [visibleTo], the pair must also stay clearly different for that
+     * other profile: plates that tell e.g. protans from deutans.
+     *
      * The default user bound, 4, is below what the lightness noise of a plate
      * (dots vary by ±10–20 % in luminance) lets anyone read.
      */
@@ -43,8 +46,13 @@ object Confusion {
         maxUserDelta: Double = 4.0,
         minTypicalDelta: Double = 8.0,
         minRatio: Double = 2.5,
+        /** Optionally, another profile that must still see the pair at least [visibleDelta] apart. */
+        visibleTo: CvdProfile? = null,
+        visibleDelta: Double = 10.0,
     ): ConfusionPair? {
         val sim = CvdSimulator(profile)
+        val other = visibleTo?.let(::CvdSimulator)
+        val otherSeen = other?.let { CieLab.fromArgb(it.simulateArgb(argb)) }
         val v = confusionAxis(sim.matrix)
         val base = Srgb.toLinear(argb)
         val c = doubleArrayOf(base.r, base.g, base.b)
@@ -69,6 +77,7 @@ object Confusion {
                 if (user > maxUserDelta) continue
                 val typical = DeltaE.ciede2000(lab, CieLab.fromArgb(twin))
                 if (typical < minTypicalDelta || typical < minRatio * user) continue
+                if (other != null && DeltaE.ciede2000(otherSeen!!, CieLab.fromArgb(other.simulateArgb(twin))) < visibleDelta) continue
                 if (best == null || typical > best.typicalDelta) best = ConfusionPair(argb, twin, typical, user)
             }
         }

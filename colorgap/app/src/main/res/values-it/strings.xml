@@ -105,4 +105,21 @@
     <string name="plate_calibration">Chi ha una visione tipica legge il numero nella tavola reale. Se lo leggi anche tu, la tua visione è più lieve del profilo %1$s: prova una gravità più bassa, e le zone evidenziate si ridurranno di conseguenza.</string>
     <string name="change_severity">Cambia la gravità</string>
     <string name="no_twin">Con il tuo profilo nessun colore chiaramente diverso si confonde con questo, quindi non c\'è niente da nascondere in una tavola: questo colore lo distingui bene.</string>
+    <string name="calib_open">Trova la mia gravità con il test dei numeri</string>
+    <string name="calib_title">Test dei numeri</string>
+    <string name="calib_intro">Vedrai circa 20 tavole a puntini. Ognuna nasconde un numero, oppure no: rispondi con il numero che vedi o con "Non vedo nessun numero". Le tavole si adattano alle tue risposte e alla fine l\'app ti propone il profilo della visione dei colori che le spiega meglio.</string>
+    <string name="calib_tips">Per un risultato affidabile: luminosità dello schermo alta, modalità notte e filtro luce blu spenti, niente occhiali da sole colorati, guarda lo schermo di fronte. Non tirare a indovinare: se non sei sicuro, scegli "Non vedo nessun numero".</string>
+    <string name="calib_disclaimer">È una stima, non una diagnosi medica: schermi e luce cambiano il modo in cui i colori appaiono.</string>
+    <string name="cancel_test">Annulla</string>
+    <string name="calib_plate_n">Tavola %1$d</string>
+    <string name="calib_plate_description">Tavola a puntini che può nascondere un numero</string>
+    <string name="calib_question">Che numero vedi?</string>
+    <string name="calib_no_number">Non vedo nessun numero</string>
+    <string name="calib_result_title">Il tuo risultato</string>
+    <string name="calib_result_profile">È il profilo il cui occhio simulato risponde alle tavole più come hai fatto tu. Con questo l\'app evidenzia ciò che percepisci davvero diversamente.</string>
+    <string name="calib_type_uncertain">Le tavole non hanno potuto stabilire con certezza se è deutan o protan: a questa gravità i due sono molto simili, quindi le zone evidenziate cambiano poco in entrambi i casi.</string>
+    <string name="calib_result_typical">Hai letto tutte le tavole: la tua visione dei colori sembra tipica, o più lieve di quanto questo test possa misurare (sotto il 40%% circa). Puoi tenere il profilo attuale o impostare a mano una gravità bassa.</string>
+    <string name="calib_result_unreliable">Hai mancato tavole che tutti riescono a leggere (il numero è solo più chiaro o più scuro): le risposte non sono affidabili. Controlla luminosità e filtri e riprova, senza tirare a indovinare.</string>
+    <string name="calib_apply">Usa questo profilo</string>
+    <string name="calib_retry">Ripeti il test</string>
 </resources>

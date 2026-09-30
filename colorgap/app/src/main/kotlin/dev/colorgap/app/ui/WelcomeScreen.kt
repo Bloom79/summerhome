@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +36,7 @@ import dev.colorgap.colorcore.CvdType
 
 /** First launch: what the app does, the user's color vision, the language. */
 @Composable
-fun WelcomeScreen(onStart: (CvdProfile) -> Unit) {
+fun WelcomeScreen(onStart: (CvdProfile) -> Unit, onCalibrate: () -> Unit) {
     val activity = LocalContext.current as Activity
     var type by rememberSaveable { mutableStateOf(CvdType.DEUTAN) }
     var severity by rememberSaveable { mutableFloatStateOf(1f) }
@@ -54,6 +55,9 @@ fun WelcomeScreen(onStart: (CvdProfile) -> Unit) {
                 Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.titleLarge)
                 TypePicker(type, onSelect = { type = it })
                 Text(stringResource(R.string.dont_know), style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(onClick = onCalibrate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(stringResource(R.string.calib_open))
+                }
                 Spacer(Modifier.size(4.dp))
                 SeverityControl(severity, onChange = { severity = it })
                 Spacer(Modifier.size(4.dp))

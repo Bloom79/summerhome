@@ -108,4 +108,21 @@
     <string name="plate_calibration">People with typical vision read the number on the real plate. If you can read it too, your color vision is milder than the %1$s profile: try a lower severity, and the highlighted areas will shrink accordingly.</string>
     <string name="change_severity">Change severity</string>
     <string name="no_twin">With your profile, no clearly different color is confused with this one, so there is nothing to hide in a plate: you tell this color apart well.</string>
+    <string name="calib_open">Find my severity with the number test</string>
+    <string name="calib_title">Number test</string>
+    <string name="calib_intro">You will see about 20 dot plates. Each hides a number, or not: answer with the number you see, or "I don\'t see a number". The plates adapt to your answers and at the end the app proposes the color vision profile that matches them.</string>
+    <string name="calib_tips">For a reliable result: screen brightness high, night mode and blue-light filter off, no colored sunglasses, look at the screen straight on. Don\'t guess: if you are not sure, choose "I don\'t see a number".</string>
+    <string name="calib_disclaimer">An estimate, not a medical diagnosis: screens and lighting change how colors are shown.</string>
+    <string name="cancel_test">Cancel</string>
+    <string name="calib_plate_n">Plate %1$d</string>
+    <string name="calib_plate_description">Dot plate that may hide a number</string>
+    <string name="calib_question">Which number do you see?</string>
+    <string name="calib_no_number">I don\'t see a number</string>
+    <string name="calib_result_title">Your result</string>
+    <string name="calib_result_profile">This is the profile whose simulated eye answers the plates most like you did. With it, the app highlights what you really perceive differently.</string>
+    <string name="calib_type_uncertain">The plates could not tell for sure whether it is deutan or protan: at this severity the two are very similar, so the highlighted areas change little either way.</string>
+    <string name="calib_result_typical">You read all the plates: your color vision looks typical, or milder than this test can measure (below about 40%%). You can keep the current profile or set a low severity by hand.</string>
+    <string name="calib_result_unreliable">You missed plates that everyone can read (the number is only lighter or darker): the answers are not reliable. Check brightness and filters and try again, without guessing.</string>
+    <string name="calib_apply">Use this profile</string>
+    <string name="calib_retry">Repeat the test</string>
 </resources>
