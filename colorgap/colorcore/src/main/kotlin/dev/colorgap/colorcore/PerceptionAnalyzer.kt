@@ -32,11 +32,18 @@ data class AnalysisConfig(
     val preBlur: Boolean = true,
     /** Radius (px) of the max filter that widens lost edges into visible bands. */
     val contrastSpread: Int = 2,
+    /**
+     * Radius (px) of the box average applied to color loss, so an area (a
+     * lawn with mowing stripes) is marked as a whole instead of in speckles
+     * where its texture crosses the threshold.
+     */
+    val colorSmooth: Int = 8,
 ) {
     init {
         require(colorScale > 0f && contrastScale > 0f) { "scales must be > 0" }
         require(edgeVisible > edgeInvisible) { "edgeVisible must exceed edgeInvisible" }
         require(contrastSpread >= 0) { "contrastSpread must be >= 0" }
+        require(colorSmooth >= 0) { "colorSmooth must be >= 0" }
     }
 
     /** The color-loss part of the score for a ΔE2000 [shift] between a color and how the user sees it. */
@@ -118,7 +125,8 @@ class PerceptionMap(
  *    dropped by a meaningful amount AND what remains is too weak to see.
  *    Lightness is part of the edge on purpose: a red/green edge that still
  *    differs in lightness stays visible to the user, and is not flagged.
- * 5. score = max(contrastLoss, colorWeight × colorLoss), in 0..1.
+ * 5. score = max(contrastLoss, colorWeight × colorLoss), in 0..1, with color
+ *    loss averaged over [AnalysisConfig.colorSmooth] px so areas are marked whole.
  *
  * Work is split by rows over the available cores. One instance reuses its
  * scratch buffers between frames of the same size, so it must not be used by
@@ -142,6 +150,7 @@ class PerceptionAnalyzer(
     private lateinit var edgeSPeak: FloatArray
     private lateinit var lost: FloatArray
     private lateinit var maxTmp: FloatArray
+    private lateinit var colorRaw: FloatArray
 
     private fun ensureBuffers(size: Int) {
         if (size == n) return
@@ -149,7 +158,7 @@ class PerceptionAnalyzer(
         labO = FloatArray(3 * size); labS = FloatArray(3 * size)
         blurTmp = FloatArray(3 * size); blurO = FloatArray(3 * size); blurS = FloatArray(3 * size)
         edgeO = FloatArray(size); edgeS = FloatArray(size); edgeSPeak = FloatArray(size)
-        lost = FloatArray(size); maxTmp = FloatArray(size)
+        lost = FloatArray(size); maxTmp = FloatArray(size); colorRaw = FloatArray(size)
     }
 
     fun analyze(argb: IntArray, width: Int, height: Int): PerceptionMap {
@@ -213,6 +222,10 @@ class PerceptionAnalyzer(
         }
         if (config.contrastSpread > 0) maxFilter(lost, contrastLoss, maxTmp, width, height, config.contrastSpread)
 
+        if (config.colorSmooth > 0) {
+            colorLoss.copyInto(colorRaw)
+            boxBlur1(colorRaw, colorLoss, maxTmp, width, height, config.colorSmooth)
+        }
         val score = FloatArray(n)
         Parallel.forRange(height) { y0, y1 ->
             for (i in y0 * width until y1 * width) score[i] = max(contrastLoss[i], config.colorWeight * colorLoss[i])
@@ -279,6 +292,24 @@ class PerceptionAnalyzer(
                 for (y in yFrom until yUntil) for (x in 0 until w) {
                     val a = 3 * (max(y - 1, 0) * w + x); val b = 3 * (y * w + x); val c = 3 * (min(y + 1, h - 1) * w + x)
                     for (k in 0 until 3) out[b + k] = (tmp[a + k] + tmp[b + k] + tmp[c + k]) / 3f
+                }
+            }
+        }
+
+        /** Separable box average of radius [r] of a single-channel buffer (clamped borders). */
+        internal fun boxBlur1(src: FloatArray, out: FloatArray, tmp: FloatArray, w: Int, h: Int, r: Int) {
+            Parallel.forRange(h) { yFrom, yUntil ->
+                for (y in yFrom until yUntil) for (x in 0 until w) {
+                    var sum = 0f
+                    for (dx in -r..r) sum += src[y * w + (x + dx).coerceIn(0, w - 1)]
+                    tmp[y * w + x] = sum / (2 * r + 1)
+                }
+            }
+            Parallel.forRange(h) { yFrom, yUntil ->
+                for (y in yFrom until yUntil) for (x in 0 until w) {
+                    var sum = 0f
+                    for (dy in -r..r) sum += tmp[(y + dy).coerceIn(0, h - 1) * w + x]
+                    out[y * w + x] = sum / (2 * r + 1)
                 }
             }
         }

@@ -251,6 +251,7 @@ class GpuPipeline(sources: ShaderSources) {
             sampler("uContrast", 0, contrastFbo!!.targets[0].id)
             int("uSpread", config.contrastSpread)
             float("uColorWeight", config.colorWeight)
+            int("uColorSmooth", config.colorSmooth)
         }
     }
 

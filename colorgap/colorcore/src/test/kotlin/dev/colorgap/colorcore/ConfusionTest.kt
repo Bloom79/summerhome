@@ -108,3 +108,22 @@ class ConfusionTest {
         assertTrue(abs(a.figure.count { it } - d.figure.count { it }) >= 0)
     }
 }
+
+class ShiftDirectionTest {
+    private val deutan = CvdSimulator(CvdProfile())
+    private fun dirs(hex: String) = Argb.fromHex(hex).let { ShiftDirection.of(it, deutan.simulateArgb(it)) }
+
+    @Test
+    fun `others see grass greener, sand pinker, a red redder`() {
+        assertEquals(ShiftDirection.GREENER, dirs("#496417").first()) // hill grass
+        assertEquals(ShiftDirection.GREENER, dirs("#778E48").first()) // foreground grass
+        assertEquals(ShiftDirection.PINKER, dirs("#E6C7AB").first()) // sand bunker
+        assertEquals(ShiftDirection.REDDER, dirs("#C0392B").first())
+    }
+
+    @Test
+    fun `grays and unchanged colors have no direction`() {
+        assertTrue(dirs("#808080").isEmpty())
+        assertTrue(ShiftDirection.of(Argb.fromHex("#6495ED"), Argb.fromHex("#6495ED")).isEmpty())
+    }
+}

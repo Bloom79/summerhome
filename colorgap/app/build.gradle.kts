@@ -14,8 +14,8 @@ android {
         applicationId = "dev.colorgap.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.8.0"
+        versionCode = 10
+        versionName = "0.8.1"
         // Only Italian and English are translated; keep library resources in line.
         resourceConfigurations += listOf("en", "it")
     }

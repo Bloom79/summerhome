@@ -48,6 +48,7 @@ import dev.colorgap.colorcore.CvdProfile
 import dev.colorgap.app.settings.AppSettings
 import dev.colorgap.colorcore.CvdType
 import dev.colorgap.colorcore.Overlays
+import dev.colorgap.colorcore.ShiftDirection
 import kotlin.math.roundToInt
 
 /** Minimum height of every primary control: large touch targets, usable with a thumb. */
@@ -164,6 +165,9 @@ internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, onDetails: () -> 
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (probe.colorVerdict == ColorProbe.ColorVerdict.DIFFERENT) FontWeight.Bold else FontWeight.Normal,
             )
+            if (probe.colorVerdict != ColorProbe.ColorVerdict.SAME) {
+                othersSee(probe.realArgb, probe.seenArgb)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = onDetails, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.details))
@@ -204,6 +208,51 @@ internal fun EdgesOnlyNotice(onEnable: () -> Unit) {
         TextButton(onClick = onEnable, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.edges_only_enable))
         }
+    }
+}
+
+/**
+ * "People with typical vision see it greener here": what the user misses, in
+ * words (ShiftDirection), or null when nothing stands out.
+ */
+@Composable
+internal fun othersSee(real: Int, seen: Int): String? {
+    val dirs = ShiftDirection.of(real, seen)
+    if (dirs.isEmpty()) return null
+    val words = dirs.map {
+        stringResource(
+            when (it) {
+                ShiftDirection.GREENER -> R.string.dir_greener
+                ShiftDirection.REDDER -> R.string.dir_redder
+                ShiftDirection.PINKER -> R.string.dir_pinker
+                ShiftDirection.YELLOWER -> R.string.dir_yellower
+                ShiftDirection.BLUER -> R.string.dir_bluer
+            },
+        )
+    }
+    return stringResource(R.string.others_see, words.joinToString(stringResource(R.string.and_separator)))
+}
+
+/** What the stripes mean: they don't change colors, so they need words. */
+@Composable
+internal fun StripesLegend() {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            Modifier
+                .size(28.dp)
+                .background(
+                    Brush.linearGradient(
+                        0f to Color.Black, 0.2f to Color.Black, 0.2f to Color.White, 0.4f to Color.White,
+                        0.4f to Color.Gray, 1f to Color.Gray,
+                        start = androidx.compose.ui.geometry.Offset.Zero,
+                        end = androidx.compose.ui.geometry.Offset(14f, 14f),
+                        tileMode = androidx.compose.ui.graphics.TileMode.Repeated,
+                    ),
+                    RoundedCornerShape(4.dp),
+                )
+                .clearAndSetSemantics { },
+        )
+        Text(stringResource(R.string.stripes_legend), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
     }
 }
 

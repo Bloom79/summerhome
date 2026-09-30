@@ -222,3 +222,37 @@ object Plate {
         }
     }
 }
+
+/**
+ * What typical vision sees *more of* than the user, in words a color-blind
+ * person can use: "others see it greener", "pinker"… From the CIELAB
+ * difference real − perceived: a* > 0 redder (pinker if light), a* < 0
+ * greener, b* > 0 yellower, b* < 0 bluer. Only components that matter are kept.
+ */
+enum class ShiftDirection { GREENER, REDDER, PINKER, YELLOWER, BLUER;
+
+    companion object {
+        fun of(real: Int, seen: Int): List<ShiftDirection> {
+            val r = CieLab.fromArgb(real)
+            val s = CieLab.fromArgb(seen)
+            val da = r.a - s.a
+            val db = r.b - s.b
+            val biggest = maxOf(kotlin.math.abs(da), kotlin.math.abs(db))
+            if (biggest < MIN_COMPONENT) return emptyList()
+            val out = ArrayList<Pair<Double, ShiftDirection>>(2)
+            if (kotlin.math.abs(da) >= MIN_COMPONENT && kotlin.math.abs(da) >= 0.4 * biggest) {
+                out += kotlin.math.abs(da) to when {
+                    da < 0 -> GREENER
+                    r.l >= 65 -> PINKER
+                    else -> REDDER
+                }
+            }
+            if (kotlin.math.abs(db) >= MIN_COMPONENT && kotlin.math.abs(db) >= 0.4 * biggest) {
+                out += kotlin.math.abs(db) to if (db > 0) YELLOWER else BLUER
+            }
+            return out.sortedByDescending { it.first }.map { it.second }
+        }
+
+        private const val MIN_COMPONENT = 3.0
+    }
+}

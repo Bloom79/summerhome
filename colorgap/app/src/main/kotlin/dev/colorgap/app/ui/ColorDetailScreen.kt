@@ -136,6 +136,7 @@ fun ColorDetailScreen(color: Int, profile: CvdProfile, onBack: () -> Unit, onOpe
                     stringResource(R.string.typical_difference, delta, stringResource(differenceWord(delta))),
                     style = MaterialTheme.typography.bodyLarge,
                 )
+                othersSee(color, seen)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                 if (delta >= ColorProbe.SLIGHT_SHIFT) {
                     Text(stringResource(R.string.detail_if_same), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                 }

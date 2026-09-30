@@ -126,4 +126,12 @@
     <string name="detail_if_same">Se i due riquadri ti sembrano uguali, è proprio ciò che l\'app misura: una persona con visione tipica li distingue al primo sguardo. Mostra questa schermata a qualcuno vicino a te per un confronto.</string>
     <string name="edges_only_notice">Evidenzio solo i bordi persi: i colori che vedi diversamente no.</string>
     <string name="edges_only_enable">Mostra anche i colori</string>
+    <string name="others_see">Chi vede normalmente qui lo vede %1$s.</string>
+    <string name="dir_greener">più verde</string>
+    <string name="dir_redder">più rosso</string>
+    <string name="dir_pinker">più rosa</string>
+    <string name="dir_yellower">più giallo</string>
+    <string name="dir_bluer">più blu</string>
+    <string name="and_separator">" e "</string>
+    <string name="stripes_legend">Righe: qui gli altri vedono i colori diversamente da te. Tocca una zona per sapere come.</string>
 </resources>

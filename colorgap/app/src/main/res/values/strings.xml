@@ -129,4 +129,12 @@
     <string name="detail_if_same">If the two squares look the same to you, that is exactly what the app measures: someone with typical vision tells them apart at a glance. Show this screen to someone next to you to compare.</string>
     <string name="edges_only_notice">Only lost edges are highlighted: colors you see differently are not.</string>
     <string name="edges_only_enable">Show colors too</string>
+    <string name="others_see">People with typical vision see it %1$s here.</string>
+    <string name="dir_greener">greener</string>
+    <string name="dir_redder">redder</string>
+    <string name="dir_pinker">pinker</string>
+    <string name="dir_yellower">yellower</string>
+    <string name="dir_bluer">bluer</string>
+    <string name="and_separator">" and "</string>
+    <string name="stripes_legend">Stripes: here others see the colors differently from you. Tap an area to find out how.</string>
 </resources>

@@ -41,7 +41,7 @@ fun dump(image: File, outDir: File, maxSize: Int, type: CvdType, severity: Doubl
             // The analysis parameters, so the GPU check runs the shaders with exactly these.
             """"config":{"colorFloor":${c.colorFloor},"colorScale":${c.colorScale},"colorWeight":${c.colorWeight},""" +
             """"contrastFloor":${c.contrastFloor},"contrastScale":${c.contrastScale},"edgeInvisible":${c.edgeInvisible},""" +
-            """"edgeVisible":${c.edgeVisible},"contrastSpread":${c.contrastSpread}}}""",
+            """"edgeVisible":${c.edgeVisible},"contrastSpread":${c.contrastSpread},"colorSmooth":${c.colorSmooth}}}""",
     )
     println("Dumped ${image.name} ${w}x$h ${type.name.lowercase()} ${(severity * 100).toInt()}% → ${outDir.path}")
 }

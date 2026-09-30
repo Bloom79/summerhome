@@ -183,7 +183,9 @@ function pageMain({ sources, SHARMA, dumps }) {
       uContrastFloor: ['1f', meta.config.contrastFloor], uContrastScale: ['1f', meta.config.contrastScale],
       uEdgeInvisible: ['1f', meta.config.edgeInvisible], uEdgeVisible: ['1f', meta.config.edgeVisible],
     });
-    run(progs.score, fScore, upW, upH, { uContrast: contrast }, { uSpread: ['1i', meta.config.contrastSpread], uColorWeight: ['1f', meta.config.colorWeight] });
+    run(progs.score, fScore, upW, upH, { uContrast: contrast }, {
+      uSpread: ['1i', meta.config.contrastSpread], uColorWeight: ['1f', meta.config.colorWeight], uColorSmooth: ['1i', meta.config.colorSmooth],
+    });
     const labSData = readFloat(fLab, 1, upW, upH);
     return { w: upW, h: upH, score, fScore, colorDelta: labSData.filter((_, i) => i % 4 === 3), scoreBytes: readBytes(fScore, upW, upH) };
   }

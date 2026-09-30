@@ -208,6 +208,7 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit, onSettings: () -> Uni
             ) {
                 ModeSelector(vm.mode, vm::selectMode)
                 if (vm.mode == ViewMode.HEATMAP) HeatLegend(vm.profile.type)
+                if (vm.mode == ViewMode.STRIPES) StripesLegend()
                 if (vm.mode != ViewMode.SPLIT && !vm.highlightColorShifts) {
                     EdgesOnlyNotice(onEnable = { vm.updateHighlightColorShifts(true) })
                 }
