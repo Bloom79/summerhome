@@ -19,10 +19,10 @@ object Overlays {
         CvdType.TRITAN -> Argb.fromHex("#B0103A") to Argb.fromHex("#9FF5FF")
     }
 
-    /** a) Semi-transparent heatmap over the zones whose score reaches [threshold]. */
+    /** a) Semi-transparent heatmap over the zones whose [score] reaches [threshold]. */
     fun heatmap(
         src: IntArray,
-        map: PerceptionMap,
+        score: FloatArray,
         threshold: Float,
         type: CvdType,
         maxAlpha: Float = 0.7f,
@@ -30,7 +30,7 @@ object Overlays {
         val (lo, hi) = heatRamp(type)
         val span = max(1f - threshold, 1e-3f)
         return IntArray(src.size) { i ->
-            val s = map.score[i]
+            val s = score[i]
             if (s < threshold) return@IntArray src[i]
             val t = ((s - threshold) / span).coerceIn(0f, 1f)
             val heat = lerpColor(lo, hi, t)
@@ -40,18 +40,26 @@ object Overlays {
         }
     }
 
+    fun heatmap(src: IntArray, map: PerceptionMap, threshold: Float, type: CvdType, maxAlpha: Float = 0.7f) =
+        heatmap(src, map.score, threshold, type, maxAlpha)
+
     /**
      * b) Diagonal black/white stripes over critical zones. Pixels between the
      * stripes are untouched, so the original colors stay visible.
      */
-    fun stripes(src: IntArray, map: PerceptionMap, threshold: Float, period: Int = stripePeriod(map)): IntArray {
-        val w = map.width
+    fun stripes(
+        src: IntArray,
+        score: FloatArray,
+        width: Int,
+        threshold: Float,
+        period: Int = stripePeriod(width, src.size / width),
+    ): IntArray {
         val band = max(1, period / 5)
         val black = Argb.pack(0, 0, 0)
         val white = Argb.pack(255, 255, 255)
         return IntArray(src.size) { i ->
-            if (map.score[i] < threshold) return@IntArray src[i]
-            val phase = ((i % w) + (i / w)) % period
+            if (score[i] < threshold) return@IntArray src[i]
+            val phase = ((i % width) + (i / width)) % period
             when {
                 phase < band -> black
                 phase < 2 * band -> white
@@ -60,24 +68,28 @@ object Overlays {
         }
     }
 
-    /** Stripe spacing proportional to the image, so it looks the same at any resolution. */
-    fun stripePeriod(map: PerceptionMap): Int = max(8, min(map.width, map.height) / 40)
+    fun stripes(src: IntArray, map: PerceptionMap, threshold: Float) =
+        stripes(src, map.score, map.width, threshold)
 
-    /** c) Split view: original on the left of [split] (0..1), the user's view on the right. */
-    fun split(src: IntArray, map: PerceptionMap, split: Float = 0.5f): IntArray {
-        val w = map.width
-        val cut = (split.coerceIn(0f, 1f) * w).toInt()
-        val lineHalf = max(1, w / 400)
+    /** Stripe spacing proportional to the image, so it looks the same at any resolution. */
+    fun stripePeriod(width: Int, height: Int): Int = max(8, min(width, height) / 40)
+
+    /** c) Split view: [src] on the left of [split] (0..1), [simulated] on the right. */
+    fun split(src: IntArray, simulated: IntArray, width: Int, split: Float = 0.5f): IntArray {
+        val cut = (split.coerceIn(0f, 1f) * width).toInt()
+        val lineHalf = max(1, width / 400)
         val white = Argb.pack(255, 255, 255)
         return IntArray(src.size) { i ->
-            val x = i % w
+            val x = i % width
             when {
                 x in (cut - lineHalf) until (cut + lineHalf) -> white
                 x < cut -> src[i]
-                else -> map.simulated[i]
+                else -> simulated[i]
             }
         }
     }
+
+    fun split(src: IntArray, map: PerceptionMap, split: Float = 0.5f) = split(src, map.simulated, map.width, split)
 
     fun lerpColor(a: Int, b: Int, t: Float): Int = Argb.pack(
         (Argb.red(a) + (Argb.red(b) - Argb.red(a)) * t + 0.5f).toInt(),

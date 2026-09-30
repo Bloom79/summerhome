@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="choose_photo">Scegli una foto</string>
+    <string name="empty_hint">Apri una foto per vedere quali zone percepisci diversamente da chi ha una visione dei colori tipica.</string>
+    <string name="mode_heatmap">Heatmap</string>
+    <string name="mode_stripes">Righe</string>
+    <string name="mode_split">Confronto</string>
+    <string name="threshold">Soglia: %1$.2f</string>
+    <string name="threshold_hint">Più bassa = più zone evidenziate</string>
+    <string name="divider">Divisore</string>
+    <string name="gallery">Galleria</string>
+    <string name="export">Esporta</string>
+    <string name="analyzing">Analisi in corso…</string>
+    <string name="critical_area">Zona critica: %1$d%%</string>
+    <string name="real_color">Colore reale</string>
+    <string name="you_see">Tu vedi</string>
+    <string name="critical_here">Qui percepisci il colore diversamente</string>
+    <string name="not_critical_here">Qui vedi come tutti gli altri</string>
+    <string name="profile_title">La tua visione dei colori</string>
+    <string name="type_deutan">Deutan (verde)</string>
+    <string name="type_protan">Protan (rosso)</string>
+    <string name="type_tritan">Tritan (blu)</string>
+    <string name="type_deutan_short">Deutan</string>
+    <string name="type_protan_short">Protan</string>
+    <string name="type_tritan_short">Tritan</string>
+    <string name="severity">Gravità: %1$d%%</string>
+    <string name="severity_hint">100% = dicromasia (-anopia), valori più bassi = tricromasia anomala (-anomalia)</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annulla</string>
+    <string name="close">Chiudi</string>
+    <string name="exported">Immagine salvata</string>
+    <string name="export_failed">Impossibile salvare l\'immagine</string>
+    <string name="open_failed">Impossibile aprire questa foto</string>
+    <string name="split_normal">Tipica</string>
+    <string name="split_you">Tu</string>
+    <string name="tap_hint">Tocca un punto per sapere il colore · pizzica o tocca due volte per ingrandire</string>
+    <string name="image_description">Foto analizzata</string>
+    <string name="change_profile">Cambia il profilo della visione dei colori</string>
+</resources>

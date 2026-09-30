@@ -106,3 +106,31 @@ class CvdSimulatorTest {
         }
     }
 }
+
+class BulkSimulationTest {
+    @Test
+    fun `fast encoder stays within one level of the exact one`() {
+        var v = 0.0
+        while (v <= 1.0) {
+            val d = Srgb.linearToChannelFast(v) - Srgb.linearToChannel(v)
+            assertTrue(d in -1..1, "at $v")
+            v += 1.0 / 100_000
+        }
+        for (c in 0..255) assertEquals(c, Srgb.linearToChannelFast(Srgb.channelToLinear(c)), "8-bit round trip $c")
+    }
+
+    @Test
+    fun `bulk simulation matches per-pixel simulation within one level`() {
+        val sim = CvdSimulator(CvdProfile(CvdType.DEUTAN, 0.8))
+        val src = IntArray(4096) { (0xFF000000.toInt()) or (it * 4099 and 0xFFFFFF) }
+        val bulk = sim.simulateInto(src)
+        for (i in src.indices) {
+            val a = sim.simulateArgb(src[i])
+            val b = bulk[i]
+            for (shift in intArrayOf(0, 8, 16)) {
+                val d = ((a shr shift) and 0xFF) - ((b shr shift) and 0xFF)
+                assertTrue(d in -1..1, "pixel $i")
+            }
+        }
+    }
+}

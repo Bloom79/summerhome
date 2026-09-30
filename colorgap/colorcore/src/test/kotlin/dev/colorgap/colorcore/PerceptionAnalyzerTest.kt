@@ -121,4 +121,18 @@ class PerceptionAnalyzerTest {
         assertEquals(img[map.index(2, 5)], split[map.index(2, 5)])
         assertEquals(map.simulated[map.index(w - 2, 5)], split[map.index(w - 2, 5)])
     }
+
+    @Test
+    fun `score upscaling preserves constants and interpolates between samples`() {
+        val map = analyze(halves("#8B5A2B", "#6E7B2B"))
+        val same = map.scoreResized(w, h)
+        for (i in same.indices) assertEquals(map.score[i], same[i])
+        val big = map.scoreResized(w * 3, h * 3)
+        assertEquals(w * 3 * h * 3, big.size)
+        assertEquals(map.score.max(), big.max(), 1e-5f)
+        assertTrue(big.min() >= map.score.min() - 1e-5f)
+        // The critical band stays around the (scaled) boundary.
+        assertTrue(big[(h * 3 / 2) * w * 3 + w * 3 / 2] > 0.8f)
+        assertEquals(map.score[map.index(1, 1)], big[3 * w * 3 + 3], 1e-5f)
+    }
 }

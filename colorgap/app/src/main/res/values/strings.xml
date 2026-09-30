@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">ColorGap</string>
+    <string name="choose_photo">Choose a photo</string>
+    <string name="empty_hint">Open a photo to see which areas you perceive differently from people with typical color vision.</string>
+    <string name="mode_heatmap">Heatmap</string>
+    <string name="mode_stripes">Stripes</string>
+    <string name="mode_split">Compare</string>
+    <string name="threshold">Threshold: %1$.2f</string>
+    <string name="threshold_hint">Lower = show more areas</string>
+    <string name="divider">Divider</string>
+    <string name="gallery">Gallery</string>
+    <string name="export">Export</string>
+    <string name="analyzing">Analyzing…</string>
+    <string name="critical_area">Critical area: %1$d%%</string>
+    <string name="real_color">Real color</string>
+    <string name="you_see">You see</string>
+    <string name="critical_here">You perceive this spot differently</string>
+    <string name="not_critical_here">You see this spot like everyone else</string>
+    <string name="profile_title">Your color vision</string>
+    <string name="type_deutan">Deutan (green)</string>
+    <string name="type_protan">Protan (red)</string>
+    <string name="type_tritan">Tritan (blue)</string>
+    <string name="type_deutan_short">Deutan</string>
+    <string name="type_protan_short">Protan</string>
+    <string name="type_tritan_short">Tritan</string>
+    <string name="severity">Severity: %1$d%%</string>
+    <string name="severity_hint">100% = dichromacy (-anopia), lower = anomalous trichromacy (-anomaly)</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="exported">Image saved</string>
+    <string name="export_failed">Could not save the image</string>
+    <string name="open_failed">Could not open this photo</string>
+    <string name="split_normal">Typical</string>
+    <string name="split_you">You</string>
+    <string name="tap_hint">Tap a point to name its color · pinch or double-tap to zoom</string>
+    <string name="image_description">Analyzed photo</string>
+    <string name="change_profile">Change color vision profile</string>
+</resources>

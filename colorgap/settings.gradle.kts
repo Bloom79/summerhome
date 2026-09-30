@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        google()
         gradlePluginPortal()
         mavenCentral()
     }
@@ -7,6 +8,7 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        google()
         mavenCentral()
     }
 }
@@ -15,3 +17,4 @@ rootProject.name = "colorgap"
 
 include(":colorcore")
 include(":cli")
+include(":app")

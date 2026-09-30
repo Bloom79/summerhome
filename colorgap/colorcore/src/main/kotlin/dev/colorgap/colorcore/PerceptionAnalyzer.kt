@@ -57,6 +57,33 @@ class PerceptionMap(
 
     /** Share of pixels whose score reaches [threshold]. */
     fun criticalFraction(threshold: Float): Float = score.count { it >= threshold }.toFloat() / score.size
+
+    /**
+     * The score resampled (bilinear, pixel-center aligned) to [w]×[h], so a map
+     * computed at analysis resolution can drive overlays at display resolution.
+     */
+    fun scoreResized(w: Int, h: Int): FloatArray {
+        if (w == width && h == height) return score.copyOf()
+        val out = FloatArray(w * h)
+        val sx = width.toFloat() / w
+        val sy = height.toFloat() / h
+        for (y in 0 until h) {
+            val fy = ((y + 0.5f) * sy - 0.5f).coerceIn(0f, (height - 1).toFloat())
+            val y0 = fy.toInt()
+            val y1 = min(y0 + 1, height - 1)
+            val ty = fy - y0
+            for (x in 0 until w) {
+                val fx = ((x + 0.5f) * sx - 0.5f).coerceIn(0f, (width - 1).toFloat())
+                val x0 = fx.toInt()
+                val x1 = min(x0 + 1, width - 1)
+                val tx = fx - x0
+                val top = score[y0 * width + x0] * (1 - tx) + score[y0 * width + x1] * tx
+                val bottom = score[y1 * width + x0] * (1 - tx) + score[y1 * width + x1] * tx
+                out[y * w + x] = top * (1 - ty) + bottom * ty
+            }
+        }
+        return out
+    }
 }
 
 /**

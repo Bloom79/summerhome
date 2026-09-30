@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A lens split in two: the scene as others see it | as you see it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#C0392B" android:pathData="M54,30 A24,24 0 0,0 54,78 Z" />
+    <path android:fillColor="#8D8030" android:pathData="M54,30 A24,24 0 0,1 54,78 Z" />
+    <path android:strokeColor="#1D3FBF" android:strokeWidth="4" android:fillColor="#00000000"
+        android:pathData="M54,28 A26,26 0 1,1 53.99,28 Z" />
+    <path android:strokeColor="#1D3FBF" android:strokeWidth="3" android:pathData="M54,26 L54,82" />
+</vector>

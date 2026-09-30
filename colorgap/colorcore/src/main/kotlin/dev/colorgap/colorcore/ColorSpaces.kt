@@ -46,6 +46,13 @@ object Srgb {
     /** Linear 0..1 → 8-bit channel, rounded and clamped. */
     fun linearToChannel(v: Double): Int = (encode(v) * 255.0 + 0.5).toInt().coerceIn(0, 255)
 
+    private const val FAST_STEPS = 16383
+    private val fromLinearLut = IntArray(FAST_STEPS + 1) { linearToChannel(it / FAST_STEPS.toDouble()) }
+
+    /** Table-based [linearToChannel], within ±1 level of it; for full-resolution bulk work. */
+    fun linearToChannelFast(v: Double): Int =
+        fromLinearLut[(v.coerceIn(0.0, 1.0) * FAST_STEPS + 0.5).toInt()]
+
     fun toLinear(argb: Int): LinearRgb = LinearRgb(
         channelToLinear(Argb.red(argb)),
         channelToLinear(Argb.green(argb)),
