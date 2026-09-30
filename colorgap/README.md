@@ -9,7 +9,7 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 | Modulo      | Cosa contiene | Dipendenze |
 |-------------|---------------|------------|
 | `colorcore` | Tutta la matematica del colore, Kotlin puro (JVM): sRGB ↔ lineare ↔ CIELAB, ΔE2000, simulazione Machado 2009, analizzatore "perdita di colore" + "contrasto perso", renderer CPU degli overlay | nessuna (solo `kotlin-test` per i test) |
-| `cli`       | Strumento desktop per provare l'algoritmo su foto reali prima che esista l'app | `colorcore`, JDK (`javax.imageio`) |
+| `cli`       | Strumento desktop per provare l'algoritmo su foto reali (e `dump` per `tools/gpu-check`) | `colorcore`, JDK (`javax.imageio`) |
 | `app`       | App Android: Compose, minSdk 26, targetSdk 35 | `colorcore`, AndroidX core-ktx, activity-compose, Compose BOM (ui, foundation, material3), ExifInterface, CameraX (core, camera2, lifecycle) |
 
 ## Piano e milestone
@@ -19,7 +19,7 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 | 1 | `colorcore` + unit test (+ CLI per provarlo) | ✅ fatto |
 | 2 | Analisi su foto statica: modulo `app`, apertura foto dalla galleria, overlay heatmap/righe/split, tap → nome colore (IT/EN) + HEX, zoom, esporta | ✅ fatto |
 | 3 | Camera live CPU: CameraX `ImageAnalysis` a risoluzione ridotta, stessi overlay, freeze frame | ✅ fatto |
-| 4 | Shader GPU: OpenGL ES 3.0 su texture esterna della camera, ≥ 24 fps, fallback CPU | da fare |
+| 4 | Shader GPU: OpenGL ES 3.0, ≥ 24 fps, fallback CPU | ✅ fatto |
 | 5 | UI e impostazioni: profilo (tipo, gravità 0–100 %) in DataStore, soglia, toggle modalità, UI IT/EN a una mano, pulsanti grandi | da fare |
 
 Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna libreria di rete; il manifest rimuove esplicitamente
@@ -47,6 +47,64 @@ Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna li
 - **Profilo**: Deutan/Protan/Tritan + gravità a passi del 5 %, dal pulsante in
   alto a destra (per ora in memoria; DataStore arriva nella milestone 5).
 - UI italiano/inglese, controlli in basso e alti ≥ 60 dp.
+
+## Camera live, percorso GPU (milestone 4)
+
+È il motore predefinito. Tutta la mappa si calcola in shader OpenGL ES 3.0 a
+640×480, contro 160–480 px del percorso CPU, e l'immagine si disegna a piena
+risoluzione.
+
+- **Ingresso**: gli stessi fotogrammi CameraX `ImageAnalysis` RGBA del percorso
+  CPU, caricati così come sono in una texture (row stride incluso), senza copie
+  né rotazioni in CPU. Rotazione e crop li applicano gli shader. Ho scelto questo
+  ingresso invece di una Preview su texture esterna perché ha la stessa
+  semantica di orientamento già verificata per la CPU; il limite di fps è quello
+  della camera (di solito 30).
+- **Passaggi** (`app/src/main/assets/shaders/`):
+  1. `lab`: media a blocchi, Lab di originale e simulato, perdita di colore;
+  2. `blur`: sfocatura 3×3;
+  3. `edges`: bordi Sobel misurati in ΔE2000;
+  4. `contrast`: contrasto perso;
+  5. `score`: allargamento dei bordi e mappa finale;
+  6. `display`: heatmap, righe o confronto, a risoluzione di schermo.
+
+  I passaggi 1–4 lavorano in half-float. La matematica del colore sta in
+  `common.glsl`, il gemello GLSL di `colorcore`.
+- **Letture verso la CPU**, senza bloccare la GPU: la mappa torna indietro ogni 4
+  fotogrammi tramite pixel-pack buffer asincroni e serve per l'area critica e il
+  verdetto del tap; il colore al tap viene da una lettura di 1 pixel.
+- **Congela**: ricampiona il fotogramma raddrizzato a 960 px e lo apre nella
+  schermata foto, come nel percorso CPU.
+- **Fallback automatico su CPU**: senza OpenGL ES 3.0, senza render target
+  half-float, o se uno shader non compila o fallisce su quel driver. Toccando
+  l'indicatore "GPU · fps · mappa" si passa da GPU a CPU e viceversa, per
+  confrontarli.
+
+### Verifica degli shader senza telefono (`tools/gpu-check`)
+
+WebGL2 usa GLSL ES 3.00, lo stesso linguaggio di OpenGL ES 3.0. Lo strumento
+carica gli shader dell'app così come sono, con la stessa intestazione, e li
+esegue in Chromium headless sugli stessi pixel della pipeline CPU:
+
+```bash
+cd colorgap
+./gradlew -q :cli:run --args="dump samples/confusion-chart.png --out out/dump/chart"
+./gradlew -q :cli:run --args="dump ../3I4A8714.JPG --out out/dump/photo --type tritan --severity 70"
+node tools/gpu-check/check.mjs out/dump/chart out/dump/photo
+```
+
+Controlla:
+
+- ΔE2000 GLSL sulle 34 coppie di Sharma (errore massimo 1,5e-4);
+- ΔE per pixel rispetto alla CPU (differenza massima 0,012);
+- mappa rispetto alla CPU (differenza media 0,0007; pixel critici in disaccordo ≤ 0,05 %);
+- rotazioni 90/180/270 con crop e riduzione 2×: identiche al caso diritto;
+- heatmap e righe rispetto agli overlay CPU;
+- freeze frame e colore al tap.
+
+Ho verificato che lo strumento se ne accorge quando un errore viene introdotto
+apposta, nella rotazione o in una costante di ΔE2000. Richiede Node e Playwright
+con Chromium: è solo uno strumento di sviluppo, non una dipendenza dell'app.
 
 ## Camera live, percorso CPU (milestone 3)
 

@@ -27,6 +27,8 @@ data class LiveSettings(
     val threshold: Float,
     /** Point to name continuously, in frame pixels; null for none. */
     val probePoint: Pair<Int, Int>? = null,
+    /** Split-view divider, 0..1 of the frame width. */
+    val split: Float = 0.5f,
 )
 
 /** One processed camera frame, ready to draw. */

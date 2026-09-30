@@ -33,6 +33,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var showingPhoto by mutableStateOf(false)
         private set
 
+    /** Live engine: GPU unless the user switched to CPU or the GPU pipeline failed on this device. */
+    var preferGpu by mutableStateOf(true)
+        private set
+    var gpuFailed by mutableStateOf(false)
+        private set
+
     /** Point named continuously on the live camera, in frame pixels. */
     var liveProbePoint by mutableStateOf<Pair<Int, Int>?>(null)
         private set
@@ -126,6 +132,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setLiveProbe(point: Pair<Int, Int>?) { liveProbePoint = point }
+
+    fun toggleEngine() {
+        preferGpu = !preferGpu
+        liveProbePoint = null // frame coordinates differ between the two engines
+    }
+
+    fun markGpuFailed() { gpuFailed = true }
 
     fun updateProfile(newProfile: CvdProfile) {
         if (newProfile == profile) return

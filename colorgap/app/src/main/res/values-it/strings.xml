@@ -37,9 +37,10 @@
     <string name="camera">Fotocamera</string>
     <string name="freeze">Congela</string>
     <string name="camera_description">Fotocamera dal vivo con le zone che percepisci diversamente</string>
-    <string name="live_status">CPU · %1$d fps · mappa %2$d×%3$d</string>
+    <string name="live_status">%1$s · %2$d fps · mappa %3$d×%4$d</string>
     <string name="camera_permission_text">ColorGap usa la fotocamera per mostrarti dal vivo le zone che percepisci diversamente. Le immagini sono analizzate sul telefono e non lo lasciano mai.</string>
     <string name="allow_camera">Consenti la fotocamera</string>
     <string name="open_settings">Apri le impostazioni dell\'app</string>
     <string name="camera_unavailable">Nessuna fotocamera disponibile. Puoi comunque analizzare le foto della galleria.</string>
+    <string name="switch_engine">passa da GPU a CPU e viceversa</string>
 </resources>

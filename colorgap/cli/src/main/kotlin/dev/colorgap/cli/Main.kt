@@ -16,6 +16,9 @@ private const val USAGE = """
 Usage: colorgap <image> [--type deutan|protan|tritan] [--severity 0..100]
                 [--threshold 0..1] [--max-size px] [--out dir]
 
+       colorgap chart [out.png]
+       colorgap dump <image> [--out dir] [--max-size px] [--type t] [--severity s] [--threshold t]
+
 Writes <name>-heatmap.png, -stripes.png, -split.png, -simulated.png and
 -score.png (grayscale map) to the output directory (default: ./out).
 """
@@ -23,6 +26,18 @@ Writes <name>-heatmap.png, -stripes.png, -split.png, -simulated.png and
 fun main(args: Array<String>) {
     if (args.isEmpty() || args[0] == "--help") { println(USAGE.trim()); exitProcess(if (args.isEmpty()) 1 else 0) }
     if (args[0] == "chart") { writeConfusionChart(File(args.getOrElse(1) { "samples/confusion-chart.png" })); return }
+    if (args[0] == "dump") {
+        val o = args.drop(2).chunked(2).associate { it[0] to it.getOrElse(1) { "" } }
+        dump(
+            File(args[1]),
+            File(o["--out"] ?: "out/dump"),
+            o["--max-size"]?.toInt() ?: 320,
+            CvdType.valueOf((o["--type"] ?: "deutan").uppercase()),
+            (o["--severity"]?.toDouble() ?: 100.0) / 100.0,
+            o["--threshold"]?.toFloat() ?: 0.35f,
+        )
+        return
+    }
     val opts = args.drop(1).chunked(2).associate { it[0] to it.getOrElse(1) { "" } }
     val input = File(args[0])
     val type = CvdType.valueOf((opts["--type"] ?: "deutan").uppercase())
@@ -31,7 +46,7 @@ fun main(args: Array<String>) {
     val maxSize = opts["--max-size"]?.toInt() ?: 800
     val outDir = File(opts["--out"] ?: "out").apply { mkdirs() }
 
-    val image = downscale(ImageIO.read(input) ?: error("Cannot decode $input"), maxSize)
+    val image = downscaleTo(ImageIO.read(input) ?: error("Cannot decode $input"), maxSize)
     val w = image.width
     val h = image.height
     val pixels = image.getRGB(0, 0, w, h, null, 0, w)
@@ -60,7 +75,7 @@ fun main(args: Array<String>) {
     ))
 }
 
-private fun downscale(src: BufferedImage, maxSize: Int): BufferedImage {
+internal fun downscaleTo(src: BufferedImage, maxSize: Int): BufferedImage {
     val scale = maxSize.toDouble() / max(src.width, src.height)
     val w = if (scale < 1) (src.width * scale).toInt() else src.width
     val h = if (scale < 1) (src.height * scale).toInt() else src.height
