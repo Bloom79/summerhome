@@ -41,7 +41,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.colorgap.app.ColorProbe
-import dev.colorgap.app.ProbeReason
 import dev.colorgap.app.R
 import dev.colorgap.app.ViewMode
 import dev.colorgap.colorcore.Argb
@@ -152,17 +151,18 @@ internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, onDetails: () -> 
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SwatchRow(stringResource(R.string.real_color), probe.realArgb, probe.realName.color.name(language))
             SwatchRow(stringResource(R.string.you_see), probe.seenArgb, probe.seenName.color.name(language))
+            // Verdicts are spelled out, never signalled by color alone.
+            if (probe.edgeLost) {
+                Text(stringResource(R.string.critical_edge), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+            }
             Text(
-                // The verdict is spelled out, with its reason, never signalled by color alone.
-                stringResource(
-                    when (probe.reason) {
-                        ProbeReason.NONE -> R.string.not_critical_here
-                        ProbeReason.COLOR -> R.string.critical_color
-                        ProbeReason.EDGE -> R.string.critical_edge
-                    },
-                ),
+                when (probe.colorVerdict) {
+                    ColorProbe.ColorVerdict.SAME -> stringResource(R.string.probe_color_same)
+                    ColorProbe.ColorVerdict.SLIGHT -> stringResource(R.string.probe_color_slight, probe.colorShift)
+                    ColorProbe.ColorVerdict.DIFFERENT -> stringResource(R.string.probe_color_different, probe.colorShift)
+                },
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (probe.critical) FontWeight.Bold else FontWeight.Normal,
+                fontWeight = if (probe.colorVerdict == ColorProbe.ColorVerdict.DIFFERENT) FontWeight.Bold else FontWeight.Normal,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton(onClick = onDetails, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {

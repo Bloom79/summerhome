@@ -12,7 +12,6 @@
     <string name="critical_area">Zona critica: %1$d%%</string>
     <string name="real_color">Colore reale</string>
     <string name="you_see">Tu vedi</string>
-    <string name="not_critical_here">Qui vedi come tutti gli altri</string>
     <string name="profile_title">La tua visione dei colori</string>
     <string name="type_deutan">Deutan (verde)</string>
     <string name="type_protan">Protan (rosso)</string>
@@ -73,7 +72,6 @@
     <string name="legend_edge">Bordo perso</string>
     <string name="details">Dettagli</string>
     <string name="back">Indietro</string>
-    <string name="critical_color">Qui il colore ti appare diverso</string>
     <string name="critical_edge">Qui per te sparisce il bordo tra due colori</string>
     <string name="detail_title">Dettaglio del colore</string>
     <string name="swatch_hint">Tocca i colori per vederli a tutto schermo.</string>
@@ -122,4 +120,8 @@
     <string name="calib_result_unreliable">Hai mancato tavole che tutti riescono a leggere (il numero è solo più chiaro o più scuro): le risposte non sono affidabili. Controlla luminosità e filtri e riprova, senza tirare a indovinare.</string>
     <string name="calib_apply">Usa questo profilo</string>
     <string name="calib_retry">Ripeti il test</string>
+    <string name="probe_color_same">Questo colore lo vedi come tutti gli altri</string>
+    <string name="probe_color_slight">Questo colore ti appare un po\' diverso (ΔE %1$.0f)</string>
+    <string name="probe_color_different">Questo colore ti appare diverso: per una visione tipica la differenza è netta (ΔE %1$.0f)</string>
+    <string name="detail_if_same">Se i due riquadri ti sembrano uguali, è proprio ciò che l\'app misura: una persona con visione tipica li distingue al primo sguardo. Mostra questa schermata a qualcuno vicino a te per un confronto.</string>
 </resources>

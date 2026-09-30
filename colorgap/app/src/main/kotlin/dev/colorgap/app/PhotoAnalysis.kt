@@ -79,16 +79,6 @@ class AnalyzedPhoto(
     }
 }
 
-/** Why a tapped point is flagged. */
-enum class ProbeReason {
-    /** Seen like everyone else. */
-    NONE,
-    /** The color itself looks different to the user (color loss dominates). */
-    COLOR,
-    /** An edge between two colors disappears for the user here (lost contrast dominates). */
-    EDGE,
-}
-
 /** What the user learns by tapping a point. */
 data class ColorProbe(
     val x: Int,
@@ -97,27 +87,39 @@ data class ColorProbe(
     val seenArgb: Int,
     val realName: ColorMatch,
     val seenName: ColorMatch,
-    val reason: ProbeReason,
+    /** ΔE2000 between the real color and how the user sees it: always meaningful, whatever the display settings. */
+    val colorShift: Float,
+    /** The map says an edge between two colors disappears for the user here. */
+    val edgeLost: Boolean,
 ) {
-    val critical: Boolean get() = reason != ProbeReason.NONE
+    enum class ColorVerdict { SAME, SLIGHT, DIFFERENT }
+
+    val colorVerdict: ColorVerdict
+        get() = when {
+            colorShift < SLIGHT_SHIFT -> ColorVerdict.SAME
+            colorShift < CLEAR_SHIFT -> ColorVerdict.SLIGHT
+            else -> ColorVerdict.DIFFERENT
+        }
+
+    val critical: Boolean get() = edgeLost || colorVerdict == ColorVerdict.DIFFERENT
 
     companion object {
+        /** Below this ΔE2000 the shift is hard to notice; from [CLEAR_SHIFT] it is plain to typical vision. */
+        const val SLIGHT_SHIFT = 5f
+        const val CLEAR_SHIFT = 10f
+
         /**
-         * Names [real] and its simulation and tells why the point is flagged:
-         * the map [score] says whether it is critical; the color's own shift
-         * (the color-loss part of the score, recomputed here) says whether
-         * that is because of the color or of a lost edge.
+         * Names [real] and its simulation. The color verdict comes from the
+         * color itself (so it stays true even when the map highlights edges
+         * only); an edge counts as lost when the map [score] is critical and
+         * the color-loss part cannot explain it.
          */
         fun of(x: Int, y: Int, real: Int, simulator: CvdSimulator, score: Float, threshold: Float, config: AnalysisConfig): ColorProbe {
             val seen = simulator.simulateArgb(real)
             val shift = DeltaE.ciede2000(CieLab.fromArgb(real), CieLab.fromArgb(seen)).toFloat()
             val colorPart = config.colorWeight * ((shift - config.colorFloor) / config.colorScale).coerceIn(0f, 1f)
-            val reason = when {
-                score < threshold -> ProbeReason.NONE
-                colorPart >= threshold -> ProbeReason.COLOR
-                else -> ProbeReason.EDGE
-            }
-            return ColorProbe(x, y, real, seen, ColorNames.nearest(real), ColorNames.nearest(seen), reason)
+            val edgeLost = score >= threshold && colorPart < threshold
+            return ColorProbe(x, y, real, seen, ColorNames.nearest(real), ColorNames.nearest(seen), shift, edgeLost)
         }
 
         /** Averages a small patch around ([x], [y]) to tame sensor noise, then [of]. */

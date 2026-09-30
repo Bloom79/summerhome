@@ -13,7 +13,6 @@
     <string name="critical_area">Critical area: %1$d%%</string>
     <string name="real_color">Real color</string>
     <string name="you_see">You see</string>
-    <string name="not_critical_here">You see this spot like everyone else</string>
     <string name="profile_title">Your color vision</string>
     <string name="type_deutan">Deutan (green)</string>
     <string name="type_protan">Protan (red)</string>
@@ -76,7 +75,6 @@
     <string name="legend_edge">Edge lost</string>
     <string name="details">Details</string>
     <string name="back">Back</string>
-    <string name="critical_color">The color here looks different to you</string>
     <string name="critical_edge">Here the edge between two colors disappears for you</string>
     <string name="detail_title">Color detail</string>
     <string name="swatch_hint">Tap the colors to see them full screen.</string>
@@ -125,4 +123,8 @@
     <string name="calib_result_unreliable">You missed plates that everyone can read (the number is only lighter or darker): the answers are not reliable. Check brightness and filters and try again, without guessing.</string>
     <string name="calib_apply">Use this profile</string>
     <string name="calib_retry">Repeat the test</string>
+    <string name="probe_color_same">You see this color like everyone else</string>
+    <string name="probe_color_slight">This color looks a little different to you (ΔE %1$.0f)</string>
+    <string name="probe_color_different">This color looks different to you: for typical vision the difference is clear (ΔE %1$.0f)</string>
+    <string name="detail_if_same">If the two squares look the same to you, that is exactly what the app measures: someone with typical vision tells them apart at a glance. Show this screen to someone next to you to compare.</string>
 </resources>

@@ -51,6 +51,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.colorgap.app.ColorProbe
 import dev.colorgap.app.R
 import dev.colorgap.colorcore.Argb
 import dev.colorgap.colorcore.CieLab
@@ -135,6 +136,9 @@ fun ColorDetailScreen(color: Int, profile: CvdProfile, onBack: () -> Unit, onOpe
                     stringResource(R.string.typical_difference, delta, stringResource(differenceWord(delta))),
                     style = MaterialTheme.typography.bodyLarge,
                 )
+                if (delta >= ColorProbe.SLIGHT_SHIFT) {
+                    Text(stringResource(R.string.detail_if_same), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                }
 
                 // 2. What changes, in lightness / saturation / hue.
                 Heading(stringResource(R.string.what_changes))
@@ -311,12 +315,16 @@ private fun ChangeRows(real: Lch, seen: Lch) {
     }
 }
 
+/** Label on its own line, then "before → after · verdict": no word is ever split, at any font size. */
 @Composable
 private fun ChangeRow(label: String, values: String, verdict: String) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-        Text(values, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(verdict, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1.3f))
+    Column(Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.titleSmall)
+        Text(
+            "$values · $verdict",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
