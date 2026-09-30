@@ -124,4 +124,6 @@
     <string name="probe_color_slight">Questo colore ti appare un po\' diverso (ΔE %1$.0f)</string>
     <string name="probe_color_different">Questo colore ti appare diverso: per una visione tipica la differenza è netta (ΔE %1$.0f)</string>
     <string name="detail_if_same">Se i due riquadri ti sembrano uguali, è proprio ciò che l\'app misura: una persona con visione tipica li distingue al primo sguardo. Mostra questa schermata a qualcuno vicino a te per un confronto.</string>
+    <string name="edges_only_notice">Evidenzio solo i bordi persi: i colori che vedi diversamente no.</string>
+    <string name="edges_only_enable">Mostra anche i colori</string>
 </resources>

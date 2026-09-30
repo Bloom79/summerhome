@@ -30,7 +30,7 @@ data class AppSettings(
         get() = AnalysisConfig(colorWeight = if (highlightColorShifts) COLOR_WEIGHT else 0f)
 
     companion object {
-        const val DEFAULT_THRESHOLD = 0.35f
+        const val DEFAULT_THRESHOLD = AnalysisConfig.DEFAULT_THRESHOLD
         const val MIN_THRESHOLD = 0.05f
         const val MAX_THRESHOLD = 0.95f
         private val COLOR_WEIGHT = AnalysisConfig().colorWeight

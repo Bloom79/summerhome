@@ -104,9 +104,9 @@ data class ColorProbe(
     val critical: Boolean get() = edgeLost || colorVerdict == ColorVerdict.DIFFERENT
 
     companion object {
-        /** Below this ΔE2000 the shift is hard to notice; from [CLEAR_SHIFT] it is plain to typical vision. */
-        const val SLIGHT_SHIFT = 5f
-        const val CLEAR_SHIFT = 10f
+        /** Shared with the map (AnalysisConfig), so card and map agree on what is "different". */
+        const val SLIGHT_SHIFT = AnalysisConfig.SLIGHT_SHIFT
+        const val CLEAR_SHIFT = AnalysisConfig.CLEAR_SHIFT
 
         /**
          * Names [real] and its simulation. The color verdict comes from the
@@ -117,7 +117,7 @@ data class ColorProbe(
         fun of(x: Int, y: Int, real: Int, simulator: CvdSimulator, score: Float, threshold: Float, config: AnalysisConfig): ColorProbe {
             val seen = simulator.simulateArgb(real)
             val shift = DeltaE.ciede2000(CieLab.fromArgb(real), CieLab.fromArgb(seen)).toFloat()
-            val colorPart = config.colorWeight * ((shift - config.colorFloor) / config.colorScale).coerceIn(0f, 1f)
+            val colorPart = config.colorScore(shift)
             val edgeLost = score >= threshold && colorPart < threshold
             return ColorProbe(x, y, real, seen, ColorNames.nearest(real), ColorNames.nearest(seen), shift, edgeLost)
         }

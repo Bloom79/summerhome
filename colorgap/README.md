@@ -292,7 +292,9 @@ Per ogni fotogramma (`PerceptionAnalyzer.analyze`):
    lineare; gravità 0–1 interpolata linearmente tra i passi tabulati 0.0, 0.1, …, 1.0.
 3. **Perdita di colore**: ΔE2000 (Sharma 2005) tra il pixel originale e quello
    simulato, in CIELAB D65.
-   `colorLoss = clamp((ΔE − 3) / 20)`.
+   `colorLoss = clamp((ΔE − 3) / 11,99)`: la scala è scelta in modo che, alla
+   soglia predefinita 0,35, la mappa marchi un colore esattamente da ΔE 10, cioè
+   dove la scheda del colore dice "diverso" (costanti condivise in `AnalysisConfig`).
 4. **Contrasto perso** (la metrica principale): forza del bordo con struttura
    Sobel (colonne/righe 1-2-1 attorno al pixel) **misurata in ΔE2000**,
    sull'originale e sul simulato, dopo un box blur 3×3 anti-rumore.

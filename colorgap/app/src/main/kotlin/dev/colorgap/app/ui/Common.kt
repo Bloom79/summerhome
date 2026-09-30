@@ -193,6 +193,20 @@ private fun SwatchRow(label: String, argb: Int, name: String) {
     }
 }
 
+/**
+ * Shown when only lost edges are highlighted: otherwise a uniform area the
+ * user sees differently (a lawn) shows 0 % and looks like "seen normally".
+ */
+@Composable
+internal fun EdgesOnlyNotice(onEnable: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.edges_only_notice), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+        TextButton(onClick = onEnable, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.edges_only_enable))
+        }
+    }
+}
+
 /** Square ⚙ button for the bottom bar: settings within thumb reach. */
 @Composable
 internal fun SettingsButton(onClick: () -> Unit) {

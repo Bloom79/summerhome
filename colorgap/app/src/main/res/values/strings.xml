@@ -127,4 +127,6 @@
     <string name="probe_color_slight">This color looks a little different to you (ΔE %1$.0f)</string>
     <string name="probe_color_different">This color looks different to you: for typical vision the difference is clear (ΔE %1$.0f)</string>
     <string name="detail_if_same">If the two squares look the same to you, that is exactly what the app measures: someone with typical vision tells them apart at a glance. Show this screen to someone next to you to compare.</string>
+    <string name="edges_only_notice">Only lost edges are highlighted: colors you see differently are not.</string>
+    <string name="edges_only_enable">Show colors too</string>
 </resources>

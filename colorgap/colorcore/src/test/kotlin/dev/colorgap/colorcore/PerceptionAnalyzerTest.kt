@@ -92,9 +92,11 @@ class PerceptionAnalyzerTest {
         for (i in map.score.indices) {
             assertEquals(maxOf(map.contrastLoss[i], 0.6f * map.colorLoss[i]), map.score[i])
         }
-        val band = map.criticalFraction(0.5f)
-        assertTrue(band > 0f && band < 0.5f, "only a band around the boundary is critical: $band")
         assertEquals(0f, map.criticalFraction(1.01f))
+        // Edges only: just a band around the boundary is critical (colors are no longer counted).
+        val edges = PerceptionAnalyzer(CvdProfile(), AnalysisConfig(colorWeight = 0f)).analyze(halves("#8B5A2B", "#6E7B2B"), w, h)
+        val band = edges.criticalFraction(0.5f)
+        assertTrue(band > 0f && band < 0.5f, "only a band around the boundary is critical: $band")
     }
 
     @Test
@@ -166,5 +168,22 @@ class PerceptionAnalyzerTest {
         }
         val mask = Overlays.maskLayer(map.score, t)
         for (i in img.indices) assertEquals(if (map.score[i] >= t) -1 else 0, mask[i])
+    }
+
+    @Test
+    fun `the map marks a color exactly where the color card calls it different`() {
+        val c = AnalysisConfig()
+        assertTrue(c.colorScore(AnalysisConfig.CLEAR_SHIFT) >= AnalysisConfig.DEFAULT_THRESHOLD)
+        assertTrue(c.colorScore(AnalysisConfig.CLEAR_SHIFT - 0.1f) < AnalysisConfig.DEFAULT_THRESHOLD)
+        // On a real frame: a uniform color whose deutan shift is above 10 is critical at the default threshold,
+        // one below 10 is not (no edges anywhere, so only color counts).
+        val sim = CvdSimulator(CvdProfile())
+        fun shift(hex: String) = DeltaE.ciede2000(CieLab.fromArgb(Argb.fromHex(hex)), CieLab.fromArgb(sim.simulateArgb(Argb.fromHex(hex))))
+        val strong = "#496417" // hill grass, ΔE ≈ 11.9
+        val mild = "#8F9E4C" // flat green, ΔE ≈ 8.6
+        assertTrue(shift(strong) > 10 && shift(mild) < 10)
+        fun criticalShare(hex: String) = analyze(IntArray(w * h) { Argb.fromHex(hex) }).criticalFraction(AnalysisConfig.DEFAULT_THRESHOLD)
+        assertEquals(1f, criticalShare(strong))
+        assertEquals(0f, criticalShare(mild))
     }
 }

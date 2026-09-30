@@ -11,11 +11,15 @@ import kotlin.math.sqrt
  */
 data class AnalysisConfig(
     /** ΔE2000 below this is treated as "same color" (camera noise, JND). */
-    val colorFloor: Float = 3f,
-    /** ΔE2000 above [colorFloor] at which color loss saturates to 1. */
-    val colorScale: Float = 20f,
+    val colorFloor: Float = COLOR_FLOOR,
+    /**
+     * ΔE2000 above [colorFloor] at which color loss saturates to 1. The
+     * default is chosen so that a [CLEAR_SHIFT] reaches [DEFAULT_THRESHOLD]:
+     * the map marks a color exactly where the color card calls it different.
+     */
+    val colorScale: Float = ALIGNED_COLOR_SCALE,
     /** Weight of color loss in the combined score (contrast loss has weight 1). */
-    val colorWeight: Float = 0.6f,
+    val colorWeight: Float = COLOR_WEIGHT,
     /** Edge strength lost below this is ignored (sensor noise). */
     val contrastFloor: Float = 2f,
     /** Edge strength lost above [contrastFloor] at which the drop saturates. */
@@ -33,6 +37,22 @@ data class AnalysisConfig(
         require(colorScale > 0f && contrastScale > 0f) { "scales must be > 0" }
         require(edgeVisible > edgeInvisible) { "edgeVisible must exceed edgeInvisible" }
         require(contrastSpread >= 0) { "contrastSpread must be >= 0" }
+    }
+
+    /** The color-loss part of the score for a ΔE2000 [shift] between a color and how the user sees it. */
+    fun colorScore(shift: Float): Float = colorWeight * ((shift - colorFloor) / colorScale).coerceIn(0f, 1f)
+
+    companion object {
+        /** ΔE2000 from which a color change is plainly visible to typical vision ("different"). */
+        const val CLEAR_SHIFT = 10f
+        /** Below this ΔE2000 a change is hard to notice ("the same"); in between, "a little different". */
+        const val SLIGHT_SHIFT = 5f
+        /** Default map threshold. */
+        const val DEFAULT_THRESHOLD = 0.35f
+        const val COLOR_FLOOR = 3f
+        const val COLOR_WEIGHT = 0.6f
+        /** colorScore(CLEAR_SHIFT) = DEFAULT_THRESHOLD, with a hair of margin against float rounding (≈ 11.99). */
+        const val ALIGNED_COLOR_SCALE = (CLEAR_SHIFT - COLOR_FLOOR) * COLOR_WEIGHT / DEFAULT_THRESHOLD * 0.999f
     }
 }
 
@@ -162,7 +182,7 @@ class PerceptionAnalyzer(
                     labS[k].toDouble(), labS[k + 1].toDouble(), labS[k + 2].toDouble(),
                 ).toFloat()
                 colorDelta[i] = d
-                colorLoss[i] = ((d - config.colorFloor) / config.colorScale).coerceIn(0f, 1f)
+                colorLoss[i] = ((d - config.colorFloor) / config.colorScale).coerceIn(0f, 1f) // = colorScore / weight
             }
         }
 

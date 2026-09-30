@@ -1,5 +1,6 @@
 package dev.colorgap.cli
 
+import dev.colorgap.colorcore.AnalysisConfig
 import dev.colorgap.colorcore.CvdProfile
 import dev.colorgap.colorcore.CvdSimulator
 import dev.colorgap.colorcore.CvdType
@@ -33,9 +34,14 @@ fun dump(image: File, outDir: File, maxSize: Int, type: CvdType, severity: Doubl
     File(outDir, "stripes.rgba").writeBytes(rgba(Overlays.stripes(pixels, map, threshold)))
     val m = CvdSimulator(profile).matrix.joinToString(",")
     val (lo, hi) = Overlays.heatRamp(type)
+    val c = AnalysisConfig()
     File(outDir, "meta.json").writeText(
         """{"width":$w,"height":$h,"threshold":$threshold,"matrix":[$m],""" +
-            """"heatLo":$lo,"heatHi":$hi,"stripePeriod":${Overlays.stripePeriod(w, h)}}""",
+            """"heatLo":$lo,"heatHi":$hi,"stripePeriod":${Overlays.stripePeriod(w, h)},""" +
+            // The analysis parameters, so the GPU check runs the shaders with exactly these.
+            """"config":{"colorFloor":${c.colorFloor},"colorScale":${c.colorScale},"colorWeight":${c.colorWeight},""" +
+            """"contrastFloor":${c.contrastFloor},"contrastScale":${c.contrastScale},"edgeInvisible":${c.edgeInvisible},""" +
+            """"edgeVisible":${c.edgeVisible},"contrastSpread":${c.contrastSpread}}}""",
     )
     println("Dumped ${image.name} ${w}x$h ${type.name.lowercase()} ${(severity * 100).toInt()}% → ${outDir.path}")
 }

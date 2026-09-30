@@ -175,14 +175,15 @@ function pageMain({ sources, SHARMA, dumps }) {
     const fLab = fbo(labO, labS), fBlur = fbo(blurO, blurS), fEdges = fbo(edges), fContrast = fbo(contrast), fScore = fbo(score);
     run(progs.lab, fLab, upW, upH, { uSrc: src }, {
       uCrop: ['4i', ...crop], uRotation: ['1i', rotation], uFactor: ['1i', factor], uSim: ['m3', meta.matrix],
-      uColorFloor: ['1f', 3], uColorScale: ['1f', 20],
+      uColorFloor: ['1f', meta.config.colorFloor], uColorScale: ['1f', meta.config.colorScale],
     });
     run(progs.blur, fBlur, upW, upH, { uLabO: labO, uLabS: labS }, {});
     run(progs.edges, fEdges, upW, upH, { uBlurO: blurO, uBlurS: blurS }, { uGain: ['1f', 1.5] });
     run(progs.contrast, fContrast, upW, upH, { uEdges: edges }, {
-      uContrastFloor: ['1f', 2], uContrastScale: ['1f', 12], uEdgeInvisible: ['1f', 3], uEdgeVisible: ['1f', 20],
+      uContrastFloor: ['1f', meta.config.contrastFloor], uContrastScale: ['1f', meta.config.contrastScale],
+      uEdgeInvisible: ['1f', meta.config.edgeInvisible], uEdgeVisible: ['1f', meta.config.edgeVisible],
     });
-    run(progs.score, fScore, upW, upH, { uContrast: contrast }, { uSpread: ['1i', 2], uColorWeight: ['1f', 0.6] });
+    run(progs.score, fScore, upW, upH, { uContrast: contrast }, { uSpread: ['1i', meta.config.contrastSpread], uColorWeight: ['1f', meta.config.colorWeight] });
     const labSData = readFloat(fLab, 1, upW, upH);
     return { w: upW, h: upH, score, fScore, colorDelta: labSData.filter((_, i) => i % 4 === 3), scoreBytes: readBytes(fScore, upW, upH) };
   }
