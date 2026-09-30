@@ -10,7 +10,7 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 |-------------|---------------|------------|
 | `colorcore` | Tutta la matematica del colore, Kotlin puro (JVM): sRGB ↔ lineare ↔ CIELAB, ΔE2000, simulazione Machado 2009, analizzatore "perdita di colore" + "contrasto perso", renderer CPU degli overlay | nessuna (solo `kotlin-test` per i test) |
 | `cli`       | Strumento desktop per provare l'algoritmo su foto reali (e `dump` per `tools/gpu-check`) | `colorcore`, JDK (`javax.imageio`) |
-| `app`       | App Android: Compose, minSdk 26, targetSdk 35 | `colorcore`, AndroidX core-ktx, activity-compose, Compose BOM (ui, foundation, material3), ExifInterface, CameraX (core, camera2, lifecycle) |
+| `app`       | App Android: Compose, minSdk 26, targetSdk 35 | `colorcore`, AndroidX core-ktx, activity-compose, Compose BOM (ui, foundation, material3), ExifInterface, CameraX (core, camera2, lifecycle), DataStore Preferences |
 
 ## Piano e milestone
 
@@ -20,9 +20,9 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 | 2 | Analisi su foto statica: modulo `app`, apertura foto dalla galleria, overlay heatmap/righe/split, tap → nome colore (IT/EN) + HEX, zoom, esporta | ✅ fatto |
 | 3 | Camera live CPU: CameraX `ImageAnalysis` a risoluzione ridotta, stessi overlay, freeze frame | ✅ fatto |
 | 4 | Shader GPU: OpenGL ES 3.0, ≥ 24 fps, fallback CPU | ✅ fatto |
-| 5 | UI e impostazioni: profilo (tipo, gravità 0–100 %) in DataStore, soglia, toggle modalità, UI IT/EN a una mano, pulsanti grandi | da fare |
+| 5 | UI e impostazioni: profilo (tipo, gravità 0–100 %) in DataStore, soglia, toggle modalità, UI IT/EN a una mano, pulsanti grandi | ✅ fatto |
 
-Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna libreria di rete; il manifest rimuove esplicitamente
+Tutte le dipendenze sono state confermate milestone per milestone. Nessuna libreria di rete; il manifest rimuove esplicitamente
 `INTERNET` e `ACCESS_NETWORK_STATE`, e backup/trasferimento dati sono disattivati.
 
 ## App (milestone 2)
@@ -51,6 +51,50 @@ Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna li
   destra → Lingua: Sistema · English · Italiano). Su Android 13+ la scelta è
   anche in Impostazioni → App → ColorGap → Lingua. Su Android < 13 è salvata
   nell'app. Il bundle non divide le lingue, così il cambio funziona anche da Play.
+
+## Interfaccia e impostazioni (milestone 5)
+
+- **Primo avvio**: una schermata di benvenuto spiega in una frase cosa fa l'app.
+  Poi chiede il tipo, con tre schede grandi e una descrizione semplice ("rossi,
+  verdi, marroni e verdi oliva si confondono"), la gravità e la lingua, e ricorda
+  che tutto resta sul telefono. Se non sai il tipo, consiglia Deutan 100%, il più
+  frequente. Il pulsante "Inizia" sta in basso.
+- **Salvato in DataStore** (`settings/`), solo sul dispositivo: backup
+  disattivati. Si salvano:
+  - profilo (tipo e gravità);
+  - ultima modalità e soglia;
+  - "evidenzia anche i colori che vedi diversamente";
+  - motore GPU/CPU;
+  - primo avvio completato.
+
+  La scrittura parte 300 ms dopo l'ultima modifica, così uno slider in movimento
+  scrive una volta sola. Un valore letto corrotto o fuori intervallo torna al
+  default invece di bloccare l'app. L'interfaccia aspetta la lettura, così non
+  lampeggiano valori predefiniti. La lingua la conserva Android (vedi sotto).
+- **Impostazioni** a schermo intero: si aprono con ⚙ in basso a sinistra, sotto
+  il pollice, o con il profilo in alto. Ogni modifica si applica subito. Contiene:
+  - la tua visione (tipo e gravità);
+  - visualizzazione: interruttore "Evidenzia anche i colori che vedi
+    diversamente", che risponde alla domanda aperta sulla perdita di colore.
+    Se è spento restano solo i bordi persi (peso del colore = 0, su CPU, GPU e
+    foto). C'è anche "Ripristina la visualizzazione predefinita";
+  - motore GPU/CPU;
+  - lingua;
+  - informazioni: come funziona, privacy, versione.
+- **Una mano**: tutte le azioni principali sono in basso e alte almeno 60 dp:
+  - camera: ⚙, Galleria, Congela;
+  - foto: ←, Galleria, Esporta;
+  - benvenuto: Inizia; impostazioni: Fatto.
+- **Legenda della heatmap**: una barra da "Colore diverso" (blu) a "Bordo
+  perso" (giallo); i colori seguono il tipo di daltonismo.
+- **Accessibilità**:
+  - etichette TalkBack su slider, pulsanti-icona e immagine;
+  - le sezioni sono "heading";
+  - interruttori con tutta la riga toccabile;
+  - la scheda del colore è una live region, così TalkBack legge il nome quando
+    cambia;
+  - la selezione non è mai indicata solo dal colore (bordo spesso + radio).
+- La **camera dal vivo** tiene lo schermo acceso.
 
 ## Camera live, percorso GPU (milestone 4)
 

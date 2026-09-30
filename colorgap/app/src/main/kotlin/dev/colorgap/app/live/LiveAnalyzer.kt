@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import dev.colorgap.app.ColorProbe
 import dev.colorgap.app.ViewMode
+import dev.colorgap.colorcore.AnalysisConfig
 import dev.colorgap.colorcore.CvdProfile
 import dev.colorgap.colorcore.CvdSimulator
 import dev.colorgap.colorcore.Overlays
@@ -30,6 +31,7 @@ data class LiveSettings(
     val probePoint: Pair<Int, Int>? = null,
     /** Split-view divider, 0..1 of the frame width. */
     val split: Float = 0.5f,
+    val config: AnalysisConfig = AnalysisConfig(),
 )
 
 /** One processed camera frame, ready to draw. */
@@ -95,8 +97,8 @@ class LiveAnalyzer : ImageAnalysis.Analyzer {
     private fun process(image: ImageProxy) {
         val start = System.nanoTime()
         val s = settings
-        if (analyzer?.profile != s.profile) {
-            analyzer = PerceptionAnalyzer(s.profile)
+        if (analyzer?.profile != s.profile || analyzer?.config != s.config) {
+            analyzer = PerceptionAnalyzer(s.profile, s.config)
             simulator = CvdSimulator(s.profile)
         }
 

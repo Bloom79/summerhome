@@ -64,7 +64,7 @@ import kotlin.math.roundToInt
  * tools/gpu-check, which verifies them against colorcore.
  */
 class GpuPipeline(sources: ShaderSources) {
-    private val config = AnalysisConfig()
+    private var config = AnalysisConfig()
     private val lab = GlProgram(sources.vertex, sources.fragment("lab.frag"), "lab")
     private val blur = GlProgram(sources.vertex, sources.fragment("blur.frag"), "blur")
     private val edges = GlProgram(sources.vertex, sources.fragment("edges.frag"), "edges")
@@ -217,9 +217,10 @@ class GpuPipeline(sources: ShaderSources) {
     }
 
     /** Runs the analysis passes on the current source frame. */
-    fun analyze(p: CvdProfile) {
+    fun analyze(p: CvdProfile, analysisConfig: AnalysisConfig) {
         val src = source ?: return
         setProfile(p)
+        config = analysisConfig
         glBindVertexArray(vao)
         pass(lab, labFbo!!) {
             sampler("uSrc", 0, src.id)

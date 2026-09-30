@@ -12,9 +12,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import dev.colorgap.app.settings.AppSettings
+import dev.colorgap.app.settings.SettingsStore
 import dev.colorgap.colorcore.CvdProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
@@ -28,6 +31,16 @@ import java.io.IOException
  * camera frame) is shown on top of the camera while [showingPhoto].
  */
 class MainViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val store = SettingsStore(app)
+
+    /** False until the saved settings are read (the UI waits, to avoid flashing the welcome screen). */
+    var settingsLoaded by mutableStateOf(false)
+        private set
+    var onboarded by mutableStateOf(false)
+        private set
+    var highlightColorShifts by mutableStateOf(true)
+        private set
 
     /** True while the photo screen is shown (also during its first analysis). */
     var showingPhoto by mutableStateOf(false)
@@ -55,11 +68,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var mode by mutableStateOf(ViewMode.HEATMAP)
         private set
-    var threshold by mutableFloatStateOf(DEFAULT_THRESHOLD)
+    var threshold by mutableFloatStateOf(AppSettings.DEFAULT_THRESHOLD)
         private set
     var split by mutableFloatStateOf(0.5f)
         private set
-    // In-memory until milestone 5 persists it in DataStore.
     var profile by mutableStateOf(CvdProfile())
         private set
     var probe by mutableStateOf<ColorProbe?>(null)
@@ -75,8 +87,31 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private data class RenderKey(val photo: AnalyzedPhoto, val mode: ViewMode, val threshold: Float)
     private val renderRequests = MutableStateFlow<RenderKey?>(null)
+    private val pendingSave = MutableStateFlow<AppSettings?>(null)
+
+    /** The persisted part of the state. */
+    val settings: AppSettings
+        get() = AppSettings(onboarded, profile, mode, threshold, highlightColorShifts, preferGpu)
 
     init {
+        viewModelScope.launch {
+            val saved = store.load()
+            onboarded = saved.onboarded
+            profile = saved.profile
+            mode = saved.mode
+            threshold = saved.threshold
+            highlightColorShifts = saved.highlightColorShifts
+            preferGpu = saved.preferGpu
+            settingsLoaded = true
+        }
+        // Save shortly after the last change: a moving slider writes once.
+        viewModelScope.launch {
+            pendingSave.filterNotNull().collectLatest {
+                delay(SAVE_DELAY_MS)
+                store.save(it)
+            }
+        }
+
         // Re-render on every change, dropping stale renders while the slider moves.
         viewModelScope.launch {
             renderRequests.filterNotNull().collectLatest { key ->
@@ -133,9 +168,46 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setLiveProbe(point: Pair<Int, Int>?) { liveProbePoint = point }
 
-    fun toggleEngine() {
-        preferGpu = !preferGpu
+    fun updatePreferGpu(value: Boolean) {
+        if (value == preferGpu) return
+        preferGpu = value
         liveProbePoint = null // frame coordinates differ between the two engines
+        save()
+    }
+
+    fun toggleEngine() = updatePreferGpu(!preferGpu)
+
+    /** The welcome screen is done: remember the profile and don't show it again. */
+    fun completeOnboarding(chosen: CvdProfile) {
+        onboarded = true
+        updateProfile(chosen)
+        save()
+    }
+
+    fun updateHighlightColorShifts(value: Boolean) {
+        if (value == highlightColorShifts) return
+        highlightColorShifts = value
+        save()
+        reanalyzePhoto()
+    }
+
+    /** Back to the default view mode, threshold and highlighting (the profile is kept). */
+    fun resetDisplay() {
+        val d = AppSettings()
+        mode = d.mode
+        updateThreshold(d.threshold)
+        updateHighlightColorShifts(d.highlightColorShifts)
+        save()
+        requestRender()
+    }
+
+    private fun save() {
+        if (settingsLoaded) pendingSave.value = settings
+    }
+
+    private fun reanalyzePhoto() {
+        val bitmap = source ?: return
+        runAnalysis { analyze(bitmap) }
     }
 
     fun markGpuFailed() { gpuFailed = true }
@@ -143,8 +215,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun updateProfile(newProfile: CvdProfile) {
         if (newProfile == profile) return
         profile = newProfile
-        val bitmap = source ?: return
-        runAnalysis { analyze(bitmap) }
+        save()
+        reanalyzePhoto()
     }
 
     /** Runs [block] as the only analysis; a newer one cancels it, and only the latest clears [busy]. */
@@ -159,17 +231,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun analyze(bitmap: Bitmap) {
-        val result = withContext(Dispatchers.Default) { AnalyzedPhoto.analyze(bitmap, profile) }
+        val result = withContext(Dispatchers.Default) { AnalyzedPhoto.analyze(bitmap, profile, settings.analysisConfig) }
         photo = result
         overlay = null
         probe = null
         requestRender()
     }
 
-    fun selectMode(newMode: ViewMode) { mode = newMode; requestRender() }
+    fun selectMode(newMode: ViewMode) {
+        mode = newMode
+        save()
+        requestRender()
+    }
 
     fun updateThreshold(value: Float) {
         threshold = value
+        save()
         probe = probe?.let { photo?.probe(it.x, it.y, value) }
         requestRender()
     }
@@ -211,6 +288,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         /** Long side of the displayed/exported image. */
         const val DISPLAY_MAX_SIDE = 1600
-        const val DEFAULT_THRESHOLD = 0.35f
+        private const val SAVE_DELAY_MS = 300L
     }
 }

@@ -3,6 +3,7 @@ package dev.colorgap.app
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import dev.colorgap.colorcore.AnalysisConfig
 import dev.colorgap.colorcore.Argb
 import dev.colorgap.colorcore.ColorMatch
 import dev.colorgap.colorcore.ColorNames
@@ -48,7 +49,7 @@ class AnalyzedPhoto(
         /** Long side of the image the perception map is computed on. */
         const val ANALYSIS_MAX_SIDE = 640
 
-        fun analyze(bitmap: Bitmap, profile: CvdProfile): AnalyzedPhoto {
+        fun analyze(bitmap: Bitmap, profile: CvdProfile, config: AnalysisConfig = AnalysisConfig()): AnalyzedPhoto {
             val start = System.nanoTime()
             val w = bitmap.width
             val h = bitmap.height
@@ -59,7 +60,7 @@ class AnalyzedPhoto(
             val sh = small.height
             val smallPixels = IntArray(sw * sh).also { small.getPixels(it, 0, sw, 0, 0, sw, sh) }
             if (small !== bitmap) small.recycle()
-            val map = PerceptionAnalyzer(profile).analyze(smallPixels, sw, sh)
+            val map = PerceptionAnalyzer(profile, config).analyze(smallPixels, sw, sh)
 
             val score = map.scoreResized(w, h)
             val simulated = CvdSimulator(profile).simulateInto(pixels)

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -26,10 +29,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,7 +45,9 @@ import dev.colorgap.app.R
 import dev.colorgap.app.ViewMode
 import dev.colorgap.colorcore.Argb
 import dev.colorgap.colorcore.CvdProfile
+import dev.colorgap.app.settings.AppSettings
 import dev.colorgap.colorcore.CvdType
+import dev.colorgap.colorcore.Overlays
 import kotlin.math.roundToInt
 
 /** Minimum height of every primary control: large touch targets, usable with a thumb. */
@@ -104,7 +113,8 @@ internal fun ModeSlider(
 ) {
     if (mode == ViewMode.SPLIT) {
         Text(stringResource(R.string.divider), style = MaterialTheme.typography.labelLarge)
-        Slider(value = split, onValueChange = onSplit)
+        val label = stringResource(R.string.divider)
+        Slider(value = split, onValueChange = onSplit, modifier = Modifier.semantics { contentDescription = label })
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -117,7 +127,13 @@ internal fun ModeSlider(
                 style = MaterialTheme.typography.labelLarge,
             )
         }
-        Slider(value = threshold, onValueChange = onThreshold, valueRange = 0.05f..0.95f)
+        val label = stringResource(R.string.threshold, threshold)
+        Slider(
+            value = threshold,
+            onValueChange = onThreshold,
+            valueRange = AppSettings.MIN_THRESHOLD..AppSettings.MAX_THRESHOLD,
+            modifier = Modifier.semantics { contentDescription = label },
+        )
         Text(stringResource(R.string.threshold_hint), style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -126,7 +142,8 @@ internal fun ModeSlider(
 internal fun ProbeCard(probe: ColorProbe, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val language = LocalConfiguration.current.locales[0].language
     Surface(
-        modifier.padding(12.dp).fillMaxWidth(),
+        // Polite live region: TalkBack reads the names when they change (e.g. while panning the camera).
+        modifier.padding(12.dp).fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         shape = RoundedCornerShape(16.dp),
         tonalElevation = 6.dp,
         shadowElevation = 6.dp,
@@ -164,6 +181,36 @@ private fun SwatchRow(label: String, argb: Int, name: String) {
             Text(label, style = MaterialTheme.typography.labelMedium)
             Text("$name · ${Argb.toHex(argb)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+/** Square ⚙ button for the bottom bar: settings within thumb reach. */
+@Composable
+internal fun SettingsButton(onClick: () -> Unit) {
+    val label = stringResource(R.string.settings_title)
+    OutlinedButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(0.dp),
+        modifier = Modifier.size(BigTouch).semantics { contentDescription = label },
+    ) {
+        Text("⚙", style = MaterialTheme.typography.headlineSmall)
+    }
+}
+
+/** What the heatmap colors mean: low end = the color looks different, high end = an edge disappears. */
+@Composable
+internal fun HeatLegend(type: CvdType) {
+    val (lo, hi) = Overlays.heatRamp(type)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.legend_color), style = MaterialTheme.typography.labelMedium)
+        Box(
+            Modifier
+                .weight(1f)
+                .height(12.dp)
+                .background(Brush.horizontalGradient(listOf(Color(lo), Color(hi))), RoundedCornerShape(6.dp))
+                .clearAndSetSemantics { },
+        )
+        Text(stringResource(R.string.legend_edge), style = MaterialTheme.typography.labelMedium)
     }
 }
 

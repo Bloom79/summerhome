@@ -24,8 +24,6 @@
     <string name="type_tritan_short">Tritan</string>
     <string name="severity">Severity: %1$d%%</string>
     <string name="severity_hint">100% = dichromacy (-anopia), lower = anomalous trichromacy (-anomaly)</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="exported">Image saved</string>
     <string name="export_failed">Could not save the image</string>
@@ -55,4 +53,26 @@
     <string name="settings_title">Settings</string>
     <string name="language_title">Language · Lingua</string>
     <string name="language_system">System</string>
+    <string name="welcome_title">Welcome to ColorGap</string>
+    <string name="welcome_text">ColorGap shows you, live, the areas you see differently from people with typical color vision. To start, tell it about your color vision.</string>
+    <string name="deutan_desc">The most common. Reds, greens, browns and olive greens get mixed up.</string>
+    <string name="protan_desc">Reds look darker and get mixed up with greens and browns.</string>
+    <string name="tritan_desc">Rare. Blues and greens, yellows and pinks get mixed up.</string>
+    <string name="dont_know">Not sure? Start with Deutan 100%: it is the most frequent. You can change it anytime in Settings.</string>
+    <string name="privacy_note">Everything stays on your phone: no image or data is ever sent anywhere.</string>
+    <string name="start">Start</string>
+    <string name="done">Done</string>
+    <string name="section_display">Display</string>
+    <string name="highlight_color_shifts">Also highlight colors you see differently</string>
+    <string name="highlight_color_shifts_hint">When off, only edges that disappear for you are shown: two neighbouring colors you cannot tell apart.</string>
+    <string name="reset_display">Restore default display</string>
+    <string name="section_engine">Live camera engine</string>
+    <string name="use_gpu">Use the GPU (recommended)</string>
+    <string name="use_gpu_hint">Finer and faster analysis. Turn off to use the CPU.</string>
+    <string name="gpu_unavailable">The GPU analysis is not available on this phone: the CPU is used.</string>
+    <string name="section_about">About</string>
+    <string name="about_how">ColorGap simulates your color vision (Machado et al. 2009 model) and compares it with typical vision using the CIEDE2000 color difference. Blue areas: the color looks different to you. Yellow areas: the edge between two colors disappears for you, so you cannot tell them apart. Tap a point to see the name of its real color.</string>
+    <string name="version">Version %1$s</string>
+    <string name="legend_color">Color differs</string>
+    <string name="legend_edge">Edge lost</string>
 </resources>

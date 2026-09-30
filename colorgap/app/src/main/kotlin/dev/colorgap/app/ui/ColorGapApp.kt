@@ -1,10 +1,10 @@
 package dev.colorgap.app.ui
 
-import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,8 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import dev.colorgap.app.gpu.GpuRenderer
 import androidx.compose.ui.platform.LocalContext
-import dev.colorgap.app.AppLanguage
 import dev.colorgap.app.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -31,7 +32,7 @@ import java.util.Locale
 fun ColorGapApp(vm: MainViewModel) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
-    var showProfile by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
 
     val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(vm::open)
@@ -47,38 +48,36 @@ fun ColorGapApp(vm: MainViewModel) {
             vm.messageShown()
         }
     }
-    BackHandler(enabled = vm.showingPhoto) { vm.closePhoto() }
+    val gpuAvailable = remember { GpuRenderer.deviceSupportsEs3(context) }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { TopBar(vm.profile, onProfileClick = { showProfile = true }) },
-    ) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize()) {
-            if (vm.showingPhoto) {
-                PhotoScreen(
-                    vm,
-                    onCamera = vm::closePhoto,
-                    onGallery = openPicker,
-                    onExport = { exportTo.launch("colorgap-${timestamp()}.png") },
-                )
-            } else {
-                CameraScreen(vm, onGallery = openPicker)
+    when {
+        // Wait for the saved settings: no flash of the welcome screen or of default values.
+        !vm.settingsLoaded -> Box(Modifier.fillMaxSize().background(Color.Black))
+        !vm.onboarded -> WelcomeScreen(onStart = vm::completeOnboarding)
+        showSettings -> {
+            BackHandler { showSettings = false }
+            SettingsScreen(vm, gpuAvailable && !vm.gpuFailed, onBack = { showSettings = false })
+        }
+        else -> {
+            BackHandler(enabled = vm.showingPhoto) { vm.closePhoto() }
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbar) },
+                topBar = { TopBar(vm.profile, onProfileClick = { showSettings = true }) },
+            ) { padding ->
+                Box(Modifier.padding(padding).fillMaxSize()) {
+                    if (vm.showingPhoto) {
+                        PhotoScreen(
+                            vm,
+                            onCamera = vm::closePhoto,
+                            onGallery = openPicker,
+                            onExport = { exportTo.launch("colorgap-${timestamp()}.png") },
+                        )
+                    } else {
+                        CameraScreen(vm, onGallery = openPicker, onSettings = { showSettings = true })
+                    }
+                }
             }
         }
-    }
-
-    if (showProfile) {
-        val activity = context as Activity
-        ProfileDialog(
-            initial = vm.profile,
-            initialLanguage = AppLanguage.current(context),
-            onDismiss = { showProfile = false },
-            onConfirm = { profile, language ->
-                vm.updateProfile(profile)
-                showProfile = false
-                AppLanguage.apply(activity, language)
-            },
-        )
     }
 }
 

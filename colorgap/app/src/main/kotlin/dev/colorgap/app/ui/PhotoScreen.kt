@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,9 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.colorgap.app.MainViewModel
 import dev.colorgap.app.R
+import dev.colorgap.app.ViewMode
 
 /** A still image (gallery photo or frozen camera frame): zoom, tap to name colors, export. */
 @Composable
@@ -60,11 +64,18 @@ fun PhotoScreen(vm: MainViewModel, onCamera: () -> Unit, onGallery: () -> Unit, 
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 ModeSelector(vm.mode, vm::selectMode)
+                if (vm.mode == ViewMode.HEATMAP) HeatLegend(vm.profile.type)
                 ModeSlider(vm.mode, vm.threshold, vm.criticalFraction, vm.split, vm::updateThreshold, vm::updateSplit)
                 Text(stringResource(R.string.tap_hint), style = MaterialTheme.typography.bodySmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onCamera, modifier = Modifier.weight(1f).heightIn(min = BigTouch)) {
-                        Text(stringResource(R.string.camera), maxLines = 1)
+                    // Back to the live camera: a square button, so the row fits small screens.
+                    val cameraLabel = stringResource(R.string.camera)
+                    OutlinedButton(
+                        onClick = onCamera,
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.size(BigTouch).semantics { contentDescription = cameraLabel },
+                    ) {
+                        Text("←", style = MaterialTheme.typography.headlineSmall)
                     }
                     OutlinedButton(onClick = onGallery, modifier = Modifier.weight(1f).heightIn(min = BigTouch)) {
                         Text(stringResource(R.string.gallery), maxLines = 1)

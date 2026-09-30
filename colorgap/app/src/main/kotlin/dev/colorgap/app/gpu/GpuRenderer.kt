@@ -132,7 +132,7 @@ class GpuRenderer(
                 } finally {
                     image.close()
                 }
-                p.analyze(s.profile)
+                p.analyze(s.profile, s.config)
                 countFrame()
                 if (++frameCount % READBACK_EVERY == 0L) readback(p, s)
             }

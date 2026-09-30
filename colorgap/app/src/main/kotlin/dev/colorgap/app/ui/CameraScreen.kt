@@ -88,7 +88,7 @@ import kotlin.math.roundToInt
 
 /** Live camera (CPU path): the analyzed frames themselves are shown, so image and overlay always match. */
 @Composable
-fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
+fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit, onSettings: () -> Unit) {
     val context = LocalContext.current
     var granted by remember { mutableStateOf(hasCameraPermission(context)) }
     var asked by rememberSaveable { mutableStateOf(false) }
@@ -113,7 +113,13 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
     val useGpu = vm.preferGpu && gpuCapable && !vm.gpuFailed
     val live = remember { LiveAnalyzer() }
     val gpu = remember { GpuRenderer(context.assets, density, onUnsupported = vm::markGpuFailed) }
-    val settings = LiveSettings(vm.profile, vm.mode, vm.threshold, vm.liveProbePoint, vm.split)
+    val settings = LiveSettings(vm.profile, vm.mode, vm.threshold, vm.liveProbePoint, vm.split, vm.settings.analysisConfig)
+    // The phone must not dim or lock while pointing the camera at something.
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
     SideEffect {
         live.settings = settings
         gpu.settings = settings
@@ -194,8 +200,10 @@ fun CameraScreen(vm: MainViewModel, onGallery: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 ModeSelector(vm.mode, vm::selectMode)
+                if (vm.mode == ViewMode.HEATMAP) HeatLegend(vm.profile.type)
                 ModeSlider(vm.mode, vm.threshold, info?.criticalFraction ?: 0f, vm.split, vm::updateThreshold, vm::updateSplit)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SettingsButton(onSettings)
                     OutlinedButton(onClick = onGallery, modifier = Modifier.weight(1f).heightIn(min = BigTouch)) {
                         Text(stringResource(R.string.gallery), style = MaterialTheme.typography.titleMedium)
                     }

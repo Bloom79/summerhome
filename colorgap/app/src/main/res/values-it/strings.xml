@@ -23,8 +23,6 @@
     <string name="type_tritan_short">Tritan</string>
     <string name="severity">Gravità: %1$d%%</string>
     <string name="severity_hint">100% = dicromasia (-anopia), valori più bassi = tricromasia anomala (-anomalia)</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Annulla</string>
     <string name="close">Chiudi</string>
     <string name="exported">Immagine salvata</string>
     <string name="export_failed">Impossibile salvare l\'immagine</string>
@@ -52,4 +50,26 @@
     <string name="settings_title">Impostazioni</string>
     <string name="language_title">Lingua · Language</string>
     <string name="language_system">Sistema</string>
+    <string name="welcome_title">Benvenuto in ColorGap</string>
+    <string name="welcome_text">ColorGap ti mostra dal vivo le zone che vedi diversamente da chi ha una visione dei colori tipica. Per iniziare, dimmi com\'è la tua.</string>
+    <string name="deutan_desc">Il più comune. Rossi, verdi, marroni e verdi oliva si confondono.</string>
+    <string name="protan_desc">I rossi appaiono più scuri e si confondono con verdi e marroni.</string>
+    <string name="tritan_desc">Raro. Si confondono blu e verdi, gialli e rosa.</string>
+    <string name="dont_know">Non sai quale? Inizia con Deutan 100%: è il più frequente. Puoi cambiarlo quando vuoi dalle Impostazioni.</string>
+    <string name="privacy_note">Tutto resta sul telefono: nessuna immagine o dato viene mai inviato.</string>
+    <string name="start">Inizia</string>
+    <string name="done">Fatto</string>
+    <string name="section_display">Visualizzazione</string>
+    <string name="highlight_color_shifts">Evidenzia anche i colori che vedi diversamente</string>
+    <string name="highlight_color_shifts_hint">Se spento, mostra solo i bordi che per te spariscono: due colori vicini che non riesci a distinguere.</string>
+    <string name="reset_display">Ripristina la visualizzazione predefinita</string>
+    <string name="section_engine">Motore della camera dal vivo</string>
+    <string name="use_gpu">Usa la GPU (consigliato)</string>
+    <string name="use_gpu_hint">Analisi più fine e più veloce. Spegni per usare la CPU.</string>
+    <string name="gpu_unavailable">L\'analisi su GPU non è disponibile su questo telefono: viene usata la CPU.</string>
+    <string name="section_about">Informazioni</string>
+    <string name="about_how">ColorGap simula la tua visione dei colori (modello di Machado et al. 2009) e la confronta con quella tipica usando la differenza di colore CIEDE2000. Zone blu: il colore ti appare diverso. Zone gialle: il bordo tra due colori per te sparisce, quindi non li distingui. Tocca un punto per sapere il nome del suo colore reale.</string>
+    <string name="version">Versione %1$s</string>
+    <string name="legend_color">Colore diverso</string>
+    <string name="legend_edge">Bordo perso</string>
 </resources>
