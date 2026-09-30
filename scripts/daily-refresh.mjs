@@ -346,6 +346,7 @@ const placed = []
 // (and today's price) for listings we already carry, so they skip the
 // one-by-one source verification. Never used to add NEW listings.
 const overflow = new Map()
+const skippedPrice = []
 // `cap` limits the NEW listings a search adds per day, not the total:
 // listings already on the portal always pass, so a zone's backlog comes in
 // a batch a day until every house in it is covered.
@@ -353,6 +354,11 @@ const addCapped = (items, cap) => {
   let n = 0
   for (const l of items) {
     if (!l || scraped.has(l.url)) continue
+    // Same price bounds as the quality gate (validate-data.mjs), which fails
+    // the whole run on one violation: an auction switched to a £5,000
+    // starting bid blocked the 2026-09-30 refresh. Skipped here, a carried
+    // listing goes through source verification and keeps its last price.
+    if (!(l.price >= 10000 && l.price <= 20e6)) { skippedPrice.push(`${l.addr} → ${l.price}`); continue }
     const isNew = !prevByUrl.has(l.url)
     if (isNew && n >= cap) { overflow.set(l.url, l); continue }
     const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
@@ -892,13 +898,14 @@ for (const z of extra) {
     console.log(`${z.zone}: ok`)
   }
 }
+if (skippedPrice.length) console.log(`prezzo fuori limiti, ignorati: ${[...new Set(skippedPrice)].join(' · ')}`)
 console.log(`scrape totale: ${scraped.size} annunci`)
 if (scraped.size < 60) { out('status', 'error'); out('summary', `scrape sospetto: solo ${scraped.size} annunci — non tocco i dati`); process.exit(0) }
 
 // Carried listings seen in today's searches beyond the caps are live: diff
 // them like scraped ones (price tracking included) instead of verifying.
 let seenOverCap = 0
-for (const [url, cand] of overflow) if (prevByUrl.has(url) && !scraped.has(url)) { scraped.set(url, cand); seenOverCap++ }
+for (const [url, cand] of overflow) if (prevByUrl.has(url) && !scraped.has(url) && cand.price >= 10000 && cand.price <= 20e6) { scraped.set(url, cand); seenOverCap++ }
 console.log(`[${elapsed()}] già in portale, visti oltre il tetto: ${seenOverCap}`)
 
 // ---- Diff against previous data ----
