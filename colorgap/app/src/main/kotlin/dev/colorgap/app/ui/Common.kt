@@ -269,17 +269,17 @@ internal fun SettingsButton(onClick: () -> Unit) {
     }
 }
 
-/** What the heatmap colors mean: low end = the color looks different, high end = an edge disappears. */
+/** What the heatmap means: the stronger the tint, the bigger the difference from typical vision. */
 @Composable
 internal fun HeatLegend(type: CvdType) {
-    val (lo, hi) = Overlays.heatRamp(type)
+    val tint = Color(Overlays.heatColor(type))
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.legend_color), style = MaterialTheme.typography.labelMedium)
         Box(
             Modifier
                 .weight(1f)
                 .height(12.dp)
-                .background(Brush.horizontalGradient(listOf(Color(lo), Color(hi))), RoundedCornerShape(6.dp))
+                .background(Brush.horizontalGradient(listOf(tint.copy(alpha = 0.1f), tint.copy(alpha = Overlays.HEAT_MAX_ALPHA))), RoundedCornerShape(6.dp))
                 .clearAndSetSemantics { },
         )
         Text(stringResource(R.string.legend_edge), style = MaterialTheme.typography.labelMedium)

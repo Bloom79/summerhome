@@ -33,11 +33,11 @@ fun dump(image: File, outDir: File, maxSize: Int, type: CvdType, severity: Doubl
     File(outDir, "heatmap.rgba").writeBytes(rgba(Overlays.heatmap(pixels, map, threshold, type)))
     File(outDir, "stripes.rgba").writeBytes(rgba(Overlays.stripes(pixels, map, threshold)))
     val m = CvdSimulator(profile).matrix.joinToString(",")
-    val (lo, hi) = Overlays.heatRamp(type)
     val c = AnalysisConfig()
     File(outDir, "meta.json").writeText(
         """{"width":$w,"height":$h,"threshold":$threshold,"matrix":[$m],""" +
-            """"heatLo":$lo,"heatHi":$hi,"stripePeriod":${Overlays.stripePeriod(w, h)},""" +
+            """"heatLo":${Overlays.heatColor(type)},"heatMaxAlpha":${Overlays.HEAT_MAX_ALPHA},"rampHalf":${Overlays.RAMP_HALF_WIDTH},""" +
+            """"stripePeriod":${Overlays.stripePeriod(w, h)},""" +
             // The analysis parameters, so the GPU check runs the shaders with exactly these.
             """"config":{"colorFloor":${c.colorFloor},"colorScale":${c.colorScale},"colorWeight":${c.colorWeight},""" +
             """"contrastFloor":${c.contrastFloor},"contrastScale":${c.contrastScale},"edgeInvisible":${c.edgeInvisible},""" +

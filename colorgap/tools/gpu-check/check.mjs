@@ -306,8 +306,8 @@ function pageMain({ sources, SHARMA, dumps }) {
       const rgb = (c) => [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
       run(progs.display, f, w, h, { uSrc: src, uScore: base.score }, {
         uCrop: ['4f', 0, 0, w, h], uRotation: ['1i', 0], uSrcSize: ['2f', w, h], uMode: ['1i', mode],
-        uThreshold: ['1f', meta.threshold], uSplit: ['1f', 0.5], uMaxAlpha: ['1f', 0.7],
-        uHeatLo: ['3f', ...rgb(meta.heatLo)], uHeatHi: ['3f', ...rgb(meta.heatHi)], uSim: ['m3', meta.matrix],
+        uThreshold: ['1f', meta.threshold], uSplit: ['1f', 0.5], uMaxAlpha: ['1f', meta.heatMaxAlpha], uRampHalf: ['1f', meta.rampHalf],
+        uHeatLo: ['3f', ...rgb(meta.heatLo)], uSim: ['m3', meta.matrix],
         uViewport: ['4f', 0, 0, w, h], uStripePeriod: ['1f', meta.stripePeriod], uLineHalf: ['1f', 2],
       });
       // Like the screen, the display pass puts the image top at the highest row: flip to compare.

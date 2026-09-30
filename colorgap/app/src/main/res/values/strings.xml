@@ -71,8 +71,8 @@
     <string name="section_about">About</string>
     <string name="about_how">ColorGap simulates your color vision (Machado et al. 2009 model) and compares it with typical vision using the CIEDE2000 color difference. Blue areas: the color looks different to you. Yellow areas: the edge between two colors disappears for you, so you cannot tell them apart. Tap a point to see the name of its real color.</string>
     <string name="version">Version %1$s</string>
-    <string name="legend_color">Color differs</string>
-    <string name="legend_edge">Edge lost</string>
+    <string name="legend_color">Differs a little</string>
+    <string name="legend_edge">Differs a lot</string>
     <string name="details">Details</string>
     <string name="back">Back</string>
     <string name="critical_edge">Here the edge between two colors disappears for you</string>

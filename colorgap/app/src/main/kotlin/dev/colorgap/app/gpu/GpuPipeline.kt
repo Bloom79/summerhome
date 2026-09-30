@@ -115,7 +115,6 @@ class GpuPipeline(sources: ShaderSources) {
     private var profile: CvdProfile? = null
     private var simMatrix = FloatArray(9)
     private var heatLo = floatArrayOf(0f, 0f, 0f)
-    private var heatHi = floatArrayOf(0f, 0f, 0f)
 
     // Camera planes (raw bytes, R8) and the RGBA frame converted from them.
     private val yuv = GlProgram(sources.vertex, sources.fragment("yuv.frag"), "yuv")
@@ -211,9 +210,7 @@ class GpuPipeline(sources: ShaderSources) {
         profile = p
         val m = CvdSimulator(p).matrix
         simMatrix = FloatArray(9) { m[it].toFloat() }
-        val (lo, hi) = Overlays.heatRamp(p.type)
-        heatLo = rgb(lo)
-        heatHi = rgb(hi)
+        heatLo = rgb(Overlays.heatColor(p.type))
     }
 
     /** Runs the analysis passes on the current source frame. */
@@ -287,9 +284,9 @@ class GpuPipeline(sources: ShaderSources) {
         display.int("uMode", mode.ordinal)
         display.float("uThreshold", threshold)
         display.float("uSplit", split)
-        display.float("uMaxAlpha", 0.7f)
+        display.float("uMaxAlpha", Overlays.HEAT_MAX_ALPHA)
+        display.float("uRampHalf", Overlays.RAMP_HALF_WIDTH)
         display.vec3("uHeatLo", heatLo[0], heatLo[1], heatLo[2])
-        display.vec3("uHeatHi", heatHi[0], heatHi[1], heatHi[2])
         display.mat3("uSim", simMatrix)
         display.vec4("uViewport", vx.toFloat(), vy.toFloat(), vw.toFloat(), vh.toFloat())
         display.float("uStripePeriod", (18f * density).roundToInt().toFloat())

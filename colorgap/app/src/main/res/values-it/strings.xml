@@ -68,8 +68,8 @@
     <string name="section_about">Informazioni</string>
     <string name="about_how">ColorGap simula la tua visione dei colori (modello di Machado et al. 2009) e la confronta con quella tipica usando la differenza di colore CIEDE2000. Zone blu: il colore ti appare diverso. Zone gialle: il bordo tra due colori per te sparisce, quindi non li distingui. Tocca un punto per sapere il nome del suo colore reale.</string>
     <string name="version">Versione %1$s</string>
-    <string name="legend_color">Colore diverso</string>
-    <string name="legend_edge">Bordo perso</string>
+    <string name="legend_color">Poco diverso</string>
+    <string name="legend_edge">Molto diverso</string>
     <string name="details">Dettagli</string>
     <string name="back">Indietro</string>
     <string name="critical_edge">Qui per te sparisce il bordo tra due colori</string>

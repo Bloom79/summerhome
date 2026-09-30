@@ -305,6 +305,12 @@ Per ogni fotogramma (`PerceptionAnalyzer.analyze`):
    poi un max-filter di raggio 2 px per trasformare i bordi in fasce visibili.
 5. **Mappa finale**: `score = max(contrastLoss, 0.6 × colorLoss)` in 0–1; la
    soglia è regolabile (default 0.35).
+6. **Marcatura graduata** (0.8.2): niente taglio netto alla soglia. L'intensità
+   `strength = clamp((score − (soglia − 0,25)) / 0,5)` sale gradualmente attorno
+   alla soglia: la tinta della heatmap diventa più coprente e le righe più
+   spesse dove la differenza è maggiore. Così una zona uniforme (un prato con
+   ΔE 8–12 ovunque) è marcata tutta in modo continuo, senza "linee" dove il
+   valore attraversa per poco la soglia.
 
 Due scelte rispetto alla specifica, emerse dai test:
 

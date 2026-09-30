@@ -111,13 +111,13 @@ class PerceptionAnalyzerTest {
     }
 
     @Test
-    fun `overlays touch only critical pixels`() {
+    fun `overlays leave pixels below the graded ramp untouched`() {
         val img = halves("#8B5A2B", "#6E7B2B")
         val map = analyze(img)
         val t = 0.5f
         val heat = Overlays.heatmap(img, map, t, CvdType.DEUTAN)
         val stripes = Overlays.stripes(img, map, t)
-        for (i in img.indices) if (map.score[i] < t) {
+        for (i in img.indices) if (map.score[i] <= t - Overlays.RAMP_HALF_WIDTH) {
             assertEquals(img[i], heat[i])
             assertEquals(img[i], stripes[i])
         }
@@ -167,7 +167,23 @@ class PerceptionAnalyzerTest {
             }
         }
         val mask = Overlays.maskLayer(map.score, t)
-        for (i in img.indices) assertEquals(if (map.score[i] >= t) -1 else 0, mask[i])
+        for (i in img.indices) assertEquals((Overlays.strength(map.score[i], t) * 255f + 0.5f).toInt(), Argb.alpha(mask[i]))
+    }
+
+    @Test
+    fun `marking grows with the difference, without a hard cut at the threshold`() {
+        val t = 0.35f
+        // Scores just below and just above the threshold get almost the same marking.
+        assertEquals(Overlays.strength(t - 0.02f, t), Overlays.strength(t + 0.02f, t), 0.1f)
+        assertEquals(0.5f, Overlays.strength(t, t), 1e-6f)
+        assertEquals(0f, Overlays.strength(t - Overlays.RAMP_HALF_WIDTH, t))
+        assertEquals(1f, Overlays.strength(t + Overlays.RAMP_HALF_WIDTH, t))
+        var previous = -1f
+        for (k in 0..100) {
+            val st = Overlays.strength(k / 100f, t)
+            assertTrue(st >= previous)
+            previous = st
+        }
     }
 
     @Test

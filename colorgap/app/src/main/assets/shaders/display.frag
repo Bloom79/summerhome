@@ -11,8 +11,8 @@ uniform int uMode; // 0 heatmap, 1 stripes, 2 split
 uniform float uThreshold;
 uniform float uSplit;
 uniform float uMaxAlpha;
-uniform vec3 uHeatLo;
-uniform vec3 uHeatHi;
+uniform float uRampHalf;  // Overlays.RAMP_HALF_WIDTH: graded marking around the threshold
+uniform vec3 uHeatLo;     // heat tint (Overlays.heatColor)
 uniform mat3 uSim;
 uniform vec4 uViewport;     // x, y, width, height in window pixels
 uniform float uStripePeriod; // pixels
@@ -30,16 +30,16 @@ void main() {
         else if (dx > 0.0) c = srgbEncode(clamp(uSim * srgbDecode(c), 0.0, 1.0));
     } else {
         float s = texture(uScore, up).r;
-        if (s >= uThreshold) {
+        // Graded marking (Overlays.strength): proportional to the score, no hard cut.
+        float st = clamp((s - (uThreshold - uRampHalf)) / (2.0 * uRampHalf), 0.0, 1.0);
+        if (st > 0.0) {
             if (uMode == 0) {
-                float t = clamp((s - uThreshold) / max(1.0 - uThreshold, 1e-3), 0.0, 1.0);
-                float fade = smoothstep(uThreshold, uThreshold + 0.08, s);
-                c = mix(c, mix(uHeatLo, uHeatHi, t), uMaxAlpha * fade * (0.6 + 0.4 * t));
+                c = mix(c, uHeatLo, uMaxAlpha * st);
             } else {
-                // Diagonal x + y (y down), constant spacing on screen.
+                // Diagonal x + y (y down), constant spacing on screen; thicker where it differs more.
                 float x = floor(gl_FragCoord.x - uViewport.x);
                 float y = floor(uViewport.w - (gl_FragCoord.y - uViewport.y));
-                float band = max(1.0, floor(uStripePeriod / 5.0));
+                float band = max(1.0, floor(uStripePeriod / 5.0)) * st;
                 float phase = mod(x + y, uStripePeriod);
                 if (phase < band) c = vec3(0.0);
                 else if (phase < 2.0 * band) c = vec3(1.0);
