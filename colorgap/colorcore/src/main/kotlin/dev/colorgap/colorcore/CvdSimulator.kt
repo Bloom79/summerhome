@@ -110,17 +110,19 @@ class CvdSimulator(val profile: CvdProfile) {
      * encoder, so channels may differ by one level from [simulateArgb].
      */
     fun simulateInto(src: IntArray, dst: IntArray = IntArray(src.size)): IntArray {
-        for (i in src.indices) {
-            val c = src[i]
-            val r = Srgb.channelToLinear(Argb.red(c))
-            val g = Srgb.channelToLinear(Argb.green(c))
-            val b = Srgb.channelToLinear(Argb.blue(c))
-            dst[i] = Argb.pack(
-                Srgb.linearToChannelFast(m[0] * r + m[1] * g + m[2] * b),
-                Srgb.linearToChannelFast(m[3] * r + m[4] * g + m[5] * b),
-                Srgb.linearToChannelFast(m[6] * r + m[7] * g + m[8] * b),
-                Argb.alpha(c),
-            )
+        Parallel.forRange(src.size, grain = 16_384) { from, until ->
+            for (i in from until until) {
+                val c = src[i]
+                val r = Srgb.channelToLinear(Argb.red(c))
+                val g = Srgb.channelToLinear(Argb.green(c))
+                val b = Srgb.channelToLinear(Argb.blue(c))
+                dst[i] = Argb.pack(
+                    Srgb.linearToChannelFast(m[0] * r + m[1] * g + m[2] * b),
+                    Srgb.linearToChannelFast(m[3] * r + m[4] * g + m[5] * b),
+                    Srgb.linearToChannelFast(m[6] * r + m[7] * g + m[8] * b),
+                    Argb.alpha(c),
+                )
+            }
         }
         return dst
     }

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="choose_photo">Scegli una foto</string>
-    <string name="empty_hint">Apri una foto per vedere quali zone percepisci diversamente da chi ha una visione dei colori tipica.</string>
     <string name="mode_heatmap">Heatmap</string>
     <string name="mode_stripes">Righe</string>
     <string name="mode_split">Confronto</string>
@@ -36,4 +34,12 @@
     <string name="tap_hint">Tocca un punto per sapere il colore · pizzica o tocca due volte per ingrandire</string>
     <string name="image_description">Foto analizzata</string>
     <string name="change_profile">Cambia il profilo della visione dei colori</string>
+    <string name="camera">Fotocamera</string>
+    <string name="freeze">Congela</string>
+    <string name="camera_description">Fotocamera dal vivo con le zone che percepisci diversamente</string>
+    <string name="live_status">CPU · %1$d fps · mappa %2$d×%3$d</string>
+    <string name="camera_permission_text">ColorGap usa la fotocamera per mostrarti dal vivo le zone che percepisci diversamente. Le immagini sono analizzate sul telefono e non lo lasciano mai.</string>
+    <string name="allow_camera">Consenti la fotocamera</string>
+    <string name="open_settings">Apri le impostazioni dell\'app</string>
+    <string name="camera_unavailable">Nessuna fotocamera disponibile. Puoi comunque analizzare le foto della galleria.</string>
 </resources>

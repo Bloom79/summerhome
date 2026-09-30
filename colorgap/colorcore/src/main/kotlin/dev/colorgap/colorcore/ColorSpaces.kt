@@ -97,6 +97,30 @@ object CieLab {
         out[offset + 2] = (200.0 * (fy - fz)).toFloat()
     }
 
+    private const val F_STEPS = 8192
+    private val fLut = FloatArray(F_STEPS + 2) { f(it.toDouble() / F_STEPS).toFloat() }
+
+    /** f(t) for t in 0..1 by linear interpolation in a table (error < 1e-5 in L*). */
+    private fun fFast(t: Double): Float {
+        val x = t.coerceIn(0.0, 1.0) * F_STEPS
+        val i = x.toInt()
+        val frac = (x - i).toFloat()
+        return fLut[i] + (fLut[i + 1] - fLut[i]) * frac
+    }
+
+    /**
+     * Table-based [linearToLab] for in-gamut input (components 0..1), within
+     * 0.01 of it; for the per-pixel hot path.
+     */
+    fun linearToLabFast(r: Double, g: Double, b: Double, out: FloatArray, offset: Int) {
+        val fx = fFast((M00 * r + M01 * g + M02 * b) / WHITE_X)
+        val fy = fFast((M10 * r + M11 * g + M12 * b) / WHITE_Y)
+        val fz = fFast((M20 * r + M21 * g + M22 * b) / WHITE_Z)
+        out[offset] = 116f * fy - 16f
+        out[offset + 1] = 500f * (fx - fy)
+        out[offset + 2] = 200f * (fy - fz)
+    }
+
     fun fromLinear(rgb: LinearRgb): Lab {
         val fx = f((M00 * rgb.r + M01 * rgb.g + M02 * rgb.b) / WHITE_X)
         val fy = f((M10 * rgb.r + M11 * rgb.g + M12 * rgb.b) / WHITE_Y)

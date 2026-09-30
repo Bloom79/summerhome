@@ -5,11 +5,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -93,7 +91,7 @@ fun PhotoCanvas(
                 } else {
                     drawPhoto(overlay ?: photo.original, fit)
                 }
-                probe?.let { drawProbeMarker(it, fit, zoom.scale) }
+                probe?.let { drawProbeMarker(it.x, it.y, fit, zoom.scale) }
             }
         }
         if (mode == ViewMode.SPLIT) {
@@ -103,34 +101,57 @@ fun PhotoCanvas(
     }
 }
 
-private fun DrawScope.drawPhoto(image: ImageBitmap, fit: FitRect) {
+internal fun DrawScope.drawPhoto(
+    image: ImageBitmap,
+    fit: FitRect,
+    srcSize: IntSize = IntSize(image.width, image.height),
+    filterQuality: FilterQuality = FilterQuality.Medium,
+) {
     drawImage(
         image,
+        srcSize = srcSize,
         dstOffset = IntOffset(fit.left.roundToInt(), fit.top.roundToInt()),
         dstSize = IntSize(fit.width.roundToInt(), fit.height.roundToInt()),
-        filterQuality = FilterQuality.Medium,
+        filterQuality = filterQuality,
     )
 }
 
 /** Ring with a black and a white stroke, visible on any background. */
-private fun DrawScope.drawProbeMarker(probe: ColorProbe, fit: FitRect, scale: Float) {
+internal fun DrawScope.drawProbeMarker(x: Int, y: Int, fit: FitRect, scale: Float = 1f) {
     val center = Offset(
-        fit.left + (probe.x + 0.5f) / fit.imageWidth * fit.width,
-        fit.top + (probe.y + 0.5f) / fit.imageHeight * fit.height,
+        fit.left + (x + 0.5f) / fit.imageWidth * fit.width,
+        fit.top + (y + 0.5f) / fit.imageHeight * fit.height,
     )
     val radius = 14.dp.toPx() / scale
     drawCircle(Color.Black, radius, center, style = Stroke(5.dp.toPx() / scale))
     drawCircle(Color.White, radius, center, style = Stroke(2.dp.toPx() / scale))
 }
 
-@Composable
-private fun CornerLabel(text: String, modifier: Modifier) {
-    Surface(
-        modifier.padding(8.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.Black.copy(alpha = 0.6f),
-        contentColor = Color.White,
-    ) {
-        Text(text, Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelLarge)
+/**
+ * Diagonal black/white stripes drawn only where [mask] is opaque: the mask
+ * (at any resolution) is scaled over [fit] in an offscreen layer, then the
+ * stripes are composited into it with SrcIn. Stripes stay crisp and keep a
+ * constant on-screen spacing whatever the mask resolution.
+ */
+internal fun DrawScope.drawMaskedStripes(mask: ImageBitmap, maskSize: IntSize, fit: FitRect) {
+    val bounds = Rect(fit.left, fit.top, fit.right, fit.bottom)
+    val canvas = drawContext.canvas
+    canvas.saveLayer(bounds, Paint())
+    drawPhoto(mask, fit, maskSize, FilterQuality.Low)
+    val period = 18.dp.toPx() // perpendicular distance between stripe pairs
+    val band = period / 5f
+    val step = period * SQRT2 // lines x + y = c: perpendicular spacing is Δc / √2
+    var c = fit.left + fit.top
+    while (c < fit.right + fit.bottom + step) {
+        drawDiagonal(c, fit, Color.Black, band)
+        drawDiagonal(c + band * SQRT2, fit, Color.White, band)
+        c += step
     }
+    canvas.restore()
 }
+
+private fun DrawScope.drawDiagonal(c: Float, fit: FitRect, color: Color, width: Float) {
+    drawLine(color, Offset(c - fit.top, fit.top), Offset(c - fit.bottom, fit.bottom), width, blendMode = BlendMode.SrcIn)
+}
+
+private const val SQRT2 = 1.4142135f

@@ -91,6 +91,32 @@ object Overlays {
 
     fun split(src: IntArray, map: PerceptionMap, split: Float = 0.5f) = split(src, map.simulated, map.width, split)
 
+    /**
+     * The heatmap as a standalone translucent layer (non-premultiplied ARGB,
+     * transparent below [threshold]). Drawing it over the frame gives the same
+     * pixels as [heatmap]; used where the layer is scaled up by the GPU.
+     */
+    fun heatLayer(score: FloatArray, threshold: Float, type: CvdType, maxAlpha: Float = 0.7f, dst: IntArray = IntArray(score.size)): IntArray {
+        val (lo, hi) = heatRamp(type)
+        val span = max(1f - threshold, 1e-3f)
+        for (i in score.indices) {
+            val s = score[i]
+            dst[i] = if (s < threshold) 0 else {
+                val t = ((s - threshold) / span).coerceIn(0f, 1f)
+                val fade = PerceptionAnalyzer.smoothstep(threshold, threshold + 0.08f, s)
+                val a = (maxAlpha * fade * (0.6f + 0.4f * t) * 255f + 0.5f).toInt().coerceIn(0, 255)
+                (lerpColor(lo, hi, t) and 0x00FFFFFF) or (a shl 24)
+            }
+        }
+        return dst
+    }
+
+    /** Opaque white where [score] reaches [threshold], transparent elsewhere: a mask for stripes. */
+    fun maskLayer(score: FloatArray, threshold: Float, dst: IntArray = IntArray(score.size)): IntArray {
+        for (i in score.indices) dst[i] = if (score[i] >= threshold) -1 else 0
+        return dst
+    }
+
     fun lerpColor(a: Int, b: Int, t: Float): Int = Argb.pack(
         (Argb.red(a) + (Argb.red(b) - Argb.red(a)) * t + 0.5f).toInt(),
         (Argb.green(a) + (Argb.green(b) - Argb.green(a)) * t + 0.5f).toInt(),

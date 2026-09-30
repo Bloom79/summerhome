@@ -52,4 +52,17 @@ class ColorSpacesTest {
             assertLab(CieLab.fromLinear(rgb), Lab(out[0].toDouble(), out[1].toDouble(), out[2].toDouble()), 1e-4)
         }
     }
+
+    @Test
+    fun `table-based Lab stays within 0_01 of the exact conversion`() {
+        val out = FloatArray(3)
+        for (r in 0..255 step 5) for (g in 0..255 step 5) for (b in 0..255 step 5) {
+            val lr = Srgb.channelToLinear(r); val lg = Srgb.channelToLinear(g); val lb = Srgb.channelToLinear(b)
+            CieLab.linearToLabFast(lr, lg, lb, out, 0)
+            val exact = CieLab.fromLinear(LinearRgb(lr, lg, lb))
+            assertEquals(exact.l, out[0].toDouble(), 0.01)
+            assertEquals(exact.a, out[1].toDouble(), 0.01)
+            assertEquals(exact.b, out[2].toDouble(), 0.01)
+        }
+    }
 }

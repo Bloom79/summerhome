@@ -65,4 +65,34 @@ class DeltaE2000Test {
         assertEquals(0.0, DeltaE.ciede2000(Lab(40.0, 30.0, -20.0), Lab(40.0, 30.0, -20.0)), 0.0)
         assertEquals(0.0, DeltaE.ciede2000(Lab(0.0, 0.0, 0.0), Lab(0.0, 0.0, 0.0)), 0.0)
     }
+
+    @Test
+    fun `fast form matches the reference on Sharma pairs`() {
+        sharma.forEachIndexed { i, r ->
+            val d = DeltaE.ciede2000Fast(r[0], r[1], r[2], r[3], r[4], r[5])
+            assertEquals(r[6], d, 5e-5, "pair ${i + 1}")
+        }
+    }
+
+    @Test
+    fun `fast form matches the reference on random and edge-case pairs`() {
+        val rnd = java.util.Random(42)
+        fun lab() = doubleArrayOf(rnd.nextDouble() * 100, rnd.nextDouble() * 200 - 100, rnd.nextDouble() * 200 - 100)
+        fun near(x: DoubleArray, s: Double) = doubleArrayOf(x[0] + rnd.nextGaussian() * s, x[1] + rnd.nextGaussian() * s, x[2] + rnd.nextGaussian() * s)
+        val pairs = ArrayList<Pair<DoubleArray, DoubleArray>>()
+        repeat(50_000) { val a = lab(); pairs += a to lab() }
+        repeat(50_000) { val a = lab(); pairs += a to near(a, 3.0) }
+        // Achromatic, one-achromatic, opposite hues, same hue.
+        pairs += doubleArrayOf(50.0, 0.0, 0.0) to doubleArrayOf(60.0, 0.0, 0.0)
+        pairs += doubleArrayOf(50.0, 0.0, 0.0) to doubleArrayOf(50.0, 10.0, -20.0)
+        pairs += doubleArrayOf(50.0, 10.0, -20.0) to doubleArrayOf(50.0, 0.0, 0.0)
+        pairs += doubleArrayOf(50.0, 10.0, 0.0) to doubleArrayOf(50.0, -10.0, 0.0)
+        pairs += doubleArrayOf(50.0, 0.0, 30.0) to doubleArrayOf(50.0, 0.0, -30.0)
+        pairs += doubleArrayOf(40.0, 5.0, 5.0) to doubleArrayOf(70.0, 10.0, 10.0)
+        for ((a, b) in pairs) {
+            val ref = DeltaE.ciede2000(a[0], a[1], a[2], b[0], b[1], b[2])
+            val fast = DeltaE.ciede2000Fast(a[0], a[1], a[2], b[0], b[1], b[2])
+            assertEquals(ref, fast, 1e-5, "${a.toList()} vs ${b.toList()}")
+        }
+    }
 }

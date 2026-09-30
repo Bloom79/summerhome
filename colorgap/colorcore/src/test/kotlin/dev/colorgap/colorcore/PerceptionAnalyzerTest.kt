@@ -98,11 +98,14 @@ class PerceptionAnalyzerTest {
     }
 
     @Test
-    fun `simulated frame matches the per-pixel simulator`() {
+    fun `simulated frame matches the per-pixel simulator within one level`() {
         val img = halves("#A0522D", "#6495ED")
         val map = analyze(img, CvdType.PROTAN, 0.6)
         val sim = CvdSimulator(CvdProfile(CvdType.PROTAN, 0.6))
-        for (i in img.indices) assertEquals(sim.simulateArgb(img[i]), map.simulated[i])
+        for (i in img.indices) {
+            val a = sim.simulateArgb(img[i]); val b = map.simulated[i]
+            for (shift in intArrayOf(0, 8, 16)) assertTrue(((a shr shift) and 0xFF) - ((b shr shift) and 0xFF) in -1..1)
+        }
     }
 
     @Test
@@ -134,5 +137,34 @@ class PerceptionAnalyzerTest {
         // The critical band stays around the (scaled) boundary.
         assertTrue(big[(h * 3 / 2) * w * 3 + w * 3 / 2] > 0.8f)
         assertEquals(map.score[map.index(1, 1)], big[3 * w * 3 + 3], 1e-5f)
+    }
+
+    @Test
+    fun `analyzer instances give identical results across frames and sizes`() {
+        val analyzer = PerceptionAnalyzer(CvdProfile())
+        val a = halves("#8B5A2B", "#6E7B2B")
+        val first = analyzer.analyze(a, w, h).score.copyOf()
+        analyzer.analyze(IntArray(10 * 7) { Argb.fromHex("#FF0000") }, 10, 7) // different size in between
+        analyzer.analyze(halves("#6495ED", "#20B2AA"), w, h)
+        val again = analyzer.analyze(a, w, h).score
+        for (i in first.indices) assertEquals(first[i], again[i])
+    }
+
+    @Test
+    fun `layers composite to the same image as the baked overlays`() {
+        val img = halves("#8B5A2B", "#6E7B2B")
+        val map = analyze(img)
+        val t = 0.4f
+        val baked = Overlays.heatmap(img, map, t, CvdType.DEUTAN)
+        val layer = Overlays.heatLayer(map.score, t, CvdType.DEUTAN)
+        for (i in img.indices) {
+            val a = Argb.alpha(layer[i]) / 255f
+            val composed = Overlays.blend(img[i], layer[i], a)
+            for (shift in intArrayOf(0, 8, 16)) {
+                assertTrue(((composed shr shift) and 0xFF) - ((baked[i] shr shift) and 0xFF) in -2..2, "pixel $i")
+            }
+        }
+        val mask = Overlays.maskLayer(map.score, t)
+        for (i in img.indices) assertEquals(if (map.score[i] >= t) -1 else 0, mask[i])
     }
 }

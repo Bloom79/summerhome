@@ -22,7 +22,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-class PhotoViewModel(app: Application) : AndroidViewModel(app) {
+/**
+ * App state shared by the live camera and the photo screen: the profile, view
+ * mode and threshold apply to both; a photo (from the gallery or a frozen
+ * camera frame) is shown on top of the camera while [showingPhoto].
+ */
+class MainViewModel(app: Application) : AndroidViewModel(app) {
+
+    /** True while the photo screen is shown (also during its first analysis). */
+    var showingPhoto by mutableStateOf(false)
+        private set
+
+    /** Point named continuously on the live camera, in frame pixels. */
+    var liveProbePoint by mutableStateOf<Pair<Int, Int>?>(null)
+        private set
 
     var photo by mutableStateOf<AnalyzedPhoto?>(null)
         private set
@@ -75,19 +88,44 @@ class PhotoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun open(uri: Uri) = runAnalysis {
-        try {
-            val bitmap = withContext(Dispatchers.IO) {
-                PhotoLoader.load(getApplication<Application>().contentResolver, uri, DISPLAY_MAX_SIDE)
+    fun open(uri: Uri) {
+        showingPhoto = true
+        runAnalysis {
+            try {
+                val bitmap = withContext(Dispatchers.IO) {
+                    PhotoLoader.load(getApplication<Application>().contentResolver, uri, DISPLAY_MAX_SIDE)
+                }
+                source = bitmap
+                analyze(bitmap)
+            } catch (e: IOException) {
+                message = R.string.open_failed
+                if (photo == null) showingPhoto = false
+            } catch (e: SecurityException) {
+                message = R.string.open_failed
+                if (photo == null) showingPhoto = false
             }
-            source = bitmap
-            analyze(bitmap)
-        } catch (e: IOException) {
-            message = R.string.open_failed
-        } catch (e: SecurityException) {
-            message = R.string.open_failed
         }
     }
+
+    /** Freeze frame: analyze a copy of the current camera frame as a photo (zoom, tap, export). */
+    fun showFrozen(frame: Bitmap) {
+        showingPhoto = true
+        source = frame
+        runAnalysis { analyze(frame) }
+    }
+
+    /** Back to the live camera. */
+    fun closePhoto() {
+        analysisJob?.cancel()
+        busy = false
+        showingPhoto = false
+        photo = null
+        overlay = null
+        probe = null
+        source = null
+    }
+
+    fun setLiveProbe(point: Pair<Int, Int>?) { liveProbePoint = point }
 
     fun updateProfile(newProfile: CvdProfile) {
         if (newProfile == profile) return

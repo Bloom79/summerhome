@@ -40,27 +40,9 @@ class AnalyzedPhoto(
         ViewMode.SPLIT -> Overlays.split(pixels, simulated, width, split)
     }
 
-    /** Names the color around ([x], [y]), averaging a small patch to tame sensor noise. */
-    fun probe(x: Int, y: Int, threshold: Float): ColorProbe {
-        val real = patchAverage(pixels, x, y)
-        val seen = patchAverage(simulated, x, y)
-        return ColorProbe(
-            x, y, real, seen,
-            ColorNames.nearest(real), ColorNames.nearest(seen),
-            critical = score[y * width + x] >= threshold,
-        )
-    }
-
-    private fun patchAverage(src: IntArray, x: Int, y: Int, radius: Int = 2): Int {
-        var r = 0; var g = 0; var b = 0; var n = 0
-        for (yy in max(0, y - radius)..min(height - 1, y + radius)) {
-            for (xx in max(0, x - radius)..min(width - 1, x + radius)) {
-                val c = src[yy * width + xx]
-                r += Argb.red(c); g += Argb.green(c); b += Argb.blue(c); n++
-            }
-        }
-        return Argb.pack(r / n, g / n, b / n)
-    }
+    /** Names the color around ([x], [y]). */
+    fun probe(x: Int, y: Int, threshold: Float): ColorProbe =
+        ColorProbe.at(pixels, width, height, x, y, CvdSimulator(profile), critical = score[y * width + x] >= threshold)
 
     companion object {
         /** Long side of the image the perception map is computed on. */
@@ -102,4 +84,20 @@ data class ColorProbe(
     val realName: ColorMatch,
     val seenName: ColorMatch,
     val critical: Boolean,
-)
+) {
+    companion object {
+        /** Averages a small patch around ([x], [y]) to tame sensor noise, then names it as seen and as simulated. */
+        fun at(pixels: IntArray, width: Int, height: Int, x: Int, y: Int, simulator: CvdSimulator, critical: Boolean, radius: Int = 2): ColorProbe {
+            var r = 0; var g = 0; var b = 0; var n = 0
+            for (yy in max(0, y - radius)..min(height - 1, y + radius)) {
+                for (xx in max(0, x - radius)..min(width - 1, x + radius)) {
+                    val c = pixels[yy * width + xx]
+                    r += Argb.red(c); g += Argb.green(c); b += Argb.blue(c); n++
+                }
+            }
+            val real = Argb.pack(r / n, g / n, b / n)
+            val seen = simulator.simulateArgb(real)
+            return ColorProbe(x, y, real, seen, ColorNames.nearest(real), ColorNames.nearest(seen), critical)
+        }
+    }
+}

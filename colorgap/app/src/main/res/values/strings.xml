@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">ColorGap</string>
-    <string name="choose_photo">Choose a photo</string>
-    <string name="empty_hint">Open a photo to see which areas you perceive differently from people with typical color vision.</string>
     <string name="mode_heatmap">Heatmap</string>
     <string name="mode_stripes">Stripes</string>
     <string name="mode_split">Compare</string>
@@ -37,4 +35,12 @@
     <string name="tap_hint">Tap a point to name its color · pinch or double-tap to zoom</string>
     <string name="image_description">Analyzed photo</string>
     <string name="change_profile">Change color vision profile</string>
+    <string name="camera">Camera</string>
+    <string name="freeze">Freeze</string>
+    <string name="camera_description">Live camera with the areas you perceive differently</string>
+    <string name="live_status">CPU · %1$d fps · map %2$d×%3$d</string>
+    <string name="camera_permission_text">ColorGap uses the camera to show, live, the areas you perceive differently. Images are analyzed on your phone and never leave it.</string>
+    <string name="allow_camera">Allow camera</string>
+    <string name="open_settings">Open app settings</string>
+    <string name="camera_unavailable">No camera available. You can still analyze photos from the gallery.</string>
 </resources>

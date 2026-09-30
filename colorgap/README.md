@@ -10,7 +10,7 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 |-------------|---------------|------------|
 | `colorcore` | Tutta la matematica del colore, Kotlin puro (JVM): sRGB ↔ lineare ↔ CIELAB, ΔE2000, simulazione Machado 2009, analizzatore "perdita di colore" + "contrasto perso", renderer CPU degli overlay | nessuna (solo `kotlin-test` per i test) |
 | `cli`       | Strumento desktop per provare l'algoritmo su foto reali prima che esista l'app | `colorcore`, JDK (`javax.imageio`) |
-| `app`       | App Android: Compose, minSdk 26, targetSdk 35 | `colorcore`, AndroidX core-ktx, activity-compose, Compose BOM (ui, foundation, material3), ExifInterface |
+| `app`       | App Android: Compose, minSdk 26, targetSdk 35 | `colorcore`, AndroidX core-ktx, activity-compose, Compose BOM (ui, foundation, material3), ExifInterface, CameraX (core, camera2, lifecycle) |
 
 ## Piano e milestone
 
@@ -18,12 +18,11 @@ una persona con visione normale. Tutto on-device, nessun accesso alla rete.
 |---|-----------|-------|
 | 1 | `colorcore` + unit test (+ CLI per provarlo) | ✅ fatto |
 | 2 | Analisi su foto statica: modulo `app`, apertura foto dalla galleria, overlay heatmap/righe/split, tap → nome colore (IT/EN) + HEX, zoom, esporta | ✅ fatto |
-| 3 | Camera live CPU: CameraX `ImageAnalysis` a risoluzione ridotta, stessi overlay, freeze frame | da fare |
+| 3 | Camera live CPU: CameraX `ImageAnalysis` a risoluzione ridotta, stessi overlay, freeze frame | ✅ fatto |
 | 4 | Shader GPU: OpenGL ES 3.0 su texture esterna della camera, ≥ 24 fps, fallback CPU | da fare |
 | 5 | UI e impostazioni: profilo (tipo, gravità 0–100 %) in DataStore, soglia, toggle modalità, UI IT/EN a una mano, pulsanti grandi | da fare |
 
-Dipendenze ancora da confermare: CameraX (milestone 3), DataStore Preferences
-(milestone 5). Nessuna libreria di rete; il manifest rimuove esplicitamente
+Dipendenze ancora da confermare: DataStore Preferences (milestone 5). Nessuna libreria di rete; il manifest rimuove esplicitamente
 `INTERNET` e `ACCESS_NETWORK_STATE`, e backup/trasferimento dati sono disattivati.
 
 ## App (milestone 2)
@@ -48,6 +47,50 @@ Dipendenze ancora da confermare: CameraX (milestone 3), DataStore Preferences
 - **Profilo**: Deutan/Protan/Tritan + gravità a passi del 5 %, dal pulsante in
   alto a destra (per ora in memoria; DataStore arriva nella milestone 5).
 - UI italiano/inglese, controlli in basso e alti ≥ 60 dp.
+
+## Camera live, percorso CPU (milestone 3)
+
+- È la schermata iniziale. Usa solo il caso d'uso CameraX `ImageAnalysis` in
+  RGBA_8888, senza Preview: a schermo vanno i fotogrammi analizzati, così
+  immagine e overlay coincidono sempre, anche quando la camera si muove.
+- Per ogni fotogramma:
+  1. il buffer RGBA viene raddrizzato e scalato a 960 px di lato lungo, in
+     bitmap riusate a rotazione (nessuna allocazione da megabyte per frame);
+  2. la mappa si calcola dopo una riduzione a media di blocchi (box filter,
+     niente aliasing, quindi niente falsi bordi) di un fattore intero da 2 a 6;
+  3. il fattore si adatta da solo: mediana del tempo su 12 frame, con obiettivo
+     circa 50 ms (≈ 20 fps); più lento → mappa più grossolana, più veloce → più fine.
+- L'overlay è un layer piccolo, scalato dal compositor con filtro bilineare. Le
+  righe sono disegnate a risoluzione di schermo dentro la maschera (SrcIn), quindi
+  restano nitide. Nel Confronto la simulazione è calcolata sul fotogramma intero.
+- Tap: il punto resta "agganciato" e il nome del colore si aggiorna a ogni
+  fotogramma mentre muovi il telefono.
+- **Congela**: copia il fotogramma visibile e lo apre nella schermata foto, con
+  analisi completa a 640 px, zoom, tap ed esportazione. Indietro (o
+  "Fotocamera") torna al live.
+- In basso l'indicatore mostra motore, fps e risoluzione della mappa, utile per
+  confrontarlo con il percorso GPU della milestone 4.
+- Permesso fotocamera chiesto al primo avvio; se viene negato: spiegazione,
+  pulsante per richiederlo e scorciatoia alle impostazioni. Senza fotocamera
+  l'app funziona comunque con la galleria.
+
+### Prestazioni di `colorcore`
+
+L'analizzatore ora divide il lavoro per righe su tutti i core (pool comune della
+JVM, nessuna dipendenza) e riusa i buffer tra fotogrammi. Usa inoltre:
+
+- `DeltaE.ciede2000Fast`: stessa formula scritta con vettori unitari di tinta
+  invece di angoli, con una sola atan2 e solo vicino al blu. Coincide con la
+  versione di riferimento entro 1e-5 su 100.000 coppie casuali e con i dati di Sharma;
+- `CieLab.linearToLabFast`: f(t) da tabella interpolata (errore < 0,01).
+
+Tempo per fotogramma misurato su desktop a 4 core:
+
+| | prima | dopo |
+|---|---|---|
+| Solo analisi, mappa 256×171 | 60 ms | 11 ms |
+| Pipeline completa camera, mappa 320×240 | — | 31 ms |
+| Pipeline completa camera, mappa 240×180 | — | 19 ms |
 
 ## Algoritmo (`colorcore`)
 
@@ -87,6 +130,10 @@ Tutti i parametri sono in `AnalysisConfig`.
 
 ### App
 
+Al primo avvio concedi la fotocamera; inquadra oggetti marroni e verdi, un
+grafico a torta o una cartina. Tocca un punto per agganciare il nome del colore,
+**Congela** per zoomare ed esportare.
+
 Requisiti: JDK 17+ e Android SDK (platform 35); scrivi il percorso dell'SDK in
 `colorgap/local.properties` (`sdk.dir=...`) o nella variabile `ANDROID_HOME`.
 
@@ -106,7 +153,7 @@ Requisiti: JDK 17+. Il wrapper Gradle scarica il resto.
 
 ```bash
 cd colorgap
-./gradlew :colorcore:test          # 36 unit test
+./gradlew :colorcore:test          # 44 unit test
 
 # grafico di prova (coppie di confusione, tavola tipo Ishihara, linee)
 ./gradlew :cli:run --args="chart samples/confusion-chart.png"
@@ -124,6 +171,9 @@ Le immagini finiscono in `colorgap/out/`: `-heatmap`, `-stripes` (righe diagonal
   ogni voce trova sé stessa, colori vicini trovano il nome atteso in IT ed EN.
 - `BulkSimulationTest`: encoder a tabella entro ±1 livello da quello esatto,
   simulazione in blocco = simulazione per pixel.
+- `ResampleTest`: media a blocchi, blocchi parziali scartati, scacchiera → grigio (niente aliasing).
+- `AdaptiveFactorTest` (app): più lento → più grossolano (solo dopo la finestra),
+  più veloce → più fine, limiti, banda di isteresi, picco di warm-up ignorato.
 - `ViewTransformTest` (app): letterbox, tap → pixel anche con zoom, pizzico che
   tiene fermo il punto sotto le dita, limiti di zoom/pan, doppio tocco.
 
@@ -137,4 +187,6 @@ Le immagini finiscono in `colorgap/out/`: `-heatmap`, `-stripes` (righe diagonal
   marrone/oliva; la confusione cresce con la gravità.
 - `PerceptionAnalyzerTest`: bordo marrone/oliva perso (deutan), bordi di
   luminanza mai segnalati, bordo rosso/verde puro non perso, mappa vuota con
-  gravità 0, anomalia lieve < dicromasia, overlay che toccano solo i pixel critici.
+  gravità 0, anomalia lieve < dicromasia, overlay che toccano solo i pixel critici,
+  risultati identici riusando l'istanza su fotogrammi di dimensioni diverse,
+  layer (heat/maschera) equivalenti agli overlay "cotti".

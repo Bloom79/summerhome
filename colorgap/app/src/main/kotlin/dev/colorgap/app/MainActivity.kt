@@ -9,10 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import dev.colorgap.app.ui.ColorGapTheme
-import dev.colorgap.app.ui.PhotoScreen
+import dev.colorgap.app.ui.ColorGapApp
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: PhotoViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleShare(intent)
         setContent {
             ColorGapTheme {
-                PhotoScreen(viewModel)
+                ColorGapApp(viewModel)
             }
         }
     }
