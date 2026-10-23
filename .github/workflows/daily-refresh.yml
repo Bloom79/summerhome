@@ -67,9 +67,12 @@ jobs:
         if: steps.refresh.outputs.status == 'changed' && steps.distcache.outputs.cache-hit != 'true'
         run: npm ci && npm run build
 
+      # Overlay all of public/ (Vite copies it verbatim): the dist cache key
+      # ignores public/, so static files added later (farm.html, the APK)
+      # would otherwise vanish when a stale cached dist is redeployed.
       - name: Refresh data in the site
         if: steps.refresh.outputs.status == 'changed'
-        run: cp public/data.json dist/data.json && cp public/deals.json dist/deals.json && cp public/trends.json dist/trends.json 2>/dev/null || true
+        run: cp -r public/. dist/
 
       - name: Commit and push
         if: steps.refresh.outputs.status == 'changed'
