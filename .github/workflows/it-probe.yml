@@ -1,0 +1,25 @@
+name: IT sources probe (temporary)
+
+# Runs the Abruzzo pipeline once from a GitHub runner to check the sources
+# answer datacenter IPs. No commit, no deploy. Remove before merging.
+
+on:
+  push:
+    branches: [feature/abruzzo]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refresh (dry run, data not committed)
+        run: node scripts/it/refresh.mjs
+      - name: Quality gate
+        run: node scripts/it/validate.mjs
+      - name: Report
+        if: always()
+        run: cat it-refresh-report.md || true
