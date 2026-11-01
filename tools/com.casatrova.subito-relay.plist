@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Daily Subito relay (see tools/subito-relay.sh). Install:
+     mkdir -p ~/.casatrova-relay && cp tools/subito-relay.sh ~/.casatrova-relay/
+     cp tools/com.casatrova.subito-relay.plist ~/Library/LaunchAgents/
+     launchctl load ~/Library/LaunchAgents/com.casatrova.subito-relay.plist
+     Runs at 07:00 local time, before the 06:30 UTC Abruzzo refresh in
+     winter (07:30 in Italy); a Mac asleep at 07:00 runs it on wake. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.casatrova.subito-relay</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>exec /bin/zsh "$HOME/.casatrova-relay/subito-relay.sh"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/casatrova-subito-relay.log</string>
+  <key>StandardErrorPath</key><string>/tmp/casatrova-subito-relay.log</string>
+</dict>
+</plist>

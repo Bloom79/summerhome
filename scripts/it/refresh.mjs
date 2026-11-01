@@ -103,12 +103,18 @@ const toSold = (l, status) => ({
   lat: l.lat, lng: l.lng, imgs: (l.imgs || []).slice(0, 1), rooms: l.rooms, firstSeen: l.date, removed: TODAY, url: l.url, status,
 })
 const missing = prev.listings.filter((l) => !scraped.has(l.url)).sort((a, b) => (a.chk || '').localeCompare(b.chk || ''))
-let unverified = 0
+let unverified = 0, dropped = 0
 await pmap(missing, async (l) => {
   const src = bySource[l.src]
   // Auction lots: the sale date passed and the lot left the listings.
   if (l.auction && l.auction < TODAY) { events.vendute.push(toSold(l, 'removed')); return }
-  if (!src || !healthy(l.src) || pastBudget(0.8)) { next.push(l); unverified++; return }
+  // A source unreachable for two weeks (blocked, relay off): drop its
+  // listings quietly, not archived as sold, since their fate is unknown.
+  if (!src || !healthy(l.src)) {
+    if ((Date.now() - new Date(l.chk || l.date).getTime()) / 864e5 > 14) { dropped++; return }
+    next.push(l); unverified++; return
+  }
+  if (pastBudget(0.8)) { next.push(l); unverified++; return }
   let live
   try { live = await src.verify(l) } catch { next.push(l); unverified++; return }
   if (live) next.push({ ...l, chk: TODAY })
@@ -188,7 +194,7 @@ if (changed) writeFileSync(dataPath, JSON.stringify(db))
 
 const perSrc = Object.entries(health).map(([id, h]) => `| ${id} | ${h.n} | ${h.ok ? 'ok' : `⚠️ ${h.err}`} |`)
 report.push('| Sorgente | Annunci | Stato |', '|---|---|---|', ...perSrc, '',
-  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti · ${unverified} non verificati oggi`)
+  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti · ${unverified} non verificati oggi${dropped ? ` · ${dropped} rimossi (sorgente irraggiungibile da 14 giorni)` : ''}`)
 writeFileSync(ROOT + 'it-refresh-report.md', report.join('\n') + '\n')
 console.log(report.join('\n'))
 
