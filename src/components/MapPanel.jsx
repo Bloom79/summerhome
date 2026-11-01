@@ -198,7 +198,7 @@ export default function MapPanel({
         <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>
         <button className={'mbtn sat' + (satellite ? ' on' : '')} onClick={onToggleSatellite} title={t('map_sat_title')}>{satellite ? t('map_sat_off') : t('map_sat')}</button>
         <button className={'mbtn pubs' + (pubsOn ? ' on' : '')} onClick={togglePubs} title={t('map_pubs_title')}>{t('map_pubs')}</button>
-        <button className="mbtn agent" onClick={onAgentSearchHere}>{t('map_agent_here')}</button>
+        {onAgentSearchHere && <button className="mbtn agent" onClick={onAgentSearchHere}>{t('map_agent_here')}</button>}
         <button className="mbtn" onClick={onFitAll}>{t('map_see_all')}</button>
       </div>
     </section>

@@ -107,6 +107,8 @@ const SOURCES = [
   [/futurepropertyauctions/, 'auction', 'Future PA'],
   [/auctionhouse/, 'auction', 'Auction House'],
   [/primepropertyauctions/, 'auction', 'Prime'],
+  [/tecnocasa\.it/, 'tecnocasa', 'Tecnocasa'],
+  [/pvp\.giustizia\.it/, 'auction', 'PVP'],
 ]
 export const srcOf = (url) => {
   for (const [re, key, label] of SOURCES) if (re.test(url || '')) return { key, label }
@@ -117,8 +119,17 @@ export const srcOf = (url) => {
 // Scozia: LBTT a scaglioni (0/2/5/10/12%) + ADS 8% sull'intero prezzo per
 // le additional dwellings (aliquota dal 5 dic 2024). Irlanda: imposta di
 // registro 1% fino a 1M, 2% fino a 1.5M, 6% oltre. Stima indicativa.
+// Italia (seconda casa, da privato o all'asta): con il "prezzo-valore"
+// l'imposta di registro è il 9% del VALORE CATASTALE (rendita × 1,05 × 120),
+// minimo €1.000, più €50 + €50 di ipotecaria e catastale. Senza la rendita
+// non si può stimare: il valore catastale sta spesso molto sotto il prezzo.
 export const buyTax = (l) => {
   if (l.contract === 'rent' || !l.price) return null
+  if (l.country === 'IT') {
+    if (!(l.rendita > 0)) return { sym: '€', it: true, total: null }
+    const base = Math.round(l.rendita * 126)
+    return { sym: '€', it: true, base, total: Math.max(1000, Math.round(base * 0.09)) + 100 }
+  }
   const p = l.price
   if (l.currency === 'GBP') {
     const bands = [[145000, 0], [250000, 0.02], [325000, 0.05], [750000, 0.10], [Infinity, 0.12]]

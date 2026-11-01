@@ -16,6 +16,7 @@ import SyncModal from './components/SyncModal.jsx'
 import ProfileModal from './components/ProfileModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
 import { CERCA_QUI_ENDPOINT, VAPID_PUBLIC_KEY } from './config.js'
+import { REGION, dataUrl, rk } from './region.js'
 
 const initialFilters = {
   zone: '', area: '', contract: '', type: '', priceRanges: [], smin: null, smax: null,
@@ -27,10 +28,10 @@ const initialFilters = {
 // collapse to "a minute ago" on every refresh.
 function trackVisit() {
   const now = Date.now()
-  const rec = loadJSON('ct_visit', null)
-  if (!rec) { saveJSON('ct_visit', { last: now, prev: null }); return null }
-  if (now - rec.last > 6 * 3600e3) { saveJSON('ct_visit', { last: now, prev: rec.last }); return new Date(rec.last).toISOString().slice(0, 10) }
-  saveJSON('ct_visit', { ...rec, last: rec.last })
+  const rec = loadJSON(rk('ct_visit'), null)
+  if (!rec) { saveJSON(rk('ct_visit'), { last: now, prev: null }); return null }
+  if (now - rec.last > 6 * 3600e3) { saveJSON(rk('ct_visit'), { last: now, prev: rec.last }); return new Date(rec.last).toISOString().slice(0, 10) }
+  saveJSON(rk('ct_visit'), { ...rec, last: rec.last })
   return rec.prev ? new Date(rec.prev).toISOString().slice(0, 10) : null
 }
 
@@ -100,7 +101,7 @@ export default function App({ initialDb }) {
   const [db, setDb] = useState(initialDb)
   const { listings: LISTINGS, sold: SOLD, updated: LAST_UPDATED } = db
   // Filters and toggles survive a page refresh.
-  const [ui] = useState(() => loadJSON('ct_ui', null))
+  const [ui] = useState(() => loadJSON(rk('ct_ui'), null))
   const [lastVisit] = useState(() => trackVisit())
   const [filters, setFilters] = useState(() => (ui?.filters ? { ...initialFilters, ...ui.filters } : initialFilters))
   const [sort, setSort] = useState(ui?.sort || 'rel')
@@ -149,8 +150,8 @@ export default function App({ initialDb }) {
   const watchRef = useRef(null)
   const [, setStatusTick] = useState(0)
   // Saved alerts + their recent matches ("novità") + push subscription state.
-  const [alerts, setAlerts] = useState(() => loadJSON('ct_alerts', []))
-  const [news, setNews] = useState(() => loadJSON('ct_news', []))
+  const [alerts, setAlerts] = useState(() => loadJSON(rk('ct_alerts'), []))
+  const [news, setNews] = useState(() => loadJSON(rk('ct_news'), []))
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
   const [tripOpen, setTripOpen] = useState(false)
@@ -164,7 +165,7 @@ export default function App({ initialDb }) {
   const [dealPages, setDealPages] = useState({})
   const [dealsOnly, setDealsOnly] = useState(false)
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}deals.json`, { cache: 'no-store' })
+    fetch(dataUrl('deals.json'), { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j?.deals) setDeals(j.deals); if (j?.pages) setDealPages(j.pages) })
       .catch(() => { /* deals are optional */ })
@@ -173,7 +174,7 @@ export default function App({ initialDb }) {
   // Market trends from the daily snapshots (scripts/trends.mjs -> public/trends.json).
   const [trends, setTrends] = useState(null)
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}trends.json`, { cache: 'no-cache' })
+    fetch(dataUrl('trends.json'), { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.days) setTrends(j) })
       .catch(() => { /* optional */ })
   }, [db.updated])
@@ -212,7 +213,7 @@ export default function App({ initialDb }) {
 
   // Persist filters/toggles so a refresh keeps the search as it was.
   useEffect(() => {
-    saveJSON('ct_ui', { filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView, satellite })
+    saveJSON(rk('ct_ui'), { filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView, satellite })
   }, [filters, sort, favOnly, seaOnly, gardenOnly, beachOnly, auctionOnly, farmOnly, reducedOnly, bothOnly, seenFilter, deskView, satellite])
 
   const saveNote = useCallback((url, text) => {
@@ -326,7 +327,7 @@ export default function App({ initialDb }) {
     // waterfront (Spiaggia): harbour-front ads often never say "sea view".
     if (seaOnly && !l.seaView && !l.feats.includes('Spiaggia')) return false
     if (gardenOnly && !l.feats.includes('Giardino')) return false
-    if (beachOnly && !l.feats.includes('Spiaggia')) return false
+    if (beachOnly && !l.feats.includes(REGION.nearFeat)) return false
     if (auctionOnly && !l.feats.includes('Asta')) return false
     // 🌱 Coltivabile: any smallholding signal — land, outbuildings,
     // greenhouse/polytunnel, or an own water source.
@@ -588,6 +589,9 @@ export default function App({ initialDb }) {
   // Register/refresh the push subscription for the saved alerts. Only asks
   // for notification permission from a user gesture (saving an alert).
   const syncPush = useCallback(async (alertList, askPermission) => {
+    // The Worker's push check reads the UK data only: other regions keep
+    // their alerts on-device (matched against each new visit's data).
+    if (!REGION.push) return
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushState('unsupported'); return }
     try {
       await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
@@ -646,16 +650,16 @@ export default function App({ initialDb }) {
       rooms: draft.rooms ? +draft.rooms : null, seaView: !!draft.seaView, garden: !!draft.garden,
       ev: { ...draft.ev },
     }
-    setAlerts((prev) => { const next = [...prev, a]; saveJSON('ct_alerts', next); syncPush(next, true); return next })
+    setAlerts((prev) => { const next = [...prev, a]; saveJSON(rk('ct_alerts'), next); syncPush(next, true); return next })
     toast(t('t_al_saved'))
   }, [syncPush, toast, t])
 
   const deleteAlert = useCallback((id) => {
-    setAlerts((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON('ct_alerts', next); syncPush(next, false); return next })
+    setAlerts((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON(rk('ct_alerts'), next); syncPush(next, false); return next })
   }, [syncPush])
 
   const markNewsRead = useCallback(() => {
-    setNews((prev) => { const next = prev.map((n) => ({ ...n, seen: true })); saveJSON('ct_news', next); return next })
+    setNews((prev) => { const next = prev.map((n) => ({ ...n, seen: true })); saveJSON(rk('ct_news'), next); return next })
   }, [])
 
   // Diff each data refresh against the last snapshot: matches for the saved
@@ -665,8 +669,8 @@ export default function App({ initialDb }) {
     const cur = {}
     for (const l of db.listings) cur[l.url] = { price: l.price, zone: l.zone, rooms: l.rooms, seaView: !!l.seaView, feats: l.feats || [], addr: l.addr, currency: l.currency }
     const soldUrls = (db.sold || []).map((s) => s.url).filter(Boolean)
-    const snap = loadJSON('ct_snap', null)
-    saveJSON('ct_snap', { listings: cur, soldUrls })
+    const snap = loadJSON(rk('ct_snap'), null)
+    saveJSON(rk('ct_snap'), { listings: cur, soldUrls })
     if (!snap || !alerts.length) return
     const events = []
     for (const [url, l] of Object.entries(cur)) {
@@ -684,7 +688,7 @@ export default function App({ initialDb }) {
         ...hits.map((h) => ({ type: h.type, addr: h.l.addr, price: h.l.price, oldPrice: h.oldPrice, currency: h.l.currency, url: h.l.url, ts: Date.now(), seen: false })),
         ...prev,
       ].slice(0, 50)
-      saveJSON('ct_news', next)
+      saveJSON(rk('ct_news'), next)
       return next
     })
     toast(t('t_al_news', { n: hits.length }))
@@ -699,7 +703,7 @@ export default function App({ initialDb }) {
       try {
         // 'no-cache' revalidates with the server (ETag): unchanged data is a
         // 304 served from the browser cache, not a 2.6 MB download every poll.
-        const txt = await (await fetch(`${import.meta.env.BASE_URL}data.json`, { cache: 'no-cache' })).text()
+        const txt = await (await fetch(dataUrl('data.json'), { cache: 'no-cache' })).text()
         if (txt !== dbTextRef.current) { dbTextRef.current = txt; setDb(JSON.parse(txt)) }
       } catch { /* offline: retry next tick */ }
     }, 10 * 60000)
@@ -744,7 +748,7 @@ export default function App({ initialDb }) {
           }
         } else {
           const fresh = await (await fetch(
-            `https://raw.githubusercontent.com/bloom79/summerhome/main/public/data.json?t=${Date.now()}`,
+            `https://raw.githubusercontent.com/bloom79/summerhome/main/public/${REGION.dir}data.json?t=${Date.now()}`,
             { cache: 'no-store' }
           )).json()
           if (!found.zone || fresh.zones.includes(found.zone)) {
@@ -802,7 +806,7 @@ export default function App({ initialDb }) {
 
   // Saved searches: named snapshots of the whole filter state, same
   // encoding as the share link, so a search can be re-applied in one tap.
-  const [searches, setSearches] = useState(() => loadJSON('ct_searches', []))
+  const [searches, setSearches] = useState(() => loadJSON(rk('ct_searches'), []))
   const searchState = () => ({ f: filters, s: seaOnly, g: gardenOnly, b: beachOnly, a: auctionOnly, fm: farmOnly, d: dealsOnly, r: reducedOnly, o: sort })
   const applySearchState = useCallback((st) => {
     setFilters({ ...initialFilters, ...(st.f || {}) })
@@ -813,7 +817,7 @@ export default function App({ initialDb }) {
   const saveSearch = (name) => {
     const n = (name || '').trim().slice(0, 40)
     if (!n) return
-    setSearches((prev) => { const next = [{ id: Date.now().toString(36), name: n, q: encodeSearch(searchState()) }, ...prev].slice(0, 12); saveJSON('ct_searches', next); return next })
+    setSearches((prev) => { const next = [{ id: Date.now().toString(36), name: n, q: encodeSearch(searchState()) }, ...prev].slice(0, 12); saveJSON(rk('ct_searches'), next); return next })
     toast(t('t_search_saved'))
   }
   const applySearch = (id) => {
@@ -823,7 +827,7 @@ export default function App({ initialDb }) {
     applySearchState(st)
     toast(t('t_search_applied', { n: s.name }))
   }
-  const deleteSearch = (id) => setSearches((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON('ct_searches', next); return next })
+  const deleteSearch = (id) => setSearches((prev) => { const next = prev.filter((x) => x.id !== id); saveJSON(rk('ct_searches'), next); return next })
 
   // Listings per zone, shown in the zone dropdown labels.
   const zoneCounts = useMemo(() => {
@@ -846,7 +850,7 @@ export default function App({ initialDb }) {
   if (filters.contract) af(t(filters.contract === 'sale' ? 'for_sale' : 'for_rent'), () => setFilters((f) => ({ ...f, contract: '' })))
   if (seaOnly) af(t('sea_view'), () => setSeaOnly(false))
   if (gardenOnly) af(t('garden'), () => setGardenOnly(false))
-  if (beachOnly) af(t('beach'), () => setBeachOnly(false))
+  if (beachOnly) af(t(REGION.ski ? 'ski_chip' : 'beach'), () => setBeachOnly(false))
   if (auctionOnly) af(t('auction_chip'), () => setAuctionOnly(false))
   if (farmOnly) af('🌱 ' + t('farm_chip'), () => setFarmOnly(false))
   if (dealsOnly) af(t('deals_chip'), () => setDealsOnly(false))
@@ -930,7 +934,7 @@ export default function App({ initialDb }) {
       if (Array.isArray(d.alerts) && d.alerts.length) setAlerts((prev) => {
         const seenIds = new Set(prev.map((a) => a.id))
         const next = [...prev, ...d.alerts.filter((a) => a?.id && !seenIds.has(a.id))]
-        saveJSON('ct_alerts', next); syncPush(next, false); return next
+        saveJSON(rk('ct_alerts'), next); syncPush(next, false); return next
       })
       if (!silent) toast(t('t_sync_got'))
       return true
@@ -1023,7 +1027,7 @@ export default function App({ initialDb }) {
     () => LISTINGS.filter((l) => l.contract !== 'rent' && (!filters.zone || l.zone === filters.zone) && l.date && l.date >= freshCutoff),
     [LISTINGS, filters.zone, freshCutoff])
   const homeItems = useMemo(() => {
-    const rank = (l) => (l.seaView ? 2 : 0) + (l.feats.includes('Giardino') ? 1 : 0)
+    const rank = (l) => ((REGION.ski ? l.feats.includes(REGION.nearFeat) : l.seaView) ? 2 : 0) + (l.feats.includes('Giardino') ? 1 : 0)
     return [...criteriaItems].sort((a, b) => rank(b) - rank(a) || (b.date || '').localeCompare(a.date || ''))
   }, [criteriaItems])
   const closeHome = useCallback(() => {
@@ -1144,7 +1148,7 @@ export default function App({ initialDb }) {
           onToggleSatellite={() => setSatellite((v) => !v)}
           onToggleAreaSync={() => setAreaSync((v) => !v)}
           onFitAll={onFitAll}
-          onAgentSearchHere={onAgentSearchHere}
+          onAgentSearchHere={REGION.cercaQui ? onAgentSearchHere : null}
           onMarkerClick={onMarkerClick}
           onClusterClick={(lat, lng) => mapRef.current?.flyTo([lat, lng], Math.min(mapZoom + 3, 14), { duration: 0.8 })}
           onOpen={openDetail}
@@ -1274,7 +1278,7 @@ export default function App({ initialDb }) {
         onOpenListing={(id) => { closeHome(); openDetail(id) }}
         pushState={pushState}
         onCreateAlert={() => {
-          saveAlert({ zone: filters.zone, priceMax: '', rooms: '', seaView: true, garden: true, ev: { nuove: true, ribassi: false, vendute: false, occasioni: true } })
+          saveAlert({ zone: filters.zone, priceMax: '', rooms: '', seaView: REGION.sea, garden: true, ev: { nuove: true, ribassi: false, vendute: false, occasioni: true } })
           closeHome()
         }}
         onEnter={() => { closeHome(); setView('list') }}

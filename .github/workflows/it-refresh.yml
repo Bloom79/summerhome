@@ -1,0 +1,116 @@
+name: Altopiano delle Rocche refresh
+
+# Daily refresh of the Abruzzo region (Ovindoli, Rocca di Mezzo, Rocca di
+# Cambio) → public/it/. Runs after the UK refresh (05:45) and shares its
+# concurrency group, so the two never race on commits or Pages deploys.
+# A broken source or a failed run opens a visible issue.
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: cerca-qui
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 200 # trends.mjs reads the daily snapshots of it/data.json
+
+      - name: Refresh listings
+        id: refresh
+        run: node scripts/it/refresh.mjs
+
+      - name: Quality gate
+        if: steps.refresh.outputs.status == 'changed'
+        run: node scripts/it/validate.mjs
+
+      - name: Analyze deals
+        if: steps.refresh.outputs.status == 'changed'
+        id: deals
+        env:
+          DATA_DIR: public/it/
+          NO_PAGE_SCAN: '1'
+        run: node scripts/analyze-deals.mjs
+
+      - name: Market trends
+        if: steps.refresh.outputs.status == 'changed'
+        env:
+          DATA_DIR: public/it/
+        run: node scripts/trends.mjs || true
+
+      - name: Restore built site
+        if: steps.refresh.outputs.status == 'changed'
+        id: distcache
+        uses: actions/cache/restore@v4
+        with:
+          path: dist
+          key: dist-${{ hashFiles('package-lock.json', 'src/**', 'index.html', 'vite.config.js') }}
+
+      - name: Setup Node
+        if: steps.refresh.outputs.status == 'changed' && steps.distcache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build (bundle changed since last deploy)
+        if: steps.refresh.outputs.status == 'changed' && steps.distcache.outputs.cache-hit != 'true'
+        run: npm ci && npm run build
+
+      - name: Refresh data in the site
+        if: steps.refresh.outputs.status == 'changed'
+        run: cp -r public/. dist/
+
+      - name: Commit and push
+        if: steps.refresh.outputs.status == 'changed'
+        run: |
+          git config user.name 'casatrova-agent'
+          git config user.email 'noreply@github.com'
+          git add public/it/data.json public/it/deals.json public/it/trends.json
+          git commit -m "Altopiano delle Rocche $(date -u +%F): ${{ steps.refresh.outputs.summary }} · ${{ steps.deals.outputs.summary }}" -m "$(cat it-refresh-report.md)"
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Setup Pages
+        if: steps.refresh.outputs.status == 'changed'
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        if: steps.refresh.outputs.status == 'changed'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        if: steps.refresh.outputs.status == 'changed'
+        uses: actions/deploy-pages@v4
+
+      - name: Surface problems as an issue
+        if: failure() || cancelled() || steps.refresh.outputs.status == 'error' || steps.refresh.outputs.broken != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="⚠️ Altopiano delle Rocche $(date -u +%F): ${{ steps.refresh.outputs.summary || 'refresh fallito' }}"
+          BODY="$(cat it-refresh-report.md 2>/dev/null || echo 'Refresh fallito prima del report — vedi log.')
+
+          Sorgenti in errore: ${{ steps.refresh.outputs.broken || '—' }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # One open issue at a time: today's replaces yesterday's.
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "Altopiano delle Rocche in:title" --json number --jq '.[].number' \
+            | while read -r n; do gh issue close "$n" --repo "$GITHUB_REPOSITORY" -c "Sostituita dal run di oggi." || true; done
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY" || true
