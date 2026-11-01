@@ -20,7 +20,7 @@ const FEATS = {
   'Annessi': 'Outbuildings', 'Serra': 'Greenhouse', 'Acqua': 'Water source',
   'Vicino piste': 'Near the ski lifts', 'Camino': 'Fireplace', 'Terrazzo': 'Terrace', 'Arredato': 'Furnished',
   'Cantina': 'Cellar', 'Posto auto': 'Parking space', 'Mansarda': 'Attic room', 'Riscaldamento autonomo': 'Own heating',
-  'Vista panoramica': 'Panoramic view',
+  'Vista panoramica': 'Panoramic view', 'Privato': 'Private seller',
   'Vista mare': 'Sea view', 'Fronte porto': 'Harbour front', 'Vicino spiaggia': 'Near beach',
   'Vicino golf': 'Near golf', 'Centro storico': 'Historic centre',
 }

@@ -29,7 +29,9 @@ const normalise = (e) => {
   const date = String(e.last_published_at || '').slice(0, 10)
   return {
     title: e.title || '',
-    type: /rustic|cascin/.test(e.type?.slug || '') ? 'Rustico' : typeOf(text),
+    // The title IS Tecnocasa's type label ("Trilocale", "Casa indipendente",
+    // "Villa a schiera", "Rustico"…); the description would mislead.
+    type: typeOf(e.title || text),
     price: e.numeric_price || num(e.price),
     size: Math.round(+e.numeric_surface) || num(e.surface),
     rooms: f.bedrooms > 0 ? f.bedrooms : null, // bedrooms, not "locali"

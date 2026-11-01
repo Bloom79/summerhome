@@ -116,10 +116,13 @@ await pmap(missing, async (l) => {
 }, 3)
 
 // ---- 4. Cross-source duplicates (agencies list the same home everywhere) ----
-// Same zone, same price, same size (±3 m²) and same rooms, on DIFFERENT
-// sources: keep the richer copy (more photos, exact coordinates), remember
-// the others in `alt` so the detail can link every portal.
-const dupKey = (l) => `${l.zone}|${l.price}|${l.rooms || '-'}`
+// Same zone and same price on DIFFERENT sources, plus the size within 3 m²
+// (or, when a size is missing, the same bedroom count on both): keep the
+// richer copy (exact coordinates, more photos), remember the others in
+// `alt` so the detail can link every portal. Bedrooms alone can't decide:
+// Subito has only "locali", so its rooms are null.
+const dupKey = (l) => `${l.zone}|${l.price}`
+const sameHome = (a, b) => (a.size && b.size ? Math.abs(a.size - b.size) <= 3 : !!(a.rooms && b.rooms && a.rooms === b.rooms))
 const groups = new Map()
 for (const l of next) { const k = dupKey(l); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(l) }
 const drop = new Set()
@@ -127,14 +130,13 @@ for (const arr of groups.values()) {
   if (arr.length < 2) continue
   for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
     const a = arr[i], b = arr[j]
-    if (drop.has(a) || drop.has(b) || a.src === b.src) continue
-    if (a.size && b.size && Math.abs(a.size - b.size) > 3) continue
+    if (drop.has(a) || drop.has(b) || a.src === b.src || !sameHome(a, b)) continue
     const score = (l) => (l.approx ? 0 : 50) + (l.imgs || []).length + (prevByUrl.has(l.url) ? 5 : 0)
     const [keep, lose] = score(a) >= score(b) ? [a, b] : [b, a]
     keep.alt = [...new Map([...(keep.alt || []), { src: lose.src, url: lose.url }, ...(lose.alt || [])].map((x) => [x.url, x])).values()]
       .filter((x) => x.url !== keep.url)
-    if (!keep.size && lose.size) keep.size = lose.size
-    if (!keep.energy && lose.energy) keep.energy = lose.energy
+    for (const k of ['size', 'rooms', 'baths', 'energy', 'year']) if (!keep[k] && lose[k]) keep[k] = lose[k]
+    keep.feats = [...new Set([...keep.feats, ...lose.feats])]
     drop.add(lose)
   }
 }
