@@ -8,6 +8,7 @@ const REGIONS = {
     id: 'uk',
     name: 'Scozia e Irlanda',
     nameEn: 'Scotland & Ireland',
+    short: 'UK',
     flag: '🇬🇧',
     dir: '', // files at the site root, as before
     // Airports relevant to the coasts; the detail shows driving time from
@@ -33,6 +34,7 @@ const REGIONS = {
     id: 'it',
     name: 'Altopiano delle Rocche',
     nameEn: 'Altopiano delle Rocche',
+    short: 'Abruzzo',
     flag: '🇮🇹',
     dir: 'it/',
     // Driving time from Rome, where weekend trips start. Every home on the

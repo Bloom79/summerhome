@@ -456,6 +456,12 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .homehead h2{margin:0;font-size:1.35rem}
 .homesub{margin:4px 0 0;font-size:.84rem;opacity:.92;line-height:1.35}
 .homex{background:rgba(255,255,255,.18);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;flex:none}
+.homeregion{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px 2px}
+.homeregion button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:9px 12px;cursor:pointer;min-width:0}
+.homeregion button b{font-size:.9rem;line-height:1.2}
+.homeregion button small{font-size:.72rem;color:var(--muted);line-height:1.25}
+.homeregion button.on{border-color:var(--brand);background:var(--brand);color:#fff}
+.homeregion button.on small{color:rgba(255,255,255,.85)}
 .homefilters{display:flex;gap:10px;padding:14px 18px 6px}
 .homefield{flex:1;display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .homefield select{font-size:.9rem;font-weight:600;color:var(--ink);padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
