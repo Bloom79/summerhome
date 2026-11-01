@@ -1,7 +1,7 @@
 import { fmtP, srcOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
-import { REGION } from '../region.js'
+import { REGION, REGION_LIST, switchRegion } from '../region.js'
 
 // Landing "Novità" panel: the first thing shown on open. It greets with the
 // houses added since the last visit — sea-view and garden ones featured —
@@ -14,7 +14,7 @@ export default function HomePanel({
   dealsOnly, onDeals, dealsCount, gbpEur, updated, onOpenListing,
   pushState, onCreateAlert,
 }) {
-  const { t, typeLabel, eur: eurMode } = useI18n()
+  const { t, lang, typeLabel, eur: eurMode } = useI18n()
   const fx = eurMode ? gbpEur : null
   if (!open) return null
 
@@ -34,6 +34,16 @@ export default function HomePanel({
             </p>
           </div>
           <button className="homex" onClick={onClose} aria-label="close">✕</button>
+        </div>
+
+        {/* Which portal: each region is its own set of homes and its own map. */}
+        <div className="homeregion" role="tablist" aria-label={t('region_title')}>
+          {REGION_LIST.map((r) => (
+            <button key={r.id} role="tab" aria-selected={r.id === REGION.id} className={r.id === REGION.id ? 'on' : ''} onClick={() => switchRegion(r.id)}>
+              <b>{r.flag} {lang === 'en' ? r.nameEn : r.name}</b>
+              <small>{t('region_sub_' + r.id)}</small>
+            </button>
+          ))}
         </div>
 
         {/* Macro filters — steer the whole app from here */}

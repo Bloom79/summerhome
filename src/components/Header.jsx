@@ -120,7 +120,7 @@ export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNea
       {REGION.gbp && <button className={'hbtn hbeur' + (eur ? ' hbon' : '')} onClick={toggleEur} title={t('eur_toggle')}>{eur ? '€' : '£'}</button>}
       <div className="langtog regiontog" title={t('region_title')}>
         {REGION_LIST.map((r) => (
-          <button key={r.id} className={r.id === REGION.id ? 'on' : ''} title={lang === 'en' ? r.nameEn : r.name} onClick={() => switchRegion(r.id)}>{r.flag}</button>
+          <button key={r.id} className={r.id === REGION.id ? 'on' : ''} title={lang === 'en' ? r.nameEn : r.name} onClick={() => switchRegion(r.id)}>{r.flag} {r.short}</button>
         ))}
       </div>
       <div className="deskview">
