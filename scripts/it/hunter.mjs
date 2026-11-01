@@ -18,6 +18,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { execFile } from 'child_process'
+import { tmpdir } from 'os'
 import { TODAY, out } from './lib.mjs'
 import { AREA } from './area.mjs'
 
@@ -194,7 +195,23 @@ const extractJson = (txt) => {
 const validResult = (v) => v && Number.isInteger(v.id) && ['vera occasione', 'interessante', 'no'].includes(v.verdict) &&
   typeof v.why === 'string' && ['pro', 'contro', 'domande'].every((k) => Array.isArray(v[k]))
 
+// Claude Code on the owner's Mac (their Claude plan, no API key): headless,
+// no tools, no MCP, our own system prompt, schema-validated JSON back. Run
+// by tools/hunter-relay.sh after the morning refresh.
+const runClaudeCli = (ask) => new Promise((resolve, reject) =>
+  execFile('claude', ['-p', ask, '--model', MODEL, '--system-prompt', SYSTEM, '--output-format', 'json',
+    '--json-schema', JSON.stringify(SCHEMA), '--tools', '', '--strict-mcp-config', '--no-session-persistence'],
+  { maxBuffer: 32e6, timeout: 900e3, cwd: tmpdir() }, (e, so, se) => {
+    if (e) return reject(new Error(String(se || e.message).slice(0, 200)))
+    try {
+      const j = JSON.parse(so.toString())
+      if (j.is_error || !j.structured_output) return reject(new Error(`claude: ${j.subtype || 'nessun risultato strutturato'}`))
+      resolve(j)
+    } catch { reject(new Error('claude: output non JSON')) }
+  }))
+
 const backend = process.env.HUNTER_LLM === 'off' ? null
+  : process.env.HUNTER_LLM === 'claude' ? 'claude'
   : process.env.ANTHROPIC_API_KEY ? 'api'
   : process.env.COPILOT_GITHUB_TOKEN || process.env.HUNTER_LLM === 'copilot' ? 'copilot' : null
 let reviewed = 0, cost = 0
@@ -226,6 +243,12 @@ if (backend && toReview.length) {
       const u = r.usage || {}
       cost += ((u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) * 1.25 + (u.cache_read_input_tokens || 0) * 0.1) * 4e-6 + (u.output_tokens || 0) * 20e-6
       try { parsed = JSON.parse(r.content.find((b) => b.type === 'text')?.text || '') } catch { console.log('cacciatore: JSON non valido'); continue }
+    } else if (backend === 'claude') {
+      try {
+        const j = await runClaudeCli(ask)
+        parsed = j.structured_output
+        cost += j.total_cost_usd || 0 // list-price equivalent; billed to the Claude plan
+      } catch (e) { console.log(`cacciatore: Claude Code fallito (${e.message}), riprovo domani`); break }
     } else {
       const prompt = `${SYSTEM}\n\nRispondi SOLO con un oggetto JSON valido, senza testo prima o dopo e senza usare strumenti, con questa forma:\n{"results":[{"id":123,"verdict":"vera occasione|interessante|no","is_condominio":false,"fair_min":70000,"fair_max":85000,"why":"…","pro":["…"],"contro":["…"],"domande":["…","…","…"]}]}\n\n${ask}`
       try { parsed = extractJson(await callCopilot(prompt)) } catch (e) { console.log(`cacciatore: Copilot fallito (${e.message}), riprovo domani`); break }
@@ -262,7 +285,7 @@ const picks = short.map((s) => {
 const prevTrue = new Set((prev.picks || []).filter((p) => p.ai?.verdict === 'vera occasione').map((p) => p.url))
 const newTrue = picks.filter((p) => p.ai?.verdict === 'vera occasione' && !prevTrue.has(p.url))
 writeFileSync(DIR + 'hunter.json', JSON.stringify({
-  updated: TODAY, model: backend === 'api' ? MODEL : backend === 'copilot' ? `copilot:${copilotModel || 'n/d'}` : null,
+  updated: TODAY, model: backend === 'api' || backend === 'claude' ? MODEL : backend === 'copilot' ? `copilot:${copilotModel || 'n/d'}` : null,
   stats: { eligible: eligible.length, shortlisted: short.length, reviewed }, picks, cache,
 }))
 

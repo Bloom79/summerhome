@@ -53,18 +53,17 @@ jobs:
           DATA_DIR: public/it/
         run: node scripts/trends.mjs || true
 
-      # Independent houses only, scored against OMI and local comparables;
-      # Claude (via the repo's Copilot subscription, or the API if a key is
-      # set) reviews the shortlist. A failure here never blocks the publish.
+      # Independent houses only, scored against OMI and local comparables.
+      # Claude's review runs at 09:00 on the owner's Mac (tools/hunter-relay.sh,
+      # their Claude plan); here the shortlist is rebuilt and the cached
+      # verdicts are kept. With an ANTHROPIC_API_KEY secret, Claude reviews
+      # here instead. A failure never blocks the publish.
       - name: Deal hunter
         if: steps.refresh.outputs.status == 'changed'
-        id: hunter
         env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.G_COPILOT }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          npm install -g @github/copilot >/dev/null 2>&1 || true
-          node scripts/it/hunter.mjs || true
+          HUNTER_LLM: ${{ secrets.ANTHROPIC_API_KEY && 'api' || 'off' }}
+        run: node scripts/it/hunter.mjs || true
 
       - name: Restore built site
         if: steps.refresh.outputs.status == 'changed'
@@ -113,17 +112,6 @@ jobs:
       - name: Deploy to GitHub Pages
         if: steps.refresh.outputs.status == 'changed'
         uses: actions/deploy-pages@v4
-
-      - name: New genuine deals as an issue
-        if: steps.hunter.outputs.new_true != '' && steps.hunter.outputs.new_true != '0'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue create --repo "$GITHUB_REPOSITORY" \
-            --title "🎯 Altopiano $(date -u +%F): ${{ steps.hunter.outputs.new_true }} nuove vere occasioni" \
-            --body "$(cat hunter-report.md)
-
-          Nell'app: https://bloom79.github.io/summerhome/?r=it (🎯 in alto)" || true
 
       - name: Surface problems as an issue
         if: failure() || cancelled() || steps.refresh.outputs.status == 'error' || steps.refresh.outputs.broken != ''
