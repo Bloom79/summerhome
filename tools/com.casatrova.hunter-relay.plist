@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Daily deal-hunter review with Claude Code (see tools/hunter-relay.sh). Install:
+     mkdir -p ~/.casatrova-relay && cp tools/hunter-relay.sh ~/.casatrova-relay/
+     cp tools/com.casatrova.hunter-relay.plist ~/Library/LaunchAgents/
+     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.casatrova.hunter-relay.plist
+     Runs at 09:00 local time, after the 06:30 UTC Abruzzo refresh (also in summer time); a Mac
+     asleep at 09:00 runs it on wake. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.casatrova.hunter-relay</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>exec /bin/zsh "$HOME/.casatrova-relay/hunter-relay.sh"</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/casatrova-hunter-relay.log</string>
+  <key>StandardErrorPath</key><string>/tmp/casatrova-hunter-relay.log</string>
+</dict>
+</plist>

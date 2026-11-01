@@ -12,6 +12,7 @@ import CompareModal from './components/CompareModal.jsx'
 import TripModal from './components/TripModal.jsx'
 import StatsModal from './components/StatsModal.jsx'
 import DealsModal from './components/DealsModal.jsx'
+import HunterModal from './components/HunterModal.jsx'
 import SyncModal from './components/SyncModal.jsx'
 import ProfileModal from './components/ProfileModal.jsx'
 import { useI18n, PRICE_RANGES } from './i18n.jsx'
@@ -170,6 +171,17 @@ export default function App({ initialDb }) {
       .then((j) => { if (j?.deals) setDeals(j.deals); if (j?.pages) setDealPages(j.pages) })
       .catch(() => { /* deals are optional */ })
   }, [db.updated])
+  // Daily deal-hunter picks (Abruzzo only: public/it/hunter.json). Optional.
+  const [hunter, setHunter] = useState(null)
+  const [hunterOpen, setHunterOpen] = useState(false)
+  useEffect(() => {
+    if (REGION.id !== 'it') return
+    fetch(dataUrl('hunter.json'), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.picks?.length) setHunter(j) })
+      .catch(() => { /* hunter is optional */ })
+  }, [db.updated])
+  const hunterById = useMemo(() => new Map((hunter?.picks || []).map((p) => [p.id, p])), [hunter])
   const dealById = useMemo(() => new Map(deals.map((d) => [d.id, d])), [deals])
   // Market trends from the daily snapshots (scripts/trends.mjs -> public/trends.json).
   const [trends, setTrends] = useState(null)
@@ -1055,6 +1067,9 @@ export default function App({ initialDb }) {
         onToggleDeals={() => setDealsOnly((v) => !v)}
         dealsActive={dealsOnly}
         dealsCount={deals.length}
+        hunterCount={hunter?.picks?.length || 0}
+        hunterGood={(hunter?.picks || []).filter((p) => p.ai?.verdict === 'vera occasione').length}
+        onOpenHunter={() => setHunterOpen(true)}
         onOpenSync={() => setSyncOpen(true)}
         deskView={deskView}
         onDeskView={setDeskView}
@@ -1216,6 +1231,7 @@ export default function App({ initialDb }) {
       {selected && (
         <DetailModal
           deal={dealById.get(selected.id)}
+          hunterPick={hunterById.get(selected.id)}
           allListings={LISTINGS}
           dealPages={dealPages}
           updated={LAST_UPDATED}
@@ -1285,6 +1301,9 @@ export default function App({ initialDb }) {
         onClose={closeHome}
       />
 
+      {hunterOpen && hunter && (
+        <HunterModal hunter={hunter} listings={LISTINGS} gbpEur={db.gbpEur} favs={favs} onToggleFav={toggleFav} onOpen={openDetail} onClose={() => setHunterOpen(false)} />
+      )}
       {dealsOpen && (
         <DealsModal deals={deals} listings={LISTINGS} gbpEur={db.gbpEur} updated={LAST_UPDATED} favs={favs} onToggleFav={toggleFav} onOpen={openDetail} onClose={() => setDealsOpen(false)} />
       )}

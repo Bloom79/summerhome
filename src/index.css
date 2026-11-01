@@ -631,3 +631,31 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .poicui,.poihrs{color:var(--muted);font-size:.74rem}
 .poilinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .poilinks a{font-size:.74rem;font-weight:700;color:var(--brand);text-decoration:none}
+
+/* ---- Deal hunter ---- */
+.hcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;background:#fff;min-width:0;overflow-wrap:anywhere}
+.hcard:hover{background:var(--brand-light)}
+.hcard-top{display:flex;gap:12px}
+.hcard .dhead{flex-wrap:wrap}
+.hcard .dmeta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.78rem}
+.hbadge{font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px}
+.hb-good{background:#dcfce7;color:#166534}
+.hb-mid{background:#fef3c7;color:#92400e}
+.hb-no{background:#e5e7eb;color:#4b5563}
+.hcard.hv-good{border-color:#86efac}
+.hwhy{font-size:.85rem;margin:8px 0 4px;color:var(--ink)}
+.hfair{font-size:.85rem;margin:4px 0}
+.hlist{list-style:none;margin:4px 0;padding:0;font-size:.82rem}
+.hlist li{padding:1px 0 1px 18px;position:relative}
+.hpro li::before{content:'\2713';color:#16a34a;font-weight:800;position:absolute;left:0}
+.hcon li::before{content:'\26A0';color:#ea580c;position:absolute;left:0}
+.hask{font-size:.82rem;margin:6px 0}
+.hask ul{margin:2px 0 0;padding-left:18px}
+.hchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.hchip{background:#eef0f2;color:#5b6570;border-radius:999px;padding:2px 8px;font-size:.7rem}
+.hno>summary{cursor:pointer}
+.hunterbox.hv-good{background:#f0fdf4;border-color:#86efac}
+.hunterbox.hv-mid{background:#fffbeb;border-color:#fde68a}
+.hunterbox.hv-no{background:#f4f6f8;border-color:var(--line)}
+.hbnew .badge{position:absolute;top:-5px;right:-5px;background:var(--accent);color:#fff;border-radius:999px;padding:0 6px;font-size:.68rem;font-weight:800;line-height:1.5}
+@media (max-width:480px){.hcard-top{flex-direction:column}.hcard .dimg{flex:0 0 auto;width:100%;height:150px}}

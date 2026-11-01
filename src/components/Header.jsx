@@ -3,7 +3,7 @@ import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { REGION, REGION_LIST, switchRegion } from '../region.js'
 
-export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, onOpenSync, deskView, onDeskView, toast }) {
+export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, hunterCount = 0, hunterGood = 0, onOpenHunter, onOpenSync, deskView, onDeskView, toast }) {
   const { t, lang, setLang, eur, setEur } = useI18n()
   const fx = eur ? gbpEur : null
   const toggleEur = () => {
@@ -116,6 +116,7 @@ export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNea
       <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
       <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
       {dealsCount > 0 && <button className={'hbtn' + (dealsActive ? ' hbon' : '')} onClick={onToggleDeals} title={t('deals_title')}>💎</button>}
+      {hunterCount > 0 && <button className="hbtn hbnew" onClick={onOpenHunter} title={t('hunter_title')}>🎯{hunterGood > 0 && <span className="badge">{hunterGood}</span>}</button>}
       <button className="hbtn" onClick={onOpenSync} title={t('sync_title')}>🔄</button>
       {REGION.gbp && <button className={'hbtn hbeur' + (eur ? ' hbon' : '')} onClick={toggleEur} title={t('eur_toggle')}>{eur ? '€' : '£'}</button>}
       <div className="langtog regiontog" title={t('region_title')}>

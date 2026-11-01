@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import { HunterNotes, verdictKey } from './HunterModal.jsx'
 import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR, auctionPast, ddmm } from '../utils.js'
 import { nearby, fmtM, ICON, gmapsLink, osmLink } from '../poi.js'
 import { useI18n } from '../i18n.jsx'
@@ -211,7 +212,7 @@ function SatMini({ lat, lng, t, pois }) {
   )
 }
 
-export default function DetailModal({ l, deal, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, nav, onNav, toast }) {
+export default function DetailModal({ l, deal, hunterPick, allListings = [], dealPages = {}, updated = '', fav, similar = [], onOpenListing, gbpEur, noteData = {}, myKey, vote = {}, profile, onVote, onSaveNote, onClose, onToggleFav, onShowOnMap, nav, onNav, toast }) {
   const { t, featLabel, listingDesc, eur: eurMode } = useI18n()
   const fx = eurMode ? gbpEur : null
 
@@ -371,6 +372,13 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             {l.energy ? <div className="stat"><b>{l.energy}</b><span>{t('st_epc')}</span></div> : null}
             {l.ctax ? <div className="stat"><b>{l.ctax}</b><span>{t('st_ctax')}</span></div> : null}
           </div>
+
+          {hunterPick && (
+            <div className={'dealbox hunterbox hv-' + verdictKey(hunterPick)}>
+              <div className="dhead"><b>🎯 {t('hunter_detail', { v: hunterPick.ai ? hunterPick.ai.verdict : t('hunter_pending') })}</b></div>
+              <HunterNotes pick={hunterPick} />
+            </div>
+          )}
 
           {(() => {
             const an = analyzeListing(l, allListings, gbpEur, dealPages, updated)

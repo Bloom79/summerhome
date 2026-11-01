@@ -53,6 +53,18 @@ jobs:
           DATA_DIR: public/it/
         run: node scripts/trends.mjs || true
 
+      # Independent houses only, scored against OMI and local comparables.
+      # Claude's review runs at 09:00 on the owner's Mac (tools/hunter-relay.sh,
+      # their Claude plan); here the shortlist is rebuilt and the cached
+      # verdicts are kept. With an ANTHROPIC_API_KEY secret, Claude reviews
+      # here instead. A failure never blocks the publish.
+      - name: Deal hunter
+        if: steps.refresh.outputs.status == 'changed'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HUNTER_LLM: ${{ secrets.ANTHROPIC_API_KEY && 'api' || 'off' }}
+        run: node scripts/it/hunter.mjs || true
+
       - name: Restore built site
         if: steps.refresh.outputs.status == 'changed'
         id: distcache
@@ -82,6 +94,7 @@ jobs:
           git config user.name 'casatrova-agent'
           git config user.email 'noreply@github.com'
           git add public/it/data.json public/it/deals.json public/it/trends.json
+          git add public/it/hunter.json 2>/dev/null || true
           git commit -m "Altopiano delle Rocche $(date -u +%F): ${{ steps.refresh.outputs.summary }} · ${{ steps.deals.outputs.summary }}" -m "$(cat it-refresh-report.md)"
           git pull --rebase origin main
           git push origin main
