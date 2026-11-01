@@ -16,6 +16,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Subito reachability
+        run: |
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
+          for u in \
+            'https://hades.subito.it/v1/search/items?c=6&t=s&r=13&ci=1&to=066065&lim=5' \
+            'https://www.subito.it/' \
+            'https://www.subito.it/annunci-abruzzo/vendita/immobili/l-aquila/ovindoli/' \
+            'https://www.subito.it/appartamenti/meraviglioso-appartamento-in-villa-l-aquila-661870530.htm'; do
+            curl -s -o /tmp/p -w "%{http_code} %{size_download} $u\n" --compressed --max-time 25 -A "$UA" -H 'Accept-Language: it-IT,it;q=0.9' "$u"
+            head -c 300 /tmp/p | tr '\n' ' '; echo
+          done
       - name: Refresh (dry run, data not committed)
         run: node scripts/it/refresh.mjs
       - name: Quality gate
