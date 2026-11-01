@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
-import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR } from '../utils.js'
+import { fmtP, ppm as ppmOf, priceSym, hostOf, srcOf, imgUrl, handleImgError, buyTax, SAT_URL, SAT_LABELS, SAT_ATTR, auctionPast, ddmm } from '../utils.js'
 import { nearby, fmtM, ICON, gmapsLink, osmLink } from '../poi.js'
 import { useI18n } from '../i18n.jsx'
 import { DealChecks } from './DealsModal.jsx'
@@ -361,7 +361,7 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
           <div className="mstats">
             {l.date ? <div className="stat"><b>{l.date.slice(8, 10)}/{l.date.slice(5, 7)}</b><span>{t('st_added')}</span></div> : null}
             {l.auction || l.feats.includes('Asta')
-              ? <div className="stat"><b>🔨 {l.auction ? `${l.auction.slice(8, 10)}/${l.auction.slice(5, 7)}` : t('auction_badge')}</b><span>{l.auction ? t('st_auction') : t('st_auction_nd')}</span></div>
+              ? <div className="stat"><b>🔨 {l.auction ? ddmm(l.auction) : t('auction_badge')}</b><span>{!l.auction ? t('st_auction_nd') : auctionPast(l) ? t('st_auction_past') : t('st_auction')}</span></div>
               : null}
             {l.size ? <div className="stat"><b>{l.size} m²</b><span>{t('st_area')}</span></div> : null}
             {l.rooms ? <div className="stat"><b>{l.rooms}</b><span>{t('st_rooms')}</span></div> : null}

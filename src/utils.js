@@ -117,6 +117,11 @@ export const srcOf = (url) => {
   return null
 }
 
+// An auction lot still listed after its auction date went unsold and can be
+// bought by private offer (Auction House's /unsold list).
+export const auctionPast = (l) => !!l.auction && l.auction < new Date().toISOString().slice(0, 10)
+export const ddmm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+
 // ---- Imposte d'acquisto stimate (SECONDA casa) ----
 // Scozia: LBTT a scaglioni (0/2/5/10/12%) + ADS 8% sull'intero prezzo per
 // le additional dwellings (aliquota dal 5 dic 2024). Irlanda: imposta di

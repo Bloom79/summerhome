@@ -704,6 +704,7 @@ const RETIRED = /tspc\.co\.uk/
 // carry the 'Asta' feat and an `auction` date, are EXCLUDED from zone
 // medians and the deals analysis, and archive themselves once the auction
 // date has passed. Coordinates come from the postcode (postcodes.io).
+const AUCTION_HOST = /futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/
 const MONTHS = { january: '01', february: '02', march: '03', april: '04', may: '05', june: '06', july: '07', august: '08', september: '09', october: '10', november: '11', december: '12' }
 const isoDate = (txt) => {
   // Month may be abbreviated ("27 Aug 2026") — match by 3-letter prefix.
@@ -923,6 +924,10 @@ for (const [url, cand] of scraped) {
   // listings back to 6 photos (enrichment runs on NEW urls only) — the root
   // cause of the recurring "too few images" complaint.
   const merged = { ...old, price: cand.price, imgs: cand.imgs.length > old.imgs.length ? cand.imgs : old.imgs, rooms: cand.rooms ?? old.rooms, baths: cand.baths ?? old.baths, chk: TODAY }
+  // Unsold auction lots are re-offered at a later sale (Future Property
+  // Auctions does this routinely): take the catalogue's current date, or
+  // the portal would show the first, long-past one.
+  if (cand.auction) merged.auction = cand.auction
   if (cand.price !== old.price)
     merged.hist = [...(old.hist || [{ d: old.date, p: old.price }]), { d: TODAY, p: cand.price }].slice(-10)
   if (cand.price < old.price) events.ribassi.push({ ...merged, oldPrice: old.price })
@@ -1007,11 +1012,15 @@ async function verifyMissing(l) {
     if (!p || !p.IsOpen) return gone()
     if (p.UnderOffer) return gone('sale_agreed')
     return keep(true)
-  } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/.test(l.url)) {
-    // Auction lots: gone from the catalogue means sold or withdrawn; a
-    // passed auction date means the auction happened either way.
+  } else if (AUCTION_HOST.test(l.url)) {
+    // Auction lots: gone from the catalogue after the auction date means the
+    // auction happened (unsold lots stay listed, e.g. Auction House /unsold).
+    // Before the date, or with no date at all (Prime sells "offer now"
+    // style), only the lot page can tell: 404/410 = withdrawn or sold.
     if (l.auction && l.auction < TODAY) return gone()
-    return keep(false)
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) return gone()
+    return keep(code === 200)
   } else if (/onthemarket\.com/.test(l.url)) {
     // OnTheMarket hard-404s dead listings; live pages carry priceRaw in
     // their __NEXT_DATA__ blob.
@@ -1110,12 +1119,16 @@ for (const l of nextListings) if (!l.id) l.id = ++maxId
 // Auction houses often relist their lots on the portals (FPA → OnTheMarket):
 // the portal copy wins the dedupe, so carry the auction nature over to it —
 // same guide price at the same address means it IS the auction lot.
+// Re-run daily even for copies already tagged, so a re-offered lot's new
+// auction date reaches its portal copy too.
 for (const l of nextListings) {
-  if (l.feats.includes('Asta')) continue
+  if (AUCTION_HOST.test(l.url)) continue
   const k = normAddr(l.addr).slice(0, 40) + '|' + l.price
   const hit = aucAll.find((a) => normAddr(a.addr).slice(0, 40) + '|' + a.price === k ||
     nearPt({ price: l.price, lat: l.lat, lng: l.lng }, a))
-  if (hit) { l.feats.push('Asta'); if (hit.auction) l.auction = hit.auction }
+  if (!hit) continue
+  if (!l.feats.includes('Asta')) l.feats.push('Asta')
+  if (hit.auction) l.auction = hit.auction
 }
 const zoneSet = new Set([...db.zones])
 for (const l of nextListings) if (!zoneSet.has(l.zone)) { db.zones.push(l.zone); zoneSet.add(l.zone) }

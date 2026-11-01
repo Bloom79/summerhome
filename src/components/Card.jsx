@@ -1,4 +1,4 @@
-import { fmtP, ppm, hostOf, srcOf, dist, fmtDist } from '../utils.js'
+import { fmtP, ppm, hostOf, srcOf, dist, fmtDist, auctionPast, ddmm } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
 
@@ -48,7 +48,7 @@ export default function Card({ l, deal, updated, gbpEur, hasNote, vote = {}, pro
         <div className="ctitle">
           {isNew && <span className="newb">✨ {t('new_badge')}</span>}
           {reduced && <span className="newb redb">📉 {t('reduced_badge')}{drop > 0 ? ` −${drop}%` : ''}</span>}
-          {(l.auction || l.feats.includes('Asta')) && <span className="newb aucb">🔨 {t('auction_badge')}{l.auction ? ` ${l.auction.slice(8, 10)}/${l.auction.slice(5, 7)}` : ''}</span>}
+          {(l.auction || l.feats.includes('Asta')) && <span className="newb aucb">🔨 {auctionPast(l) ? t('auction_post') : `${t('auction_badge')}${l.auction ? ` ${ddmm(l.auction)}` : ''}`}</span>}
           {deal && <span className={'newb dealb' + (deal.tier === 'top' ? ' top' : '')}>{deal.tier === 'top' ? '🔥' : '💎'} {t('deal_badge')} {deal.score}</span>}
           {hasNote && <span className="noteb" title={t('notes_label')}>📝</span>}
           {Object.entries(vote).filter(([n]) => n !== profile).map(([n, v]) => (
