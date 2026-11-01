@@ -34,7 +34,7 @@ const REGIONS = {
     id: 'it',
     name: 'Altopiano delle Rocche',
     nameEn: 'Altopiano delle Rocche',
-    short: 'Abruzzo',
+    short: 'Ovindoli',
     flag: '🇮🇹',
     dir: 'it/',
     // Driving time from Rome, where weekend trips start. Every home on the
