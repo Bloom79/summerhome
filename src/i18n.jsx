@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react'
 import { hostOf } from './utils.js'
+import { REGION } from './region.js'
 
 // Property type labels IT -> EN
 const TYPES = {
@@ -8,12 +9,18 @@ const TYPES = {
   'Villa': 'Villa',
   'Appartamento': 'Apartment',
   'Bungalow': 'Bungalow',
+  'Villetta a schiera': 'Terraced house',
+  'Baita': 'Chalet',
+  'Rustico': 'Rustic house',
 }
 
 // Feature tag labels IT -> EN
 const FEATS = {
   'Garage': 'Garage', 'Giardino': 'Garden', 'Spiaggia': 'Beachfront', 'Asta': 'Auction', 'Terreno': 'Land', 'Da ammodernare': 'Needs modernisation',
   'Annessi': 'Outbuildings', 'Serra': 'Greenhouse', 'Acqua': 'Water source',
+  'Vicino piste': 'Near the ski lifts', 'Camino': 'Fireplace', 'Terrazzo': 'Terrace', 'Arredato': 'Furnished',
+  'Cantina': 'Cellar', 'Posto auto': 'Parking space', 'Mansarda': 'Attic room', 'Riscaldamento autonomo': 'Own heating',
+  'Vista panoramica': 'Panoramic view', 'Privato': 'Private seller',
   'Vista mare': 'Sea view', 'Fronte porto': 'Harbour front', 'Vicino spiaggia': 'Near beach',
   'Vicino golf': 'Near golf', 'Centro storico': 'Historic centre',
 }
@@ -63,6 +70,17 @@ const STR = {
     tax_title: "Imposte d'acquisto stimate (2\u00aa casa)",
     tax_scot: '(LBTT {lbtt} + ADS 8% {ads} \u00b7 stima indicativa)',
     tax_ie: '(imposta di registro \u00b7 stima indicativa)',
+    tax_it: "Da privato o all'asta: registro 9% del valore catastale (rendita \u00d7 126, minimo \u20ac1.000) + \u20ac100 fissi. Da impresa: IVA 10% del prezzo + \u20ac600. Il valore catastale \u00e8 spesso molto sotto il prezzo: chiedi la rendita all'agenzia.",
+    tax_it_r: '(registro 9% sul valore catastale {v} + \u20ac100 fissi \u00b7 stima indicativa)',
+    ski_chip: '\u26f7 Vicino piste', region_title: 'Cambia zona di ricerca', perizia: 'perizia (PDF)',
+    'search_ph@it': 'Cerca zona o indirizzo\u2026 (es. Ovindoli, Rovere, Campo Felice)',
+    'banner@it': "\u26f7 Case in vendita sull'Altopiano delle Rocche: Ovindoli, Rocca di Mezzo, Rocca di Cambio e frazioni \u00b7 aggiornato {date}",
+    'banner_short@it': "\u26f7 {n} case sull'Altopiano \u00b7 agg. {date}",
+    'map_legend@it': '\u2728 nuova \u22643 gg \u00b7 \ud83d\udc8e occasione sotto la media di zona',
+    'home_sub@it': "{n} nuove case dall'ultima visita \u2014 giardino e vicino piste in evidenza",
+    'home_sub_first@it': '{n} case aggiunte di recente \u2014 giardino e vicino piste in evidenza',
+    omi_range: 'OMI zona: {a}\u2013{b} \u20ac/m\u00b2', omi_title: "Quotazioni OMI dell'Agenzia delle Entrate (1\u00b0 sem. 2026, stato normale, zona centrale del comune)",
+    'travel_from@it': "~{t} d'auto da {g}",
     dc_sqm: '{unit} \u20ac/m\u00b2 contro {zone} mediana di zona (\u2212{pct}%)',
     dc_comps: '\u2212{pct}% rispetto alla mediana delle case da {rooms} camere in zona ({n} confronti)',
     dc_cuts: 'Prezzo gi\u00e0 ribassato del {pct}%', dc_cuts_multi: ' in {n} tagli',
@@ -214,6 +232,17 @@ const STR = {
     tax_title: 'Estimated purchase taxes (2nd home)',
     tax_scot: '(LBTT {lbtt} + ADS 8% {ads} \u00b7 indicative)',
     tax_ie: '(stamp duty \u00b7 indicative)',
+    tax_it: 'From a private seller or at auction: 9% registration tax on the cadastral value (rendita \u00d7 126, minimum \u20ac1,000) + \u20ac100 fixed. From a developer: 10% VAT on the price + \u20ac600. The cadastral value is often far below the price: ask the agent for the rendita.',
+    tax_it_r: '(9% registration tax on cadastral value {v} + \u20ac100 fixed \u00b7 indicative)',
+    ski_chip: '\u26f7 Near the lifts', region_title: 'Change search area', perizia: 'valuation report (PDF, Italian)',
+    'search_ph@it': 'Search area or address\u2026 (e.g. Ovindoli, Rovere, Campo Felice)',
+    'banner@it': '\u26f7 Homes for sale on the Altopiano delle Rocche: Ovindoli, Rocca di Mezzo, Rocca di Cambio and their villages \u00b7 updated {date}',
+    'banner_short@it': '\u26f7 {n} homes on the plateau \u00b7 upd. {date}',
+    'map_legend@it': '\u2728 new \u22643 days \u00b7 \ud83d\udc8e deal below the zone median',
+    'home_sub@it': '{n} new homes since your last visit \u2014 garden and near-the-lifts featured',
+    'home_sub_first@it': '{n} recently added homes \u2014 garden and near-the-lifts featured',
+    omi_range: 'OMI area: {a}\u2013{b} \u20ac/m\u00b2', omi_title: 'Official OMI values from the Italian Revenue Agency (H1 2026, normal condition, central zone of the comune)',
+    'travel_from@it': '~{t} drive from {g}',
     dc_sqm: '{unit} \u20ac/m\u00b2 vs {zone} zone median (\u2212{pct}%)',
     dc_comps: '\u2212{pct}% vs the median of {rooms}-bedroom homes in the zone ({n} comparables)',
     dc_cuts: 'Already reduced by {pct}%', dc_cuts_multi: ' over {n} cuts',
@@ -324,8 +353,16 @@ const STR = {
 }
 
 // Shared price bands (numeric; min inclusive, max exclusive). Used by the
-// multi-select price filter and the filtering logic.
-export const PRICE_RANGES = [
+// multi-select price filter and the filtering logic. The Abruzzo plateau
+// trades far lower (studios from ~€30k), so it gets its own bands; the ids
+// differ so a saved UK search never maps onto a wrong Italian band.
+export const PRICE_RANGES = REGION.id === 'it' ? [
+  { id: 'i1', min: null, max: 50000 },
+  { id: 'i2', min: 50000, max: 100000 },
+  { id: 'i3', min: 100000, max: 150000 },
+  { id: 'i4', min: 150000, max: 250000 },
+  { id: 'i5', min: 250000, max: null },
+] : [
   { id: 'a', min: null, max: 250000 },
   { id: 'b', min: 250000, max: 500000 },
   { id: 'c', min: 500000, max: 750000 },
@@ -342,7 +379,10 @@ export function LangProvider({ children }) {
   const [eur, setEurState] = useState(() => { try { return localStorage.getItem('ct_eur') === '1' } catch { return false } })
   const setEur = (v) => { setEurState(v); try { localStorage.setItem('ct_eur', v ? '1' : '0') } catch { /* ignore */ } }
   const t = (k, vars) => {
-    let s = STR[lang][k] ?? STR.it[k] ?? k
+    // "key@region" overrides "key" in that region (e.g. drive times from
+    // Roma instead of from an airport).
+    const rk = k + '@' + REGION.id
+    let s = STR[lang][rk] ?? STR[lang][k] ?? STR.it[rk] ?? STR.it[k] ?? k
     if (typeof s === 'string' && vars) for (const [kk, vv] of Object.entries(vars)) s = s.replaceAll('{' + kk + '}', vv)
     return s
   }

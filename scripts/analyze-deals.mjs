@@ -39,8 +39,10 @@ const pmap = async (items, fn, limit = 8) => {
 }
 const median = (arr) => arr.length ? [...arr].sort((a, b) => a - b)[Math.floor(arr.length / 2)] : null
 
-const db = JSON.parse(readFileSync(ROOT + 'public/data.json', 'utf8'))
-const dealsPath = ROOT + 'public/deals.json'
+// DATA_DIR selects the region (public/ = UK and Ireland, public/it/ = Abruzzo).
+const DATA_DIR = process.env.DATA_DIR || 'public/'
+const db = JSON.parse(readFileSync(ROOT + DATA_DIR + 'data.json', 'utf8'))
+const dealsPath = ROOT + DATA_DIR + 'deals.json'
 const prev = existsSync(dealsPath) ? JSON.parse(readFileSync(dealsPath, 'utf8')) : {}
 const pageCache = prev.pages || {}
 const fx = db.gbpEur || 1.15
@@ -61,9 +63,13 @@ const MOTIVE = [
   ['fixed', /fixed price|price-type-name">\s*Fixed/i, 4],
   ['closing', /closing date/i, 3],
   ['nochain', /no (onward )?chain|chain[- ]free/i, 2],
-  ['quick', /motivated seller|priced (for|to) (a )?(quick|fast|swift) sale|reduced for (a )?quick sale|priced to sell|keen to sell|quick sale (sought|required)/i, 4],
+  ['quick', /motivated seller|priced (for|to) (a )?(quick|fast|swift) sale|reduced for (a )?quick sale|priced to sell|keen to sell|quick sale (sought|required)|vendita urgente|prezzo (ribassato|ridotto|trattabile)|occasione unica|ottimo affare|libero subito/i, 4],
 ]
-const toScan = sale.filter((l) => !/s1homes/.test(l.url) && !pageCache[l.url])
+// Abruzzo listings carry their full description already: scan that text
+// instead of fetching every source page again (NO_PAGE_SCAN=1).
+const NO_PAGE_SCAN = !!process.env.NO_PAGE_SCAN
+if (NO_PAGE_SCAN) for (const l of sale) pageCache[l.url] = { flags: MOTIVE.filter(([, re]) => re.test(l.desc || '')).map(([k]) => k) }
+const toScan = NO_PAGE_SCAN ? [] : sale.filter((l) => !/s1homes/.test(l.url) && !pageCache[l.url])
 await pmap(toScan, async (l) => {
   try {
     const page = await get(l.url)
@@ -132,7 +138,7 @@ const lines = deals.slice(0, 8).map((d) => {
   const l = byId.get(d.id)
   return `- ${d.tier === 'top' ? '🔥' : '💎'} ${d.score}pt ${l.addr} — ${l.currency === 'EUR' ? '€' : '£'}${l.price.toLocaleString('en-GB')} (${d.checks.map((c) => c.k).join('+')})`
 })
-writeFileSync(ROOT + 'deals-report.md', `# Occasioni ${TODAY}\n${lines.join('\n')}\n`)
+writeFileSync(ROOT + (DATA_DIR === 'public/' ? '' : DATA_DIR.replace(/^public\/|\/$/g, '') + '-') + 'deals-report.md', `# Occasioni ${TODAY}\n${lines.join('\n')}\n`)
 out('deals', deals.length)
 out('deals_new', deals.filter((d) => d.isNew).length)
 out('summary', `${deals.length} occasioni (${deals.filter((d) => d.tier === 'top').length} top) su ${sale.length} annunci`)

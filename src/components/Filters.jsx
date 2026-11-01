@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n, PRICE_RANGES } from '../i18n.jsx'
+import { REGION } from '../region.js'
 
 const emptyAdv = { smin: '', smax: '', rooms: '', baths: '', feats: [], epc: '' }
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
@@ -111,12 +112,10 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
             </div>
           )}
         </div>
-        <select className={'chip' + (filters.travel ? ' active' : '')} value={filters.travel || ''} title={t('travel_note')} onChange={(e) => onImmediate('travel', e.target.value)}>
+        {REGION.travelSteps.length > 0 && <select className={'chip' + (filters.travel ? ' active' : '')} value={filters.travel || ''} title={t('travel_note')} onChange={(e) => onImmediate('travel', e.target.value)}>
           <option value="">{t('travel_any')}</option>
-          <option value="90">{t('travel_90')}</option>
-          <option value="150">{t('travel_150')}</option>
-          <option value="240">{t('travel_240')}</option>
-        </select>
+          {REGION.travelSteps.map((m) => <option key={m} value={m}>{t('travel_' + m)}</option>)}
+        </select>}
         <select className={'chip' + (filters.freshness ? ' active' : '')} value={filters.freshness} onChange={(e) => onImmediate('freshness', e.target.value)}>
           <option value="">{t('fresh_all')}</option>
           <option value="1">{t('fresh_1')}</option>
@@ -131,16 +130,17 @@ export default function Filters({ zones, areas = [], searches = [], onSaveSearch
         </select>
         <select className="chip" value={filters.type} onChange={(e) => onImmediate('type', e.target.value)}>
           <option value="">{t('all_types')}</option>
-          {['Cottage', 'Casa indipendente', 'Villa', 'Appartamento', 'Bungalow'].map((ty) => (
+          {REGION.types.map((ty) => (
             <option key={ty} value={ty}>{typeLabel(ty)}</option>
           ))}
         </select>
         <button className="chip" onClick={() => setOpen((o) => !o)}>
           ⚙️ {t('adv_filters')}{advCount ? <span className="badge">{advCount}</span> : null}
         </button>
-        <button className={'chip' + (seaOnly ? ' active' : '')} onClick={onToggleSea}>{t('sea_view')}</button>
+        {REGION.sea && <button className={'chip' + (seaOnly ? ' active' : '')} onClick={onToggleSea}>{t('sea_view')}</button>}
         <button className={'chip' + (gardenOnly ? ' active' : '')} onClick={onToggleGarden}>{t('garden')}</button>
-        <button className={'chip' + (beachOnly ? ' active' : '')} onClick={onToggleBeach}>{t('beach')}</button>
+        {/* Same toggle, region-specific meaning: beachfront (UK) or near the ski lifts (IT). */}
+        <button className={'chip' + (beachOnly ? ' active' : '')} onClick={onToggleBeach}>{t(REGION.ski ? 'ski_chip' : 'beach')}</button>
         <button className={'chip' + (auctionOnly ? ' active' : '')} onClick={onToggleAuction}>🔨 {t('auction_chip')}</button>
         <button className={'chip' + (farmOnly ? ' active' : '')} onClick={onToggleFarm}>🌱 {t('farm_chip')}</button>
         {dealsCount > 0 && (

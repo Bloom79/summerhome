@@ -4,10 +4,11 @@ import 'leaflet/dist/leaflet.css'
 import './index.css'
 import App from './App.jsx'
 import { LangProvider } from './i18n.jsx'
+import { dataUrl } from './region.js'
 
 // Listings live in data.json, fetched at runtime: agents update the portal by
 // publishing new data, with no app rebuild — and the app can hot-swap it.
-fetch(`${import.meta.env.BASE_URL}data.json`, { cache: 'no-store' })
+fetch(dataUrl('data.json'), { cache: 'no-store' })
   .then((r) => r.json())
   .then((db) => {
     ReactDOM.createRoot(document.getElementById('root')).render(
