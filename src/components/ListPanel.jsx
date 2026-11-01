@@ -99,7 +99,11 @@ export default function ListPanel({
         ) : (
           <div id="count" dangerouslySetInnerHTML={{ __html: t('sold_found', { n: `<b>${items.length}</b>` }) }} />
         )}
-        {!soldView && <select id="sort" value={sort} onChange={(e) => onSortChange(e.target.value)}>
+        {/* Phone: a small ⇅ chip over the native picker (the select stays,
+            transparent, so Android shows its own list). */}
+        {!soldView && <label className={'sortwrap' + (sort !== 'rel' ? ' on' : '')} title={t('sort_title')}>
+          <span className="sort-ic" aria-hidden="true">⇅</span>
+        <select id="sort" value={sort} onChange={(e) => onSortChange(e.target.value)} aria-label={t('sort_title')}>
           <option value="rel">{t('sort_rel')}</option>
           <option value="pasc">{t('sort_pasc')}</option>
           <option value="pdesc">{t('sort_pdesc')}</option>
@@ -110,7 +114,8 @@ export default function ListPanel({
           <option value="new">{t('sort_new')}</option>
           <option value="deal">{t('sort_deal')}</option>
           <option value="dist">{t('sort_dist')}</option>
-        </select>}
+        </select>
+        </label>}
       </div>
 
       {!soldView && dealsOnly && (

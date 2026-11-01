@@ -79,6 +79,12 @@ function PubsLayer({ on, t }) {
 const clusterIcon = (n) =>
   L.divIcon({ className: '', html: `<div class="clusterpin">${n}</div>`, iconSize: [0, 0] })
 
+// "🛰 Satellite" → icon + label spans (the label hides on phones).
+const iconLabel = (s) => {
+  const i = String(s).indexOf(' ')
+  return i < 0 ? s : <><span className="mb-ic">{s.slice(0, i)}</span><span className="mb-tx">{s.slice(i + 1)}</span></>
+}
+
 export default function MapPanel({
   items, zoom, highlightId, userPos, areaSync, seen, soldView, pinClassOf, gbpEur, satellite,
   onToggleAreaSync, onToggleSatellite, onFitAll, onAgentSearchHere, onMarkerClick, onClusterClick, onOpen, onSeen, onMapReady, onBoundsChange,
@@ -87,6 +93,8 @@ export default function MapPanel({
   const fx = eur ? gbpEur : null
   // 🍺 layer toggle, remembered on the device.
   const [pubsOn, setPubsOn] = useState(() => { try { return localStorage.getItem('ct_pubs') === '1' } catch { return false } })
+  // Phone: legend shown on demand (ⓘ).
+  const [legendOpen, setLegendOpen] = useState(false)
   const togglePubs = () => setPubsOn((v) => { try { localStorage.setItem('ct_pubs', v ? '0' : '1') } catch { /* ignore */ } return !v })
 
   // Grid clustering, no plugins: below street zoom, cells with 3+ houses
@@ -192,14 +200,18 @@ export default function MapPanel({
         </MapContainer>
       </div>
 
-      {!soldView && <div className="maplegend">{t('map_legend')}</div>}
+      {/* Phone: the legend folds into an ⓘ button so it doesn't cover the map. */}
+      {!soldView && <div className={'maplegend' + (legendOpen ? ' open' : '')}>{t('map_legend')}</div>}
+      {!soldView && <button className={'maplegend-btn' + (legendOpen ? ' on' : '')} onClick={() => setLegendOpen((v) => !v)} aria-label={t('map_legend')} title={t('map_legend')}>ⓘ</button>}
 
+      {/* Labels are "emoji text": on phones only the emoji shows, in round
+          buttons (full label as tooltip / accessible name). */}
       <div className="mapbtns">
-        <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync}>{t('map_search_area')}</button>
-        <button className={'mbtn sat' + (satellite ? ' on' : '')} onClick={onToggleSatellite} title={t('map_sat_title')}>{satellite ? t('map_sat_off') : t('map_sat')}</button>
-        <button className={'mbtn pubs' + (pubsOn ? ' on' : '')} onClick={togglePubs} title={t('map_pubs_title')}>{t('map_pubs')}</button>
-        {onAgentSearchHere && <button className="mbtn agent" onClick={onAgentSearchHere}>{t('map_agent_here')}</button>}
-        <button className="mbtn" onClick={onFitAll}>{t('map_see_all')}</button>
+        <button className={'mbtn' + (areaSync ? ' on' : '')} onClick={onToggleAreaSync} title={t('map_search_area')} aria-label={t('map_search_area')}>{iconLabel(t('map_search_area'))}</button>
+        <button className={'mbtn sat' + (satellite ? ' on' : '')} onClick={onToggleSatellite} title={t('map_sat_title')} aria-label={t('map_sat_title')}>{iconLabel(satellite ? t('map_sat_off') : t('map_sat'))}</button>
+        <button className={'mbtn pubs' + (pubsOn ? ' on' : '')} onClick={togglePubs} title={t('map_pubs_title')} aria-label={t('map_pubs_title')}>{iconLabel(t('map_pubs'))}</button>
+        {onAgentSearchHere && <button className="mbtn agent" onClick={onAgentSearchHere} title={t('map_agent_here')} aria-label={t('map_agent_here')}>{iconLabel(t('map_agent_here'))}</button>}
+        <button className="mbtn" onClick={onFitAll} title={t('map_see_all')} aria-label={t('map_see_all')}>{iconLabel(t('map_see_all'))}</button>
       </div>
     </section>
   )
