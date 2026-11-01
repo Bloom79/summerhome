@@ -638,7 +638,9 @@ const OTM_TOWNS = [
 const otmNext = (html) => {
   const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html || '')
   if (!m) return null
-  try { return JSON.parse(m[1]).props?.initialReduxState || null } catch { return null }
+  // Since Oct 2026 the Redux state sits under props.pageProps; keep the old
+  // spot as a fallback in case the site reverts.
+  try { const j = JSON.parse(m[1]); return j.props?.pageProps?.initialReduxState || j.props?.initialReduxState || null } catch { return null }
 }
 const otmCandidate = (o, ztOverride) => {
   const price = +String(o.price || '').replace(/[^0-9]/g, '')
@@ -956,69 +958,80 @@ await pmap(missing, async (l) => {
   // third of the daily source fetches.
   if (l.chk && l.chk > VERIFY_AFTER) { nextListings.push(l); recent++; return }
   if (pastBudget(0.8)) { nextListings.push(l); unverified++; return }
-  const pushed = nextListings.length
-  await verifyMissing(l)
-  if (nextListings.length > pushed) l.chk = TODAY
+  // `chk` only when the source confirmed the listing live: a fetch error
+  // keeps the listing but leaves it first in line for tomorrow.
+  if (await verifyMissing(l)) l.chk = TODAY
 }, 8)
 console.log(`[${elapsed()}] verificati di recente, non ricontrollati: ${recent}`)
 if (unverified) console.log(`[${elapsed()}] budget esaurito: ${unverified} annunci mancanti riportati senza verifica (domani per primi)`)
+// Returns true only when the source confirmed the listing is still live.
+// Off the market → archived (soldNew); a fetch error → carried over unverified.
 async function verifyMissing(l) {
+  const gone = (status = 'removed') => { soldNew.push({ ...toSold(l), status }); return false }
+  const keep = (verified) => { nextListings.push(l); return verified }
   if (/myhome\.ie/.test(l.url)) {
     const code = await getStatus(l.url)
-    if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
+    if (code === 404 || code === 410) return gone()
     let page = ''
-    try { page = await get(l.url) } catch { nextListings.push(l); return }
+    try { page = await get(l.url) } catch { return keep(false) }
     const title = /<title>([^<]*)/.exec(page)?.[1] || ''
-    if (/^Sold/i.test(title.trim())) soldNew.push({ ...toSold(l), status: 'sold' })
-    else if (/^Sale Agreed/i.test(title.trim())) soldNew.push({ ...toSold(l), status: 'sale_agreed' })
-    else if (!/€\s?[\d,]+/.test(title)) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    if (/^Sold/i.test(title.trim())) return gone('sold')
+    if (/^Sale Agreed/i.test(title.trim())) return gone('sale_agreed')
+    if (!/€\s?[\d,]+/.test(title)) return gone()
+    return keep(true)
   } else if (/s1homes\.com/.test(l.url)) {
     // s1homes soft-404s (/property/<bad-id> still answers 200): the /view/
     // page is server-rendered and puts the ADDRESS in og:title for live
-    // listings, a generic "s1homes | Property" for dead ones.
+    // listings, a generic "s1homes | Property" for dead ones. Since ~Oct
+    // 2026 the /view/ page also answers 410 for removed listings.
+    const view = `https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`
+    const code = await getStatus(view)
+    if (code === 404 || code === 410) return gone()
     let page = ''
-    try { page = await get(`https://www.s1homes.com/property-for-sale/view/${l.url.split('/').pop()}`) } catch { nextListings.push(l); return }
-    if (/property="og:title" content="s1homes \|/.test(page)) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    try { page = await get(view) } catch { return keep(false) }
+    if (/property="og:title" content="s1homes \|/.test(page)) return gone()
+    return keep(true)
   } else if (/espc\.com/.test(l.url)) {
     // ESPC answers 410 Gone for withdrawn/sold listings; a live page
     // carries the "latitude" JSON. Transport errors keep the listing.
     const code = await getStatus(l.url)
-    if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
+    if (code === 404 || code === 410) return gone()
     let page = ''
-    try { page = await get(l.url) } catch { nextListings.push(l); return }
-    if (!page.includes('"latitude"')) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    try { page = await get(l.url) } catch { return keep(false) }
+    if (!page.includes('"latitude"')) return gone()
+    return keep(true)
   } else if (/aspc\.co\.uk/.test(l.url)) {
     // The API answers `null` for a withdrawn listing; under offer = agreed.
     let p
-    try { p = JSON.parse(await get(`${ASPC_API}/GetProperty/${l.url.split('/').pop()}`)) } catch { nextListings.push(l); return }
-    if (!p || !p.IsOpen) soldNew.push({ ...toSold(l), status: 'removed' })
-    else if (p.UnderOffer) soldNew.push({ ...toSold(l), status: 'sale_agreed' })
-    else nextListings.push(l)
+    try { p = JSON.parse(await get(`${ASPC_API}/GetProperty/${l.url.split('/').pop()}`)) } catch { return keep(false) }
+    if (!p || !p.IsOpen) return gone()
+    if (p.UnderOffer) return gone('sale_agreed')
+    return keep(true)
   } else if (/futurepropertyauctions\.co\.uk|auctionhouse\.co\.uk|primepropertyauctions\.co\.uk/.test(l.url)) {
     // Auction lots: gone from the catalogue means sold or withdrawn; a
     // passed auction date means the auction happened either way.
-    if (l.auction && l.auction < TODAY) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    if (l.auction && l.auction < TODAY) return gone()
+    return keep(false)
   } else if (/onthemarket\.com/.test(l.url)) {
     // OnTheMarket hard-404s dead listings; live pages carry priceRaw in
     // their __NEXT_DATA__ blob.
     const code = await getStatus(l.url)
-    if (code === 404 || code === 410) { soldNew.push({ ...toSold(l), status: 'removed' }); return }
+    if (code === 404 || code === 410) return gone()
     let page = ''
-    try { page = await get(l.url) } catch { nextListings.push(l); return }
-    if (/no longer (available|on the market)|has been removed/i.test(page) || !page.includes('"priceRaw"'))
-      soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    try { page = await get(l.url) } catch { return keep(false) }
+    if (/no longer (available|on the market)|has been removed/i.test(page) || !page.includes('"priceRaw"')) return gone()
+    return keep(true)
   } else {
+    // Rightmove answers 404/410 for removed listings, and get() (curl -f)
+    // throws on those, which used to read as a transport error and keep
+    // dead listings forever. Probe the status first, as for the others.
+    const code = await getStatus(l.url)
+    if (code === 404 || code === 410) return gone()
     let page = ''
-    try { page = await get(l.url) } catch { nextListings.push(l); return }
-    const gone = /this property has been removed|no longer (available|on the market)/i.test(page) ||
-      (!page.includes('"keyFeatures"') && !/£[\d,]+/.test(page.slice(0, 60000)))
-    if (gone) soldNew.push({ ...toSold(l), status: 'removed' })
-    else nextListings.push(l)
+    try { page = await get(l.url) } catch { return keep(false) }
+    if (/this property has been removed|no longer (available|on the market)/i.test(page) ||
+      (!page.includes('"keyFeatures"') && !/£[\d,]+/.test(page.slice(0, 60000)))) return gone()
+    return keep(true)
   }
 }
 function toSold(l) {
