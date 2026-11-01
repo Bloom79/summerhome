@@ -8,17 +8,11 @@ import Gallery from './Gallery.jsx'
 import Lightbox from './Lightbox.jsx'
 import { analyzeListing } from '../analyze.js'
 import { CERCA_QUI_ENDPOINT } from '../config.js'
+import { REGION } from '../region.js'
 
-// Airports relevant to the portal's coasts; the modal shows driving time
-// from the closest one (OSRM demo server, cached per listing).
-const GATES = [
-  ['Edimburgo', 55.9508, -3.3615],
-  ['Glasgow', 55.8642, -4.4331],
-  ['Inverness', 57.5425, -4.0475],
-  ['Aberdeen', 57.2019, -2.1978],
-  ['Dublino', 53.4264, -6.2499],
-  ['Donegal', 55.0442, -8.3410],
-]
+// Where trips start (airports for the UK coasts, cities for Abruzzo): the
+// modal shows driving time from the closest one (OSRM demo server, cached).
+const GATES = REGION.gates
 const travelCache = (() => { try { return JSON.parse(localStorage.getItem('ct_travel')) || {} } catch { return {} } })()
 const fmtDur = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`)
 
@@ -295,6 +289,8 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
     return () => { alive = false }
   }, [l.lat, l.lng])
   const poiLine = near && [
+    // Nightly distance to the closest ski-lift base (scripts/it/refresh.mjs).
+    l.ski && `⛷ ${l.ski.n} ~${fmtM(l.ski.m)}`,
     near.nearest.beach && `🏖 ${t('poi_beach')} ~${fmtM(near.nearest.beach.d)}`,
     near.venues[0] && `🍺 ${t('poi_pub')} ~${fmtM(near.venues[0].d)}`,
     near.nearest.shop && `🛒 ${t('poi_shop')} ~${fmtM(near.nearest.shop.d)}`,
@@ -356,7 +352,9 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
           )}
           <div className="mhead">
             <div><div className="mtitle">{l.title}</div></div>
-            <div className="mprice">{fmtP(l, fx)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small></div>
+            <div className="mprice">{fmtP(l, fx)}<br /><small>{[eur, ppm].filter(Boolean).join(' · ')}</small>
+              {Array.isArray(l.omi) && <><br /><small className="momi" title={t('omi_title')}>{t('omi_range', { a: l.omi[0].toLocaleString('it-IT'), b: l.omi[1].toLocaleString('it-IT') })}</small></>}
+            </div>
           </div>
           <div className="maddr">📍 {l.addr}{l.town ? ` — ${l.town}` : ''}</div>
 
@@ -409,8 +407,10 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
             const f = (n) => tx.sym + n.toLocaleString('it-IT')
             return (
               <div className="mtax">
-                <div className="mtax-head">🏛 {t('tax_title')} <b>{f(tx.total)}</b></div>
-                <small>{tx.ads ? t('tax_scot', { lbtt: f(tx.lbtt), ads: f(tx.ads) }) : t('tax_ie')}</small>
+                <div className="mtax-head">🏛 {t('tax_title')} {tx.total != null && <b>{f(tx.total)}</b>}</div>
+                <small>{tx.it
+                  ? (tx.total != null ? t('tax_it_r', { v: f(tx.base) }) : t('tax_it'))
+                  : tx.ads ? t('tax_scot', { lbtt: f(tx.lbtt), ads: f(tx.ads) }) : t('tax_ie')}</small>
               </div>
             )
           })()}
@@ -420,6 +420,11 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
               {srcOf(l.url) && <span className={'srcb srcb-' + srcOf(l.url).key}>{srcOf(l.url).label}</span>}{' '}
               🔗 {t('src_label')}:{' '}
               <a href={l.url} target="_blank" rel="noopener noreferrer">{hostOf(l.url)}</a>
+              {/* Same home on other portals (merged by the Abruzzo pipeline). */}
+              {(l.alt || []).map((a) => (
+                <span key={a.url}> · <a href={a.url} target="_blank" rel="noopener noreferrer">{hostOf(a.url)}</a></span>
+              ))}
+              {l.perizia && <span> · 📄 <a href={l.perizia} target="_blank" rel="noopener noreferrer">{t('perizia')}</a></span>}
             </div>
           )}
 

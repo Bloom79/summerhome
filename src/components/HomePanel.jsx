@@ -1,6 +1,7 @@
 import { fmtP, srcOf } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import Gallery from './Gallery.jsx'
+import { REGION } from '../region.js'
 
 // Landing "Novità" panel: the first thing shown on open. It greets with the
 // houses added since the last visit — sea-view and garden ones featured —
@@ -56,7 +57,7 @@ export default function HomePanel({
         </div>
 
         <div className="hometoggles">
-          <button className={seaOnly ? 'on' : ''} onClick={onSea}>{t('sea_view')}</button>
+          {REGION.sea && <button className={seaOnly ? 'on' : ''} onClick={onSea}>{t('sea_view')}</button>}
           <button className={gardenOnly ? 'on' : ''} onClick={onGarden}>{t('garden')}</button>
           {dealsCount > 0 && <button className={dealsOnly ? 'on' : ''} onClick={onDeals}>{t('deals_chip')}</button>}
         </div>
@@ -103,7 +104,7 @@ export default function HomePanel({
           <button className="homeenter" onClick={onEnter}>
             {previewCount > 0 ? t('home_see_all', { n: previewCount }) : t('home_browse')} →
           </button>
-          {pushState !== 'unsupported' && (
+          {REGION.push && pushState !== 'unsupported' && (
             <button className="homealert" onClick={onCreateAlert} disabled={pushState === 'on'}>
               🔔 {pushState === 'on' ? t('home_alert_on') : t('home_alert')}
             </button>

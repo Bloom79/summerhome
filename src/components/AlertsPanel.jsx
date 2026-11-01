@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useI18n, PRICE_RANGES } from '../i18n.jsx'
+import { REGION } from '../region.js'
 
 const fmtK = (n) => (n >= 1000000 ? +(n / 1000000).toFixed(1) + 'M' : n / 1000 + 'k')
 const emptyDraft = { zone: '', priceMax: '', rooms: '', seaView: false, garden: false, ev: { nuove: true, ribassi: true, vendute: false, occasioni: true } }
@@ -72,7 +73,7 @@ export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, o
             </select>
           </div>
           <div className="alchecks">
-            <label><input type="checkbox" checked={draft.seaView} onChange={() => setD('seaView', !draft.seaView)} />{t('sea_view')}</label>
+            {REGION.sea && <label><input type="checkbox" checked={draft.seaView} onChange={() => setD('seaView', !draft.seaView)} />{t('sea_view')}</label>}
             <label><input type="checkbox" checked={draft.garden} onChange={() => setD('garden', !draft.garden)} />{t('garden')}</label>
           </div>
           <div className="alchecks alev">
@@ -88,7 +89,7 @@ export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, o
           >{t('al_save')}</button>
         </div>
 
-        <div className="alform">
+        {REGION.push && <div className="alform">
           <div className="alhead">{t('al_push_title')}</div>
           <p className="agentexpl">
             {pushState === 'on' && t('al_push_on')}
@@ -103,7 +104,7 @@ export default function AlertsPanel({ zones, alerts, news, pushState, pushErr, o
           {pushState === 'on' && (
             <button className="agentsend" onClick={onTestPush}>{t('al_push_test')}</button>
           )}
-        </div>
+        </div>}
         <button className="agentcancel" onClick={onClose}>{t('agent_cancel')}</button>
       </div>
     </div>

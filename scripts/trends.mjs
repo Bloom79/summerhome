@@ -7,12 +7,14 @@ import { execFileSync } from 'child_process'
 import { writeFileSync } from 'fs'
 
 const ROOT = new URL('..', import.meta.url).pathname
+// DATA_DIR selects the region (public/ = UK and Ireland, public/it/ = Abruzzo).
+const DATA_DIR = process.env.DATA_DIR || 'public/'
 const median = (a) => (a.length ? [...a].sort((p, q) => p - q)[Math.floor(a.length / 2)] : null)
-const shas = execFileSync('git', ['log', '--format=%H', '-n', '120', '--', 'public/data.json'], { cwd: ROOT }).toString().trim().split('\n').filter(Boolean)
+const shas = execFileSync('git', ['log', '--format=%H', '-n', '120', '--', DATA_DIR + 'data.json'], { cwd: ROOT }).toString().trim().split('\n').filter(Boolean)
 const byDay = new Map()
 for (const sha of shas) {
   let d
-  try { d = JSON.parse(execFileSync('git', ['show', `${sha}:public/data.json`], { cwd: ROOT, maxBuffer: 64e6 }).toString()) } catch { continue }
+  try { d = JSON.parse(execFileSync('git', ['show', `${sha}:${DATA_DIR}data.json`], { cwd: ROOT, maxBuffer: 64e6 }).toString()) } catch { continue }
   if (!d?.updated || byDay.has(d.updated)) continue // newest commit of each day wins
   const fx = d.gbpEur || 1.15
   const eur = (l) => (l.currency === 'GBP' ? l.price * fx : l.price)
@@ -25,5 +27,5 @@ for (const sha of shas) {
   byDay.set(d.updated, { d: d.updated, total: (d.listings || []).length, new: (d.listings || []).filter((l) => l.date === d.updated).length, sold: (d.sold || []).length, zones })
 }
 const days = [...byDay.values()].sort((a, b) => a.d.localeCompare(b.d)).slice(-90)
-writeFileSync(ROOT + 'public/trends.json', JSON.stringify({ updated: days[days.length - 1]?.d || null, days }))
+writeFileSync(ROOT + DATA_DIR + 'trends.json', JSON.stringify({ updated: days[days.length - 1]?.d || null, days }))
 console.log(`trends: ${days.length} giorni (${days[0]?.d} → ${days[days.length - 1]?.d})`)
