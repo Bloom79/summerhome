@@ -19,12 +19,18 @@ const out = (k, v) => {
   console.log(`${k}=${v}`)
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`)
 }
+// 404/410 means the listing is off the market. Other failures carry their
+// reason ("HTTP 403", "curl 28" = timeout) into the report, so a blocked
+// or slow source can be told apart from a broken adapter.
+class Gone extends Error {}
 const get = (url) => new Promise((resolve, reject) =>
-  execFile('curl', ['-sf', '--max-time', '25', '-A', UA, url], { maxBuffer: 64e6 },
-    (e, so) => (e ? reject(new Error(`curl ${url}`)) : resolve(so.toString()))))
-const getStatus = (url) => new Promise((resolve) =>
-  execFile('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '25', '-A', UA, url], {},
-    (e, so) => resolve(e ? 0 : +so.toString())))
+  execFile('curl', ['-s', '--max-time', '25', '-A', UA, '-w', '\n%{http_code}', url], { maxBuffer: 64e6 }, (e, so) => {
+    if (e) return reject(new Error(`curl ${e.code}`))
+    const s = so.toString(), i = s.lastIndexOf('\n'), code = +s.slice(i + 1)
+    if (code === 404 || code === 410) return reject(new Gone())
+    if (!code || code >= 400) return reject(new Error(`HTTP ${code}`))
+    resolve(s.slice(0, i))
+  }))
 const pmap = async (items, fn, limit = 8) => {
   const res = new Array(items.length)
   let i = 0
@@ -52,7 +58,9 @@ const checks = {
     const page = await get(l.url)
     const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(page)
     if (!m) return ['struttura pagina cambiata (niente __NEXT_DATA__)']
-    const p = JSON.parse(m[1]).props?.initialReduxState?.property
+    // Since Oct 2026 the Redux state sits under props.pageProps.
+    const j = JSON.parse(m[1])
+    const p = (j.props?.pageProps?.initialReduxState || j.props?.initialReduxState)?.property
     if (!p || !p.priceRaw) return ['gone']
     const probs = []
     if (+p.priceRaw !== l.price) probs.push(`prezzo ${l.price} ≠ ${p.priceRaw}`)
@@ -87,10 +95,7 @@ const checks = {
     return probs
   },
   espc: async (l) => {
-    // 410 Gone for withdrawn listings (get() rejects on it → handled as
-    // unreachable by the caller, so probe the status first).
-    const code = await getStatus(l.url)
-    if (code === 404 || code === 410) return ['gone']
+    // 410 Gone for withdrawn listings (get() turns it into 'gone').
     const page = await get(l.url)
     if (!page.includes('"latitude"')) return ['gone']
     const probs = []
@@ -119,47 +124,72 @@ const checks = {
     if (price && price !== l.price) return [`prezzo ${l.price} ≠ ${price}`]
     return []
   },
+  // Auction houses (Future/Prime Property Auctions, Auction House Scotland):
+  // the lot page answering is all the refresh relies on too.
+  aste: async (l) => { await get(l.url); return [] },
 }
 const srcOf = (url) =>
   /rightmove/.test(url) ? 'rightmove' : /onthemarket/.test(url) ? 'onthemarket' :
-  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : /espc\.com/.test(url) ? 'espc' : /aspc\.co\.uk/.test(url) ? 'aspc' : 'myhome'
+  /s1homes/.test(url) ? 's1homes' : /tspc/.test(url) ? 'tspc' : /espc\.com/.test(url) ? 'espc' : /aspc\.co\.uk/.test(url) ? 'aspc' :
+  /futurepropertyauctions|primepropertyauctions|auctionhouse\.co\.uk/.test(url) ? 'aste' : 'myhome'
+
+// Per-source cap on parallel requests: ESPC is the one portal that failed
+// a whole audit at once (Nov 2026) while the gentler daily refresh got through.
+const CAP = { espc: 2 }
+const slots = {}
+const withSlot = async (src, fn) => {
+  const s = (slots[src] ||= { n: 0, q: [] })
+  while (s.n >= (CAP[src] || Infinity)) await new Promise((r) => s.q.push(r))
+  s.n++
+  try { return await fn() } finally { s.n--; s.q.shift()?.() }
+}
 
 const bySrc = {}
 const findings = [] // {l, probs}
 const unreachable = []
+const GONE = ['gone']
+const run = (src, l) => withSlot(src, () => checks[src](l)).catch((e) => { if (e instanceof Gone) return GONE; throw e })
 // Retired sources (TSPC, 403 to scripts) are dropped by the refresh; skip them here too.
 await pmap(db.listings.filter((x) => !/tspc\.co\.uk/.test(x.url)), async (l) => {
   const src = srcOf(l.url)
-  bySrc[src] = bySrc[src] || { total: 0, bad: 0, gone: 0, unreachable: 0 }
-  bySrc[src].total++
+  const s = bySrc[src] = bySrc[src] || { total: 0, bad: 0, gone: 0, unreachable: 0, why: {} }
+  s.total++
   let probs
-  try { probs = await checks[src](l) } catch {
+  try { probs = await run(src, l) } catch {
     // One retry after a pause: slow portals (TSPC ~3.5s/page) throttle
     // bursts, and a transient timeout must not read as a broken adapter.
     await new Promise((r) => setTimeout(r, 4000))
-    try { probs = await checks[src](l) } catch { bySrc[src].unreachable++; unreachable.push(l); return }
+    try { probs = await run(src, l) } catch (e) {
+      s.unreachable++; unreachable.push(l)
+      s.why[e.message] = (s.why[e.message] || 0) + 1
+      return
+    }
   }
   if (!probs.length) return
-  if (probs[0] === 'gone') { bySrc[src].gone++; findings.push({ l, probs: ['non più sul portale (il prossimo refresh la archivierà)'] }) }
-  else { bySrc[src].bad++; findings.push({ l, probs }) }
+  if (probs[0] === 'gone') { s.gone++; findings.push({ l, probs: ['non più sul portale (il prossimo refresh la archivierà)'] }) }
+  else { s.bad++; findings.push({ l, probs }) }
 }, 8)
 
 // Systematic breakage: a big share of one source failing means the adapter
-// is broken, not the market moving.
+// is broken, not the market moving. That includes "gone": the refresh
+// re-checks missing listings every few days, so a healthy source has only
+// a handful at audit time; OnTheMarket showed 100% gone for four weeks
+// (Oct 2026) after a page-structure change, unnoticed.
 const broken = Object.entries(bySrc)
-  .filter(([, s]) => s.total >= 5 && (s.bad + s.unreachable) / s.total > 0.3)
+  .filter(([, s]) => s.total >= 5 && (s.bad + s.unreachable + s.gone) / s.total > 0.3)
   .map(([src]) => src)
+const whyOf = (s) => Object.entries(s.why).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ×${n}`).join(', ')
 
 const lines = [
   `# Audit sorgenti ${new Date().toISOString().slice(0, 10)}`,
   '',
   `${db.listings.length} annunci controllati contro le pagine sorgente.`,
   '',
-  '| Sorgente | Annunci | Incoerenti | Rimossi | Irraggiungibili |',
-  '|---|---|---|---|---|',
-  ...Object.entries(bySrc).map(([src, s]) => `| ${src} | ${s.total} | ${s.bad} | ${s.gone} | ${s.unreachable} |`),
+  '| Sorgente | Annunci | Incoerenti | Rimossi | Irraggiungibili | Motivo |',
+  '|---|---|---|---|---|---|',
+  ...Object.entries(bySrc).map(([src, s]) => `| ${src} | ${s.total} | ${s.bad} | ${s.gone} | ${s.unreachable} | ${whyOf(s)} |`),
   '',
-  ...(broken.length ? [`⚠️ **Possibile rottura sistematica dell'adapter**: ${broken.join(', ')} (oltre il 30% degli annunci incoerenti o irraggiungibili — probabile cambiamento del sito).`, ''] : []),
+  ...(broken.length ? [`⚠️ **Possibile rottura sistematica dell'adapter**: ${broken.join(', ')} (oltre il 30% degli annunci incoerenti, rimossi o irraggiungibili — probabile cambiamento del sito, o blocco delle richieste se il motivo è HTTP 403/429).`, ''] : []),
   ...(findings.length ? ['## Annunci con problemi', '', ...findings.map(({ l, probs }) => `- #${l.id} ${l.addr} (${l.zone}) — ${probs.join('; ')} — ${l.url}`)] : ['Nessuna incoerenza trovata. ✅']),
   ...(unreachable.length ? ['', `${unreachable.length} pagine non raggiungibili ora (transitorio, non conteggiate come errori salvo soglia sistematica).`] : []),
 ]

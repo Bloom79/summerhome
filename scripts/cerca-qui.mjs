@@ -348,6 +348,8 @@ if (cc === 'ie') {
     listings.push(l)
   }
 
+  // Since Oct 2026 OnTheMarket's Redux state sits under props.pageProps.
+  const otmState = (j) => j.props?.pageProps?.initialReduxState || j.props?.initialReduxState
   const otmFound = []
   await pmap(slugs, async (sl) => {
     let html
@@ -355,7 +357,7 @@ if (cc === 'ie') {
     const mm = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html)
     if (!mm) return
     let list
-    try { list = JSON.parse(mm[1]).props?.initialReduxState?.results?.list } catch { return }
+    try { list = otmState(JSON.parse(mm[1]))?.results?.list } catch { return }
     if (!Array.isArray(list)) return
     otmSlugs.push(sl)
     otmFound.push(...list)
@@ -385,7 +387,7 @@ if (cc === 'ie') {
   await pmap(listings.filter((l) => l.url.includes('onthemarket')), async (l) => {
     try {
       const page = await get(l.url)
-      const p = JSON.parse(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(page)[1]).props?.initialReduxState?.property
+      const p = otmState(JSON.parse(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(page)[1]))?.property
       if (!p) return
       const text = `${p.description || ''} ${(p.features || []).map((f) => f.feature || '').join(' ')}`.replace(/<[^>]+>/g, ' ')
       if (text.trim()) { l.seaView = SEA.some((r) => r.test(text)); l.feats = featsOf(text) }
