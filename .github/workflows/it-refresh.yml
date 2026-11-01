@@ -53,6 +53,19 @@ jobs:
           DATA_DIR: public/it/
         run: node scripts/trends.mjs || true
 
+      # Independent houses only, scored against OMI and local comparables;
+      # Claude (via the repo's Copilot subscription, or the API if a key is
+      # set) reviews the shortlist. A failure here never blocks the publish.
+      - name: Deal hunter
+        if: steps.refresh.outputs.status == 'changed'
+        id: hunter
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.G_COPILOT }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @github/copilot >/dev/null 2>&1 || true
+          node scripts/it/hunter.mjs || true
+
       - name: Restore built site
         if: steps.refresh.outputs.status == 'changed'
         id: distcache
@@ -82,6 +95,7 @@ jobs:
           git config user.name 'casatrova-agent'
           git config user.email 'noreply@github.com'
           git add public/it/data.json public/it/deals.json public/it/trends.json
+          git add public/it/hunter.json 2>/dev/null || true
           git commit -m "Altopiano delle Rocche $(date -u +%F): ${{ steps.refresh.outputs.summary }} · ${{ steps.deals.outputs.summary }}" -m "$(cat it-refresh-report.md)"
           git pull --rebase origin main
           git push origin main
@@ -99,6 +113,17 @@ jobs:
       - name: Deploy to GitHub Pages
         if: steps.refresh.outputs.status == 'changed'
         uses: actions/deploy-pages@v4
+
+      - name: New genuine deals as an issue
+        if: steps.hunter.outputs.new_true != '' && steps.hunter.outputs.new_true != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "🎯 Altopiano $(date -u +%F): ${{ steps.hunter.outputs.new_true }} nuove vere occasioni" \
+            --body "$(cat hunter-report.md)
+
+          Nell'app: https://bloom79.github.io/summerhome/?r=it (🎯 in alto)" || true
 
       - name: Surface problems as an issue
         if: failure() || cancelled() || steps.refresh.outputs.status == 'error' || steps.refresh.outputs.broken != ''
