@@ -3,8 +3,23 @@ import { geocode, zoomForType, fmtP } from '../utils.js'
 import { useI18n } from '../i18n.jsx'
 import { REGION, REGION_LIST, switchRegion } from '../region.js'
 
-export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, hunterCount = 0, hunterGood = 0, onOpenHunter, onOpenSync, deskView, onDeskView, toast }) {
+export default function Header({ listings, updated, gbpEur, onOpenListing, onFlyTo, onNearMe, onOpenStats, onOpenHome, newCount, onToggleDeals, dealsActive, dealsCount, hunterCount = 0, hunterGood = 0, onOpenHunter, onOpenSync, deskView, onDeskView, toast }) {
   const { t, lang, setLang, eur, setEur } = useI18n()
+  // Phone overflow menu (☰): every header action that doesn't fit one row.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const act = (fn) => { setMenuOpen(false); fn() }
+  // Publish the header height so the phone layout can slide it away on
+  // scroll (see the hdr-hide rule in index.css).
+  const hdrRef = useRef(null)
+  useEffect(() => {
+    const el = hdrRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--hdr-h', el.offsetHeight + 'px'))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  // Never hide the header while its menu is open.
+  useEffect(() => { if (menuOpen) document.documentElement.classList.remove('hdr-hide') }, [menuOpen])
   const fx = eur ? gbpEur : null
   const toggleEur = () => {
     const next = !eur
@@ -85,7 +100,7 @@ export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNea
   }
 
   return (
-    <header>
+    <header ref={hdrRef}>
       <div className="logo">🏠 <span className="lg-txt">Casa<em>Trova</em></span></div>
       <div className="searchwrap" ref={wrapRef}>
         <div className="searchbox">
@@ -112,27 +127,57 @@ export default function Header({ listings, gbpEur, onOpenListing, onFlyTo, onNea
           </div>
         )}
       </div>
+      {/* Always in the bar: what's new and the deal hunter. */}
       <button className="hbtn hbnew" onClick={onOpenHome} title={t('home_title')}>✨{newCount > 0 && <span className="badge">{newCount}</span>}</button>
-      <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
-      <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
-      {dealsCount > 0 && <button className={'hbtn' + (dealsActive ? ' hbon' : '')} onClick={onToggleDeals} title={t('deals_title')}>💎</button>}
       {hunterCount > 0 && <button className="hbtn hbnew" onClick={onOpenHunter} title={t('hunter_title')}>🎯{hunterGood > 0 && <span className="badge">{hunterGood}</span>}</button>}
-      <button className="hbtn" onClick={onOpenSync} title={t('sync_title')}>🔄</button>
-      {REGION.gbp && <button className={'hbtn hbeur' + (eur ? ' hbon' : '')} onClick={toggleEur} title={t('eur_toggle')}>{eur ? '€' : '£'}</button>}
-      <div className="langtog regiontog" title={t('region_title')}>
-        {REGION_LIST.map((r) => (
-          <button key={r.id} className={r.id === REGION.id ? 'on' : ''} title={lang === 'en' ? r.nameEn : r.name} onClick={() => switchRegion(r.id)}>{r.flag} {r.short}</button>
-        ))}
+      {/* Desktop: the rest inline. Phone: hidden, reachable from ☰. */}
+      <div className="hdesk">
+        <button className="hbtn" onClick={onNearMe}>{t('near_me')}</button>
+        <button className="hbtn" onClick={onOpenStats} title={t('stats_title')}>📊</button>
+        {dealsCount > 0 && <button className={'hbtn' + (dealsActive ? ' hbon' : '')} onClick={onToggleDeals} title={t('deals_title')}>💎</button>}
+        <button className="hbtn" onClick={onOpenSync} title={t('sync_title')}>🔄</button>
+        {REGION.gbp && <button className={'hbtn hbeur' + (eur ? ' hbon' : '')} onClick={toggleEur} title={t('eur_toggle')}>{eur ? '€' : '£'}</button>}
+        <div className="langtog regiontog" title={t('region_title')}>
+          {REGION_LIST.map((r) => (
+            <button key={r.id} className={r.id === REGION.id ? 'on' : ''} title={lang === 'en' ? r.nameEn : r.name} onClick={() => switchRegion(r.id)}>{r.flag} {r.short}</button>
+          ))}
+        </div>
+        <div className="deskview">
+          <button className={deskView === 'list' ? 'on' : ''} title={t('view_list')} onClick={() => onDeskView('list')}>☰</button>
+          <button className={deskView === 'split' ? 'on' : ''} title={t('view_split')} onClick={() => onDeskView('split')}>◧</button>
+          <button className={deskView === 'map' ? 'on' : ''} title={t('view_map')} onClick={() => onDeskView('map')}>🗺</button>
+        </div>
+        <div className="langtog">
+          <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
+          <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
+        </div>
       </div>
-      <div className="deskview">
-        <button className={deskView === 'list' ? 'on' : ''} title={t('view_list')} onClick={() => onDeskView('list')}>☰</button>
-        <button className={deskView === 'split' ? 'on' : ''} title={t('view_split')} onClick={() => onDeskView('split')}>◧</button>
-        <button className={deskView === 'map' ? 'on' : ''} title={t('view_map')} onClick={() => onDeskView('map')}>🗺</button>
-      </div>
-      <div className="langtog">
-        <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
-        <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
-      </div>
+      <button className="hbtn hmenubtn" onClick={() => setMenuOpen((o) => !o)} aria-label={t('menu_title')} aria-expanded={menuOpen}>{menuOpen ? '✕' : '☰'}</button>
+      {menuOpen && (
+        <>
+          <div className="hmenu-back" onClick={() => setMenuOpen(false)} />
+          <nav className="hmenu" aria-label={t('menu_title')}>
+            <div className="hmenu-meta">{t('menu_meta', { n: listings.length, date: updated ? `${updated.slice(8, 10)}/${updated.slice(5, 7)}` : '—' })}</div>
+            <button onClick={() => act(onNearMe)}>{t('near_me')}</button>
+            <button onClick={() => act(onOpenStats)}>📊 {t('stats_title')}</button>
+            {dealsCount > 0 && <button className={dealsActive ? 'on' : ''} onClick={() => act(onToggleDeals)}>💎 {t('deals_title')} <span className="hm-n">{dealsCount}</span></button>}
+            {hunterCount > 0 && <button onClick={() => act(onOpenHunter)}>🎯 {t('hunter_title')}{hunterGood > 0 && <span className="hm-n">{hunterGood}</span>}</button>}
+            <button onClick={() => act(onOpenSync)}>🔄 {t('sync_title')}</button>
+            {REGION.gbp && <button className={eur ? 'on' : ''} onClick={() => act(toggleEur)}>€ {t('eur_toggle')}</button>}
+            <div className="hmenu-label">{t('region_title')}</div>
+            <div className="hmenu-seg">
+              {REGION_LIST.map((r) => (
+                <button key={r.id} className={r.id === REGION.id ? 'on' : ''} onClick={() => switchRegion(r.id)}>{r.flag} {lang === 'en' ? r.nameEn : r.name}</button>
+              ))}
+            </div>
+            <div className="hmenu-label">{t('menu_lang')}</div>
+            <div className="hmenu-seg">
+              <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>Italiano</button>
+              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>English</button>
+            </div>
+          </nav>
+        </>
+      )}
     </header>
   )
 }

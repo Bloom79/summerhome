@@ -1057,6 +1057,7 @@ export default function App({ initialDb }) {
     <div className={'app' + (mobileView === 'map' ? ' mapview' : '') + ' desk-' + deskView}>
       <Header
         listings={LISTINGS}
+        updated={LAST_UPDATED}
         gbpEur={db.gbpEur}
         onOpenListing={openDetail}
         onFlyTo={flyTo}

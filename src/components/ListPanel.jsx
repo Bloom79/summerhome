@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Filters from './Filters.jsx'
 import Card from './Card.jsx'
 import SoldCard from './SoldCard.jsx'
@@ -25,6 +25,17 @@ export default function ListPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightId])
   const shown = items.length > limit ? items.slice(0, limit) : items
+  // Phone: slide the header away while scrolling down the list, bring it
+  // back on any scroll up (or near the top) — more room for the homes.
+  const lastY = useRef(0)
+  const onListScroll = (e) => {
+    if (!window.matchMedia('(max-width:840px)').matches) return
+    const y = e.currentTarget.scrollTop, d = y - lastY.current
+    const root = document.documentElement.classList
+    if (y < 40 || d < -8) root.remove('hdr-hide')
+    else if (d > 8) root.add('hdr-hide')
+    lastY.current = y
+  }
   return (
     <section id="panel">
       <Filters
@@ -118,13 +129,13 @@ export default function ListPanel({
             <button className="afclear" onClick={onClearFilters}>{t('af_clear_all')}</button>
           )}
           {onShareSearch && (
-            <button className="afshare" onClick={onShareSearch} title={t('share_search')}>{t('share_search')}</button>
+            <button className="afshare" onClick={onShareSearch} title={t('share_search')} aria-label={t('share_search')}>🔗<span className="afshare-txt"> {t('share_search').replace(/^🔗\s*/, '')}</span></button>
           )}
         </div>
       )}
 
       {items.length ? (
-        <div id="list">
+        <div id="list" onScroll={onListScroll}>
           {shown.map((l) => (
             <div key={l.id} ref={(el) => { if (cardRefs) cardRefs.current[l.id] = el }}>
               {soldView ? <SoldCard s={l} /> : <Card
