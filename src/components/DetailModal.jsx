@@ -380,6 +380,9 @@ export default function DetailModal({ l, deal, allListings = [], dealPages = {},
               <div className="dealbox neutral">
                 <div className="dhead"><span className="dscore none">🔨</span><b>{t('auction_analysis')}</b></div>
                 <div className="lrsm">{t('auction_note')}</div>
+                {REGION.auctionHistory && (
+                  <div className="lrsm">📊 {t('auction_hist', REGION.auctionHistory)}</div>
+                )}
                 <LiveAnalysis l={l} toast={toast} />
               </div>
             )

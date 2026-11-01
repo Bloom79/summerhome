@@ -111,6 +111,13 @@ const SOURCES = [
   [/pvp\.giustizia\.it/, 'auction', 'PVP'],
   [/subito\.it/, 'subito', 'Subito'],
   [/altopianoimmobiliare\.it/, 'altopiano', 'Altopiano Imm.'],
+  [/gabetti\.it/, 'gabetti', 'Gabetti'],
+  [/casadaprivato\.it/, 'casadaprivato', 'CasaDaPrivato'],
+  [/bachecacase\.com/, 'bachecacase', 'BachecaCase'],
+  [/immobiliare\.it/, 'immobiliare', 'Immobiliare.it'],
+  [/idealista\.it/, 'idealista', 'Idealista'],
+  [/wikicasa\.it/, 'wikicasa', 'Wikicasa'],
+  [/(clickcase|trovacasa|pcase|bancadellecase|caasa)\.(it|com|net)/, 'caasa', 'via Caasa'],
 ]
 export const srcOf = (url) => {
   for (const [re, key, label] of SOURCES) if (re.test(url || '')) return { key, label }

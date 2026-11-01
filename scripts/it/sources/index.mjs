@@ -10,6 +10,12 @@
 import tecnocasa from './tecnocasa.mjs'
 import subito from './subito.mjs'
 import altopiano from './altopiano.mjs'
+import gabetti from './gabetti.mjs'
+import casadaprivato from './casadaprivato.mjs'
+import bachecacase from './bachecacase.mjs'
+import caasa from './caasa.mjs'
 import pvp from './pvp.mjs'
 
-export const SOURCES = [tecnocasa, subito, altopiano, pvp]
+// Caasa (an aggregator) after the direct sources: a home both found directly
+// and through Caasa keeps the direct copy (first source wins a url).
+export const SOURCES = [tecnocasa, subito, altopiano, gabetti, casadaprivato, bachecacase, caasa, pvp]

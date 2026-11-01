@@ -128,6 +128,9 @@ await pmap(missing, async (l) => {
 // `alt` so the detail can link every portal. Bedrooms alone can't decide:
 // Subito has only "locali", so its rooms are null.
 const dupKey = (l) => `${l.zone}|${l.price}`
+// Same portal = possibly two identical flats in one residence; only copies
+// on DIFFERENT portals are merged (an aggregator like Caasa yields several).
+const portal = (l) => new URL(l.url).host.replace(/^www\./, '')
 const sameHome = (a, b) => (a.size && b.size ? Math.abs(a.size - b.size) <= 3 : !!(a.rooms && b.rooms && a.rooms === b.rooms))
 const groups = new Map()
 for (const l of next) { const k = dupKey(l); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(l) }
@@ -136,7 +139,7 @@ for (const arr of groups.values()) {
   if (arr.length < 2) continue
   for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
     const a = arr[i], b = arr[j]
-    if (drop.has(a) || drop.has(b) || a.src === b.src || !sameHome(a, b)) continue
+    if (drop.has(a) || drop.has(b) || portal(a) === portal(b) || !sameHome(a, b)) continue
     const score = (l) => (l.approx ? 0 : 50) + (l.imgs || []).length + (prevByUrl.has(l.url) ? 5 : 0)
     const [keep, lose] = score(a) >= score(b) ? [a, b] : [b, a]
     keep.alt = [...new Map([...(keep.alt || []), { src: lose.src, url: lose.url }, ...(lose.alt || [])].map((x) => [x.url, x])).values()]

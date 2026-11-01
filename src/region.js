@@ -48,6 +48,10 @@ const REGIONS = {
     cercaQui: false,
     push: false,
     gbp: false,
+    // Residential court auctions in the three comuni, 2020 → Oct 2026, from
+    // astegiudiziarie.it (157 attempts on 71 properties). Shown on auction
+    // lots; refresh by re-running the history count (see PR notes).
+    auctionHistory: { n: 157, props: 71, deserted: 57, soldPct: 79, tries: 2, firstPct: 71 },
   },
 }
 
