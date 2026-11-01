@@ -8,14 +8,17 @@ export default function Header({ listings, updated, gbpEur, onOpenListing, onFly
   // Phone overflow menu (☰): every header action that doesn't fit one row.
   const [menuOpen, setMenuOpen] = useState(false)
   const act = (fn) => { setMenuOpen(false); fn() }
-  // Publish the header height so the phone layout can slide it away on
-  // scroll (see the hdr-hide rule in index.css).
+  // Publish how much of the header may slide away on scroll (see hdr-hide in
+  // index.css): everything but the UK/Ovindoli tabs, which stay in sight.
   const hdrRef = useRef(null)
   useEffect(() => {
     const el = hdrRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--hdr-h', el.offsetHeight + 'px'))
+    const tabs = el.querySelector('.hregion')
+    const set = () => document.documentElement.style.setProperty('--hdr-h', (el.offsetHeight - (tabs?.offsetHeight || 0)) + 'px')
+    const ro = new ResizeObserver(set)
     ro.observe(el)
+    if (tabs) ro.observe(tabs)
     return () => ro.disconnect()
   }, [])
   // Never hide the header while its menu is open.
@@ -151,6 +154,13 @@ export default function Header({ listings, updated, gbpEur, onOpenListing, onFly
           <button className={lang === 'it' ? 'on' : ''} onClick={() => setLang('it')}>IT</button>
           <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
         </div>
+      </div>
+      {/* Phone: the two portals as tabs, always in sight (desktop has the
+          UK/Ovindoli toggle inline above). */}
+      <div className="hregion" role="tablist" aria-label={t('region_title')}>
+        {REGION_LIST.map((r) => (
+          <button key={r.id} role="tab" aria-selected={r.id === REGION.id} className={r.id === REGION.id ? 'on' : ''} onClick={() => switchRegion(r.id)}>{r.flag} {r.short}</button>
+        ))}
       </div>
       <button className="hbtn hmenubtn" onClick={() => setMenuOpen((o) => !o)} aria-label={t('menu_title')} aria-expanded={menuOpen}>{menuOpen ? '✕' : '☰'}</button>
       {menuOpen && (

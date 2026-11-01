@@ -499,6 +499,7 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 /* ---- Header: desktop inline group, phone overflow menu (☰) ---- */
 .hdesk{display:contents}
 .hmenubtn{display:none}
+.hregion{display:none}
 .hmenu-back{position:fixed;inset:0;z-index:1290;background:rgba(10,30,34,.25)}
 .hmenu{position:absolute;top:100%;right:8px;z-index:1300;width:min(320px,calc(100vw - 16px));max-height:calc(100vh - var(--hdr-h,60px) - 16px);overflow-y:auto;
   background:#fff;color:var(--ink);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.28);padding:8px;display:flex;flex-direction:column;gap:2px;margin-top:6px}
@@ -511,9 +512,13 @@ select.chip{appearance:none;padding-right:26px;background-image:url("data:image/
 .hmenu-seg button{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 8px;font-size:.84rem;font-weight:700;cursor:pointer;line-height:1.2}
 .hmenu-seg button.on{background:var(--brand);border-color:var(--brand);color:#fff}
 @media (max-width:840px){
-  header{position:relative;flex-wrap:nowrap;gap:8px;transition:margin-top .22s ease}
+  header{position:relative;flex-wrap:wrap;row-gap:6px;gap:8px;padding-bottom:0;transition:margin-top .22s ease}
   .hdesk{display:none}
   .hmenubtn{display:inline-flex;align-items:center;justify-content:center;min-width:42px}
+  /* Second slim row: the two portals as underlined tabs, always visible. */
+  .hregion{display:flex;order:10;flex:0 0 100%;margin:0 -10px;border-top:1px solid rgba(255,255,255,.14)}
+  .hregion button{flex:1;border:0;background:transparent;color:rgba(255,255,255,.72);font-size:.86rem;font-weight:700;padding:8px 6px 7px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+  .hregion button.on{color:#fff;border-bottom-color:var(--accent)}
   header .searchwrap{min-width:0}
   header .hbtn{padding:8px 11px}
   /* Scrolling down the list slides the header away (ListPanel). */
