@@ -59,7 +59,12 @@ export const AREA = {
   },
 }
 
-const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, ' ')
+// Frazioni the owner doesn't want (Nov 2026): homes there are left out of
+// the portal, whatever the source calls the comune.
+export const EXCLUDED = new Set(['Santa Jona', 'San Potito'])
+
+// Ads spell Santa Jona as "Santa Iona" too.
+const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, ' ').replace(/\bsanta iona\b/g, 'santa jona')
 const NAMED = [...PLACES].sort((a, b) => b.name.length - a.name.length) // "Rocca di Mezzo" before "Rocca"
 
 // Zone (comune) and town (frazione) of a home, or null when outside the
@@ -75,6 +80,6 @@ export const zoneOf = (lat, lng, text) => {
     const d = haversineM({ lat, lng }, p)
     return d < 4000 && (!best || d < best.d) ? { ...p, d } : best
   }, null)
-  if (!place) return null
+  if (!place || EXCLUDED.has(place.name)) return null
   return { zone: place.comune, town: HAMLETS.has(place.name) ? place.comune : place.name }
 }

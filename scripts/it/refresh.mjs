@@ -149,7 +149,10 @@ for (const arr of groups.values()) {
     drop.add(lose)
   }
 }
-const listings = next.filter((l) => !drop.has(l))
+// Homes the area rules now leave out (excluded frazioni) go quietly, also
+// when carried over from yesterday: not archived as sold.
+const excluded = next.filter((l) => !drop.has(l) && !zoneOf(l.lat, l.lng, `${l.addr || ''} ${l.town || ''}`))
+const listings = next.filter((l) => !drop.has(l) && !excluded.includes(l))
 events.nuove = events.nuove.filter((l) => !drop.has(l))
 
 // ---- 5. Ids, distances to the ski lifts, drive times ----
@@ -197,7 +200,7 @@ if (changed) writeFileSync(dataPath, JSON.stringify(db))
 
 const perSrc = Object.entries(health).map(([id, h]) => `| ${id} | ${h.n} | ${h.ok ? 'ok' : `⚠️ ${h.err}`} |`)
 report.push('| Sorgente | Annunci | Stato |', '|---|---|---|', ...perSrc, '',
-  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti · ${unverified} non verificati oggi${dropped ? ` · ${dropped} rimossi (sorgente irraggiungibile da 14 giorni)` : ''}`)
+  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti${excluded.length ? ` · ${excluded.length} esclusi (frazioni non volute)` : ''} · ${unverified} non verificati oggi${dropped ? ` · ${dropped} rimossi (sorgente irraggiungibile da 14 giorni)` : ''}`)
 writeFileSync(ROOT + 'it-refresh-report.md', report.join('\n') + '\n')
 console.log(report.join('\n'))
 
