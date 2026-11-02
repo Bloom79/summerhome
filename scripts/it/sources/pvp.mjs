@@ -23,7 +23,7 @@ const discover = async () => {
   } catch { /* keep the known paths */ }
 }
 
-const COMUNI = new Map([['ovindoli', 'Ovindoli'], ['rocca di mezzo', 'Rocca di Mezzo'], ['rocca di cambio', 'Rocca di Cambio']])
+const COMUNI = new Map([['ovindoli', 'Ovindoli'], ['rocca di mezzo', 'Rocca di Mezzo']])
 const QUERIES = [
   { tribunale: 'Tribunale di AVEZZANO', tipoLotto: 'IMMOBILI' },
   { tribunale: "Tribunale di L'AQUILA", tipoLotto: 'IMMOBILI' },

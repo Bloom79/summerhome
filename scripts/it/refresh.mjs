@@ -103,9 +103,12 @@ const toSold = (l, status) => ({
   lat: l.lat, lng: l.lng, imgs: (l.imgs || []).slice(0, 1), rooms: l.rooms, firstSeen: l.date, removed: TODAY, url: l.url, status,
 })
 const missing = prev.listings.filter((l) => !scraped.has(l.url)).sort((a, b) => (a.chk || '').localeCompare(b.chk || ''))
-let unverified = 0, dropped = 0
+let unverified = 0, dropped = 0, outOfArea = 0
 await pmap(missing, async (l) => {
   const src = bySource[l.src]
+  // Now outside the area rules (an excluded comune or frazione): gone
+  // quietly, never archived as sold.
+  if (!zoneOf(l.lat, l.lng, `${l.addr || ''} ${l.town || ''}`)) { outOfArea++; return }
   // Auction lots: the sale date passed and the lot left the listings.
   if (l.auction && l.auction < TODAY) { events.vendute.push(toSold(l, 'removed')); return }
   // A source unreachable for two weeks (blocked, relay off): drop its
@@ -121,17 +124,24 @@ await pmap(missing, async (l) => {
   else events.vendute.push(toSold(l, 'removed'))
 }, 3)
 
-// ---- 4. Cross-source duplicates (agencies list the same home everywhere) ----
-// Same zone and same price on DIFFERENT sources, plus the size within 3 m²
-// (or, when a size is missing, the same bedroom count on both): keep the
-// richer copy (exact coordinates, more photos), remember the others in
-// `alt` so the detail can link every portal. Bedrooms alone can't decide:
-// Subito has only "locali", so its rooms are null.
+// ---- 4. Duplicates (agencies list the same home on every portal) ----
+// Same zone and same price, then:
+// - different portals: floor areas within 12% (portals quote gross vs net
+//   m², e.g. 370 and 374 m² for one villa); with a size missing on one copy,
+//   only when that price has exactly one other candidate (no guessing);
+// - same portal (a re-post): areas within 3 m² and the same room count.
+// The richer copy stays (exact coordinates, more photos); the others are
+// kept in `alt` so the detail links every portal.
 const dupKey = (l) => `${l.zone}|${l.price}`
-// Same portal = possibly two identical flats in one residence; only copies
-// on DIFFERENT portals are merged (an aggregator like Caasa yields several).
 const portal = (l) => new URL(l.url).host.replace(/^www\./, '')
-const sameHome = (a, b) => (a.size && b.size ? Math.abs(a.size - b.size) <= 3 : !!(a.rooms && b.rooms && a.rooms === b.rooms))
+const sameHome = (a, b, groupSize) => {
+  const samePortal = portal(a) === portal(b)
+  if (a.size && b.size) {
+    const d = Math.abs(a.size - b.size)
+    return samePortal ? d <= 3 && (a.rooms || 0) === (b.rooms || 0) : d <= Math.max(3, 0.12 * Math.max(a.size, b.size))
+  }
+  return !samePortal && groupSize === 2
+}
 const groups = new Map()
 for (const l of next) { const k = dupKey(l); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(l) }
 const drop = new Set()
@@ -139,7 +149,7 @@ for (const arr of groups.values()) {
   if (arr.length < 2) continue
   for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
     const a = arr[i], b = arr[j]
-    if (drop.has(a) || drop.has(b) || portal(a) === portal(b) || !sameHome(a, b)) continue
+    if (drop.has(a) || drop.has(b) || !sameHome(a, b, arr.length)) continue
     const score = (l) => (l.approx ? 0 : 50) + (l.imgs || []).length + (prevByUrl.has(l.url) ? 5 : 0)
     const [keep, lose] = score(a) >= score(b) ? [a, b] : [b, a]
     keep.alt = [...new Map([...(keep.alt || []), { src: lose.src, url: lose.url }, ...(lose.alt || [])].map((x) => [x.url, x])).values()]
@@ -200,7 +210,7 @@ if (changed) writeFileSync(dataPath, JSON.stringify(db))
 
 const perSrc = Object.entries(health).map(([id, h]) => `| ${id} | ${h.n} | ${h.ok ? 'ok' : `⚠️ ${h.err}`} |`)
 report.push('| Sorgente | Annunci | Stato |', '|---|---|---|', ...perSrc, '',
-  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti${excluded.length ? ` · ${excluded.length} esclusi (frazioni non volute)` : ''} · ${unverified} non verificati oggi${dropped ? ` · ${dropped} rimossi (sorgente irraggiungibile da 14 giorni)` : ''}`)
+  `${listings.length} annunci · ${events.nuove.length} nuovi · ${events.ribassi.length} ribassi · ${events.vendute.length} venduti/ritirati · ${drop.size} doppioni uniti${excluded.length + outOfArea ? ` · ${excluded.length + outOfArea} esclusi (zone non volute)` : ''} · ${unverified} non verificati oggi${dropped ? ` · ${dropped} rimossi (sorgente irraggiungibile da 14 giorni)` : ''}`)
 writeFileSync(ROOT + 'it-refresh-report.md', report.join('\n') + '\n')
 console.log(report.join('\n'))
 

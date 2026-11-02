@@ -12,7 +12,7 @@
 import { get, sleep, clip, num, typeOf, featsOf, energyOf, Gone } from '../lib.mjs'
 
 const BASE = 'https://www.casadaprivato.it'
-const COMUNI = ['ovindoli', 'rocca_di_mezzo', 'rocca_di_cambio']
+const COMUNI = ['ovindoli', 'rocca_di_mezzo']
 const MAX_DETAILS = 30
 const NOT_HOME = /\b(terren[oi]|garage|box|posto auto|negozio|ufficio|magazzino|capannone|locale commerciale|laboratorio|fabbricato rurale)\b/i
 const MONTHS = { gen: 1, feb: 2, mar: 3, apr: 4, mag: 5, giu: 6, lug: 7, ago: 8, set: 9, ott: 10, nov: 11, dic: 12 }

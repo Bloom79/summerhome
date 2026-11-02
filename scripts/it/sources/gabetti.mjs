@@ -9,7 +9,7 @@
 import { get, sleep, clip, num, typeOf, featsOf, energyOf, Gone } from '../lib.mjs'
 import { zoneOf } from '../area.mjs'
 
-const COMUNI = ['ovindoli', 'rocca-di-mezzo', 'rocca-di-cambio']
+const COMUNI = ['ovindoli', 'rocca-di-mezzo']
 const BASE = 'https://www.gabetti.it'
 const listUrl = (c, p) => `${BASE}/vendita/${c}${p > 1 ? `?page=${p}` : ''}`
 const NOT_HOME = /\b(ufficio|negozio|box|garage|magazzino|capannone|laboratorio|terreno|locale commerciale|albergo)\b/i
