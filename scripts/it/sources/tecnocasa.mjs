@@ -6,7 +6,7 @@
 
 import { get, sleep, clip, num, typeOf, Gone } from '../lib.mjs'
 
-const COMUNI = ['ovindoli', 'rocca-di-mezzo', 'rocca-di-cambio']
+const COMUNI = ['ovindoli', 'rocca-di-mezzo']
 const PER_PAGE = 15
 const searchUrl = (c, p) => `https://www.tecnocasa.it/annunci/immobili/abruzzo/aquila/${c}${p > 1 ? `/pag-${p}` : ''}.html`
 const unescape = (s) => s.replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')

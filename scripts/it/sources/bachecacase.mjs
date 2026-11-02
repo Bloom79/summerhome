@@ -17,7 +17,6 @@ import { get, sleep, clip, num, typeOf, featsOf } from '../lib.mjs'
 const COMUNI = [
   ['ovindoli', 'Ovindoli'],
   ['rocca-di-mezzo', 'Rocca di Mezzo'],
-  ['rocca-di-cambio', 'Rocca di Cambio'],
 ]
 const MAX_PAGES = 6
 const searchUrl = (c, p) => `https://www.bachecacase.com/case-appartamenti-in-vendita/${c}${p > 1 ? `?pag=${p}` : ''}`

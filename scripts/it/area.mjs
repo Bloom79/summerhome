@@ -32,11 +32,10 @@ const PLACES = [
 const HAMLETS = new Set(['Aia Decina', 'Campagnolo', 'Magnola', 'Vado del Ceraso', 'Colle Belvedere', 'Colle Ciaccio', 'Colle Marino', 'Cavigliara'])
 
 export const AREA = {
-  zones: ['Ovindoli', 'Rocca di Mezzo', 'Rocca di Cambio'],
+  zones: ['Ovindoli', 'Rocca di Mezzo'],
   comuni: [
     { name: 'Ovindoli', istat: '066065', lat: 42.13703, lng: 13.5161 },
     { name: 'Rocca di Mezzo', istat: '066082', lat: 42.21302, lng: 13.52812 },
-    { name: 'Rocca di Cambio', istat: '066081', lat: 42.23504, lng: 13.48996 },
   ],
   places: PLACES,
   bounds: { minLat: 42.08, maxLat: 42.28, minLng: 13.43, maxLng: 13.56 },
@@ -62,6 +61,9 @@ export const AREA = {
 // Frazioni the owner doesn't want (Nov 2026): homes there are left out of
 // the portal, whatever the source calls the comune.
 export const EXCLUDED = new Set(['Santa Jona', 'San Potito'])
+// Whole comuni left out (Nov 2026). Their places stay listed above so a home
+// there is recognised and dropped, not pinned to the nearest other village.
+export const EXCLUDED_COMUNI = new Set(['Rocca di Cambio'])
 
 // Ads spell Santa Jona as "Santa Iona" too.
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, ' ').replace(/\bsanta iona\b/g, 'santa jona')
@@ -80,6 +82,6 @@ export const zoneOf = (lat, lng, text) => {
     const d = haversineM({ lat, lng }, p)
     return d < 4000 && (!best || d < best.d) ? { ...p, d } : best
   }, null)
-  if (!place || EXCLUDED.has(place.name)) return null
+  if (!place || EXCLUDED.has(place.name) || EXCLUDED_COMUNI.has(place.comune)) return null
   return { zone: place.comune, town: HAMLETS.has(place.name) ? place.comune : place.name }
 }

@@ -21,7 +21,6 @@ import { AREA } from '../area.mjs'
 const COMUNI = [
   ['ovindoli', 'Ovindoli'],
   ['rocca-di-mezzo', 'Rocca di Mezzo'],
-  ['rocca-di-cambio', 'Rocca di Cambio'],
 ]
 // "appartamento" already contains bilocali/trilocali/attici/monolocali.
 const TYPES = ['appartamento', 'casa-indipendente', 'villa', 'villetta-a-schiera', 'baita']
